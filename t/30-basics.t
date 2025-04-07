@@ -73,9 +73,9 @@ $ENV{APP_EXTRA__DEBUG}   = '1';
 
 # Load config
 my $config = Config::Abstraction->new(
-    config_dirs => [$test_dir],
-    env_prefix  => 'APP_',
-    flatten     => 0,
+	config_dirs => [$test_dir],
+	env_prefix  => 'APP_',
+	flatten     => 0,
 );
 
 # YAML + JSON
@@ -95,15 +95,18 @@ is $config->get('logging.file'), 'logfile.log', 'base.ini sets logging.file';
 # Check ENV merging
 is $config->get('extra.debug'), '1', 'extra.debug from ENV';
 
+# Undefined value
+is($config->get('extra.foo'), undef, 'Undefined keys return undef');
+
 # Flattened test
 my $flat = Config::Abstraction->new(
-    config_dirs => [$test_dir],
-    env_prefix  => 'APP_',
-    flatten     => 1,
+	config_dirs => [$test_dir],
+	env_prefix  => 'APP_',
+	flatten     => 1,
 );
 
 is $flat->get('api.timeout'), '60', 'Flattened: XML override timeout';
-is $flat->get('database.user'), 'env_user', 'Flattened: ENV override still works';
+is($flat->get('database.user'), 'env_user', 'Flattened: ENV override still works');
 
 # remove_tree($test_dir);
 done_testing();

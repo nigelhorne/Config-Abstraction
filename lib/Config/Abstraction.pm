@@ -217,6 +217,7 @@ sub _load_config
 			next unless -f $path;
 
 			my $data;
+			# TODO: only load config modules when they are needed
 			if ($file =~ /\.ya?ml$/) {
 				$data = eval { LoadFile($path) };
 				croak "Failed to load YAML from $path: $@" if $@;
@@ -236,6 +237,7 @@ sub _load_config
 			}
 			%merged = %{ merge( $data, \%merged ) };
 		}
+		# TODO: add $self->{script_name} to the list of files to look at, through all parsers, ignoring all errors
 	}
 
 	# Merge ENV vars
@@ -254,8 +256,8 @@ sub _load_config
 		my ($key, $value) = split(/=/, $arg, 2);
 		next unless $key =~ /^$self->{env_prefix}(.*)$/;
 
-		my $path = lc $1;
-		my @parts = split /__/, $path;
+		my $path = lc($1);
+		my @parts = split(/__/, $path);
 		my $ref = \%merged;
 		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
 		$ref->{ $parts[-1] } = $value;
