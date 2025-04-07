@@ -259,20 +259,38 @@ sub _load_config
 		if(my $config_file = $self->{'config_file'}) {
 			my $path = File::Spec->catfile($dir, $config_file);
 			if((-f $path) && (-r $path)) {
-				my $data;
+				my $data = read_file($path);
 				eval {
-					$data = LoadFile($path) or
-						decode_json(read_file($path)) or
-						XMLin($path, ForceArray => 0, KeyAttr => []);
-					if((!defined($data)) && (my $ini = Config::IniFiles->new(-file => $path))) {
-						$data = { map {
-							my $section = $_;
-							$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
-						} $ini->Sections() };
+					if($data =~ /^\s*<\?xml/) {
+						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
+					} else {
+						eval { $data = decode_json($data) };
+						if($@) {
+							undef $data;
+						}
+					}
+					if(!$data) {
+						$data = LoadFile($path);
+					}
+					if(!$data) {
+						if(my $ini = Config::IniFiles->new(-file => $path)) {
+							$data = { map {
+								my $section = $_;
+								$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+							} $ini->Sections() };
+						}
+					}
+					if(!$data) {
+						# Maybe XML without the leading XML header
+						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					}
 				};
-				if($data) {
-					%merged = %{ merge( $data, \%merged ) };
+				if(scalar(keys %merged)) {
+					if($data) {
+						%merged = %{ merge( $data, \%merged ) };
+					}
+				} else {
+					%merged = %{$data};
 				}
 			}
 		}
