@@ -2,6 +2,10 @@
 
 Config::Abstraction - Configuration Abstraction Layer
 
+# VERSION
+
+Version 0.01
+
 # SYNOPSIS
 
     use Config::Abstraction;
@@ -106,7 +110,6 @@ This will override any value set for `database.user` in the configuration files.
 Configuration values can be overridden via the command line (`@ARGV`).
 For instance, if you have a key in the configuration such as `database.user`,
 you can override it by adding `"APP_DATABASE__USER=other_user_name"` to the command line arguments.
-
 This will override any value set for `database.user` in the configuration files.
 
 ## EXAMPLE CONFIGURATION FLOW
@@ -194,6 +197,6 @@ Nigel Horne, `<njh at nigelhorne.com>`
 
 Hey! **The above document had some coding errors, which are explained below:**
 
-- Around line 93:
+- Around line 99:
 
     You forgot a '=back' before '=head2'
