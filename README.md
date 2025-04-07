@@ -174,8 +174,8 @@ Retrieve a configuration value using dotted key notation (e.g.,
 
 ## all()
 
-Returns the entire configuration hash, possibly flattened depending on the
-`flatten` option.
+Returns the entire configuration hash,
+possibly flattened depending on the `flatten` option.
 
 # SUPPORT
 

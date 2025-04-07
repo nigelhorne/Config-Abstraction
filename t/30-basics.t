@@ -8,7 +8,7 @@ use File::Slurp qw(write_file);
 # use lib "$FindBin::Bin/../lib";
 use Test::TempDir::Tiny;
 
-use Config::Abstraction;
+BEGIN { use_ok('Config::Abstraction') }
 
 # my $test_dir = File::Spec->catdir($FindBin::Bin, 'test_config');
 my $test_dir = tempdir();
@@ -69,13 +69,13 @@ INI
 # Set ENV override
 local %ENV;
 $ENV{APP_DATABASE__USER} = 'env_user';
-$ENV{APP_EXTRA__DEBUG}   = '1';
+$ENV{APP_EXTRA__DEBUG} = '1';
 
 # Load config
 my $config = Config::Abstraction->new(
 	config_dirs => [$test_dir],
-	env_prefix  => 'APP_',
-	flatten     => 0,
+	env_prefix => 'APP_',
+	flatten => 0,
 );
 
 # YAML + JSON
@@ -101,8 +101,8 @@ is($config->get('extra.foo'), undef, 'Undefined keys return undef');
 # Flattened test
 my $flat = Config::Abstraction->new(
 	config_dirs => [$test_dir],
-	env_prefix  => 'APP_',
-	flatten     => 1,
+	env_prefix => 'APP_',
+	flatten => 1,
 );
 
 is $flat->get('api.timeout'), '60', 'Flattened: XML override timeout';

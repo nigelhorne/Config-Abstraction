@@ -208,7 +208,7 @@ If true, returns a flat configuration structure like C<'database.user'> (default
 
 sub new {
 	my $class = shift;
-	my $params = Params::Get::get_params(undef, @_);
+	my $params = Params::Get::get_params(undef, @_) || {};
 
 	my $self = bless {
 		%{$params},
@@ -250,12 +250,12 @@ sub _load_config
 				$data = { map {
 					my $section = $_;
 					$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
-				} $ini->Sections };
+				} $ini->Sections() };
 			}
 			%merged = %{ merge( $data, \%merged ) };
 		}
-		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
 
+		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
 		if(my $config_file = $self->{'config_file'}) {
 			my $path = File::Spec->catfile($dir, $config_file);
 			if((-f $path) && (-r $path)) {
@@ -268,7 +268,7 @@ sub _load_config
 						$data = { map {
 							my $section = $_;
 							$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
-						} $ini->Sections };
+						} $ini->Sections() };
 					}
 				};
 				if($data) {
@@ -311,9 +311,11 @@ C<'database.user'>). Returns C<undef> if the key doesn't exist.
 
 =cut
 
-sub get {
+sub get
+{
 	my ($self, $key) = @_;
-	if ($self->{flatten}) {
+
+	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
 	my $ref = $self->{config};
@@ -326,12 +328,13 @@ sub get {
 
 =head2 all()
 
-Returns the entire configuration hash, possibly flattened depending on the
-C<flatten> option.
+Returns the entire configuration hash,
+possibly flattened depending on the C<flatten> option.
 
 =cut
 
-sub all {
+sub all
+{
 	my $self = shift;
 
 	return $self->{'config'};
