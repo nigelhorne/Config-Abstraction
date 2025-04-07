@@ -283,9 +283,6 @@ sub _load_config
 						# Maybe XML without the leading XML header
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					}
-					if((!$data) || (ref($data) ne 'HASH')) {
-						::diag(__LINE__);
-					}
 				};
 				if(scalar(keys %merged)) {
 					if($data) {
