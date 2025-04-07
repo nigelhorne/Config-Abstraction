@@ -1,6 +1,3 @@
-Here’s a `Makefile.PL` you can use to package and install **Config::Abstraction** using `ExtUtils::MakeMaker`:
-
-```perl
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
