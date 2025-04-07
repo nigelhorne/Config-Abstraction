@@ -1,11 +1,8 @@
 use strict;
 use warnings;
 use Test::Most;
-# use File::Path qw(make_path remove_tree);
 use File::Spec;
 use File::Slurp qw(write_file);
-# use FindBin;
-# use lib "$FindBin::Bin/../lib";
 use Test::TempDir::Tiny;
 
 BEGIN { use_ok('Config::Abstraction') }
