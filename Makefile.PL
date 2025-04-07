@@ -12,7 +12,7 @@ if($^O eq 'darwin') {
 }
 
 WriteMakefile(
-	NAME		 => 'Config::Abstraction',
+	NAME => 'Config::Abstraction',
 	VERSION_FROM => 'lib/Config/Abstraction.pm', # Path to your module
 	AUTHOR	=> 'Nigel Horne <njh@nigelhorne.com>',
 	ABSTRACT_FROM	=> 'lib/Config/Abstraction.pm',
@@ -21,11 +21,12 @@ WriteMakefile(
 		: ()),
 	MIN_PERL_VERSION => '5.10.0',
 	PREREQ_PM	=> {
-		'Carp'		 => 0,
+		'Carp' => 0,
 		'Config::IniFiles' => 0,
 		'JSON::MaybeXS'	=> 0,
 		'Params::Get' => 0,
-		'YAML::XS'	 => 0,
+		'YAML::XS' => 0,
+		'XML::Parser::Expat' => 0,	# Seems to be needed for Windows
 		'XML::Simple' => 0,
 		'File::Slurp'	=> 0,
 		'File::Spec'	=> 0,
