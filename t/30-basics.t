@@ -17,6 +17,7 @@ my $test_dir = tempdir();
 
 # base.yaml
 write_file("$test_dir/base.yaml", <<'YAML');
+---
 database:
   user: base_user
   pass: base_pass
