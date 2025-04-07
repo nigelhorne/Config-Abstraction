@@ -24,6 +24,7 @@ WriteMakefile(
 		'Carp'		 => 0,
 		'Config::IniFiles' => 0,
 		'JSON::MaybeXS'	=> 0,
+		'Params::Get' => 0,
 		'YAML::XS'	 => 0,
 		'XML::Simple' => 0,
 		'File::Slurp'	=> 0,

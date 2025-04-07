@@ -13,6 +13,7 @@ use File::Spec;
 use File::Basename;
 use Hash::Merge qw( merge );
 use Hash::Flatten qw(flatten unflatten);
+use Params::Get;
 
 =head1 NAME
 
@@ -207,29 +208,13 @@ If true, returns a flat configuration structure like C<'database.user'> (default
 
 sub new {
 	my $class = shift;
-
-	# Handle hash or hashref arguments
-	my %args;
-	if(@_ == 1) {
-		if(ref $_[0] eq 'HASH') {
-			# If the first argument is a hash reference, dereference it
-			%args = %{$_[0]};
-		} else {
-			$args{'logger'} = shift;
-		}
-	} elsif((scalar(@_) % 2) == 0) {
-		# If there is an even number of arguments, treat them as key-value pairs
-		%args = @_;
-	} else {
-		# If there is an odd number of arguments, treat it as an error
-		croak(__PACKAGE__, ': Invalid arguments passed to new()');
-	}
+	my $params = Params::Get::get_params(undef, @_);
 
 	my $self = bless {
-		%args,
-		config_dirs => $args{config_dirs} || ['config'],
-		env_prefix => $args{env_prefix} || 'APP_',
-		flatten	 => $args{flatten} // 0,
+		%{$params},
+		config_dirs => $params->{config_dirs} || ['config'],
+		env_prefix => $params->{env_prefix} || 'APP_',
+		flatten	 => $params->{flatten} // 0,
 		config	=> {},
 	}, $class;
 

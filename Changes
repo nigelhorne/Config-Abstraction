@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.03
+	Use Params::Get
+
 0.02	Mon Apr  7 12:50:34 EDT 2025
 	Added config_file option
 
