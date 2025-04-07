@@ -20,7 +20,10 @@ WriteMakefile(
 		? ('LICENSE'=> 'GPL')
 		: ()),
 	MIN_PERL_VERSION => '5.10.0',
-	PREREQ_PM	=> {
+	PL_FILES => {},
+	CONFIGURE_REQUIRES => {
+		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
+	}, PREREQ_PM	=> {
 		'Carp' => 0,
 		'Config::IniFiles' => 0,
 		'JSON::MaybeXS'	=> 0,
