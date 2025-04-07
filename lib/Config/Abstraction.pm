@@ -10,7 +10,7 @@ use JSON::MaybeXS qw(decode_json);
 use XML::Simple qw(XMLin);
 use File::Slurp qw(read_file);
 use File::Spec;
-use File::Basename;
+# use File::Basename;
 use Hash::Merge qw( merge );
 use Hash::Flatten qw(flatten unflatten);
 use Params::Get;
@@ -272,7 +272,7 @@ sub _load_config
 					if(!$data) {
 						$data = LoadFile($path);
 					}
-					if(!$data) {
+					if((!$data) || (ref($data) ne 'HASH')) {
 						if(my $ini = Config::IniFiles->new(-file => $path)) {
 							$data = { map {
 								my $section = $_;
@@ -280,7 +280,7 @@ sub _load_config
 							} $ini->Sections() };
 						}
 					}
-					if(!$data) {
+					if((!$data) || (ref($data) ne 'HASH')) {
 						# Maybe XML without the leading XML header
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					}
