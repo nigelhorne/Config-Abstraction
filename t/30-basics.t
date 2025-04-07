@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::Most;
-use File::Path qw(make_path remove_tree);
+# use File::Path qw(make_path remove_tree);
 use File::Spec;
 use File::Slurp qw(write_file);
 # use FindBin;
@@ -53,6 +53,19 @@ write_file("$test_dir/local.xml", <<'XML');
 </config>
 XML
 
+# base.ini
+write_file("$test_dir/base.ini", <<'INI');
+[logging]
+level=info
+file=logfile.log
+INI
+
+# local.ini
+write_file("$test_dir/local.ini", <<'INI');
+[logging]
+level=debug
+INI
+
 # Set ENV override
 $ENV{APP_DATABASE__USER} = 'env_user';
 $ENV{APP_EXTRA__DEBUG}   = '1';
@@ -73,6 +86,13 @@ is $config->get('extra.debug'), '1', 'extra.debug from ENV';
 # XML merge
 is $config->get('api.url'), 'https://api.example.com', 'API URL from base.xml';
 is $config->get('api.timeout'), '60', 'local.xml overrides base.xml';
+
+# Check INI merging
+is $config->get('logging.level'), 'debug', 'local.ini overrides base.ini';
+is $config->get('logging.file'), 'logfile.log', 'base.ini sets logging.file';
+
+# Check ENV merging
+is $config->get('extra.debug'), '1', 'extra.debug from ENV';
 
 # Flattened test
 my $flat = Config::Abstraction->new(

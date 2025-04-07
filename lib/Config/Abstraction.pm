@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Config::IniFiles;
 use YAML::XS qw(LoadFile);
 use JSON::MaybeXS qw(decode_json);
 use XML::Simple qw(XMLin);
@@ -24,9 +25,9 @@ Config::Abstraction - Configuration Abstraction Layer
   use Config::Abstraction;
 
   my $config = Config::Abstraction->new(
-      config_dirs => ['config'],
-      env_prefix  => 'MYAPP_',
-      flatten     => 0,
+    config_dirs => ['config'],
+    env_prefix  => 'MYAPP_',
+    flatten => 0,
   );
 
   my $db_user = $config->get('database.user');
@@ -48,54 +49,61 @@ Options:
 =cut
 
 sub new {
-    my ($class, %opts) = @_;
-    my $self = bless {
-        config_dirs => $opts{config_dirs} || ['config'],
-        env_prefix  => $opts{env_prefix} || 'APP_',
-        flatten     => $opts{flatten} // 0,
-        config      => {},
-    }, $class;
+	my ($class, %opts) = @_;
+	my $self = bless {
+		config_dirs => $opts{config_dirs} || ['config'],
+		env_prefix => $opts{env_prefix} || 'APP_',
+		flatten	 => $opts{flatten} // 0,
+		config	=> {},
+	}, $class;
 
-    $self->_load_config;
+	$self->_load_config();
 
-    return $self;
+	return $self;
 }
 
 sub _load_config {
-    my ($self) = @_;
-    my %merged;
+	my $self = shift;
+	my %merged;
 
-    for my $dir (@{ $self->{config_dirs} }) {
-        for my $file (qw/base.yaml base.json base.xml local.yaml local.json local.xml/) {
-            my $path = File::Spec->catfile($dir, $file);
-            next unless -f $path;
+	for my $dir (@{ $self->{config_dirs} }) {
+		for my $file (qw/base.yaml base.json base.xml base.ini local.yaml local.json local.xml local.ini/) {
+			my $path = File::Spec->catfile($dir, $file);
+			next unless -f $path;
 
-            my $data;
-            if ($file =~ /\.ya?ml$/) {
-                $data = eval { LoadFile($path) };
-                croak "Failed to load YAML from $path: $@" if $@;
-            } elsif ($file =~ /\.json$/) {
-                $data = eval { decode_json(read_file($path)) };
-                croak "Failed to load JSON from $path: $@" if $@;
-	    } elsif ($file =~ /\.xml$/) {
-                $data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
-                croak "Failed to load XML from $path: $@" if $@;
-            }
-            %merged = %{ merge( $data, \%merged ) };
-        }
-    }
+			my $data;
+			if ($file =~ /\.ya?ml$/) {
+				$data = eval { LoadFile($path) };
+				croak "Failed to load YAML from $path: $@" if $@;
+			} elsif ($file =~ /\.json$/) {
+				$data = eval { decode_json(read_file($path)) };
+				croak "Failed to load JSON from $path: $@" if $@;
+			} elsif ($file =~ /\.xml$/) {
+				$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
+				croak "Failed to load XML from $path: $@" if $@;
+			} elsif ($file =~ /\.ini$/) {
+				my $ini = Config::IniFiles->new(-file => $path);
+				croak "Failed to load INI from $path" unless $ini;
+				$data = { map {
+					my $section = $_;
+					$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+				} $ini->Sections };
+			}
+			%merged = %{ merge( $data, \%merged ) };
+		}
+	}
 
-    # Merge ENV vars
-    for my $key (keys %ENV) {
-        next unless $key =~ /^$self->{env_prefix}(.*)$/;
-        my $path = lc $1;
-        my @parts = split /__/, $path;
-        my $ref = \%merged;
-        $ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
-        $ref->{ $parts[-1] } = $ENV{$key};
-    }
+	# Merge ENV vars
+	for my $key (keys %ENV) {
+		next unless $key =~ /^$self->{env_prefix}(.*)$/;
+		my $path = lc $1;
+		my @parts = split /__/, $path;
+		my $ref = \%merged;
+		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
+		$ref->{ $parts[-1] } = $ENV{$key};
+	}
 
-    $self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
+	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 }
 
 =head2 get(key)
@@ -105,17 +113,16 @@ Retrieve a value using dotted key notation.
 =cut
 
 sub get {
-    my ($self, $key) = @_;
-    if ($self->{flatten}) {
-        return $self->{config}{$key};
-    } else {
-        my $ref = $self->{config};
-        for my $part (split /\./, $key) {
-            return undef unless ref $ref eq 'HASH';
-            $ref = $ref->{$part};
-        }
-        return $ref;
-    }
+	my ($self, $key) = @_;
+	if ($self->{flatten}) {
+		return $self->{config}{$key};
+	}
+	my $ref = $self->{config};
+	for my $part (split /\./, $key) {
+		return undef unless ref $ref eq 'HASH';
+		$ref = $ref->{$part};
+	}
+	return $ref;
 }
 
 =head2 all()
@@ -125,8 +132,8 @@ Return the entire config hash (possibly flattened).
 =cut
 
 sub all {
-    my ($self) = @_;
-    return $self->{config};
+	my ($self) = @_;
+	return $self->{config};
 }
 
 1;
