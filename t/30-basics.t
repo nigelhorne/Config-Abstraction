@@ -67,6 +67,7 @@ level=debug
 INI
 
 # Set ENV override
+local %ENV;
 $ENV{APP_DATABASE__USER} = 'env_user';
 $ENV{APP_EXTRA__DEBUG}   = '1';
 

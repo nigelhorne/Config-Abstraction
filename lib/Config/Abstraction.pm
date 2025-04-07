@@ -34,17 +34,31 @@ Config::Abstraction - Configuration Abstraction Layer
 
 =head1 DESCRIPTION
 
-This module loads layered configuration files in YAML or JSON format
-and merges them together. It also supports environment variable overrides.
+This module loads layered configuration files in YAML, JSON, XML and INI format
+and merges them together.
+It also supports environment variable and command line overrides.
 
 =head1 METHODS
 
 =head2 new
 
 Options:
-  - config_dirs: Arrayref of directories to look for config files
-  - env_prefix: Prefix for ENV keys (e.g. MYAPP_DATABASE__USER)
-  - flatten: Return flat keys like 'database.user'
+
+=over 4
+
+=item * C<config_dirs>
+
+Arrayref of directories to look for config files
+
+=item * C<env_prefix>
+
+Prefix for ENV keys and command line options (e.g. MYAPP_DATABASE__USER)
+
+=item * C<flatten>
+
+Return flat keys like 'database.user'
+
+=back
 
 =cut
 
@@ -62,7 +76,8 @@ sub new {
 	return $self;
 }
 
-sub _load_config {
+sub _load_config
+{
 	my $self = shift;
 	my %merged;
 
@@ -103,6 +118,21 @@ sub _load_config {
 		$ref->{ $parts[-1] } = $ENV{$key};
 	}
 
+	# Merge command line options
+	if(@ARGV) {
+		foreach my $arg(@ARGV) {
+			next unless($arg =~ /=/);
+			my ($key, $value) = split(/=/, $arg, 2);
+			next unless $key =~ /^$self->{env_prefix}(.*)$/;
+
+			my $path = lc $1;
+			my @parts = split /__/, $path;
+			my $ref = \%merged;
+			$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
+			$ref->{ $parts[-1] } = $arg;
+		}
+	}
+
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 }
 
@@ -132,16 +162,39 @@ Return the entire config hash (possibly flattened).
 =cut
 
 sub all {
-	my ($self) = @_;
-	return $self->{config};
+	my $self = shift;
+
+	return $self->{'config'};
 }
 
 1;
 
-__END__
+=head1 SUPPORT
+
+This module is provided as-is without any warranty.
+
+Please report any bugs or feature requests to C<bug-config-abstraction at rt.cpan.org>,
+or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Config-Abstraction>.
+I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Config::Abstraction
+
+=head1 SEE ALSO
+
+=over 4
+
+=item * L<Config::Auto>
+
+=back
 
 =head1 AUTHOR
 
 Nigel Horne, C<< <njh at nigelhorne.com> >>
 
 =cut
+
+__END__
