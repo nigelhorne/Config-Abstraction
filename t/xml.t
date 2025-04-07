@@ -25,6 +25,20 @@ my $config = Config::Abstraction->new(
 );
 
 diag(Data::Dumper->new([$config])->Dump()) if($ENV{'TEST_VERBOSE'});
-cmp_ok($config->get('UserName'), 'eq', 'njh', 'XML can be read in from a file');
+cmp_ok($config->get('UserName'), 'eq', 'njh', 'XML can be read in from a file with an XML header');
+
+write_file(File::Spec->catdir($test_dir, 'xml_test'), <<'XML');
+<config>
+	<UserName>nan</UserName>
+</config>
+XML
+
+$config = Config::Abstraction->new(
+	config_dirs => [$test_dir],
+	config_file => 'xml_test'
+);
+
+diag(Data::Dumper->new([$config])->Dump()) if($ENV{'TEST_VERBOSE'});
+cmp_ok($config->get('UserName'), 'eq', 'nan', 'XML can be read in from a file with no XML header');
 
 done_testing();
