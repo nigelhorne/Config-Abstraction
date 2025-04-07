@@ -108,5 +108,20 @@ my $flat = Config::Abstraction->new(
 is $flat->get('api.timeout'), '60', 'Flattened: XML override timeout';
 is($flat->get('database.user'), 'env_user', 'Flattened: ENV override still works');
 
+# Test config_file
+write_file("$test_dir/foo", <<'YAML');
+first:
+  second: value
+YAML
+
+$config = Config::Abstraction->new(
+	config_dirs => [$test_dir],
+	config_file => 'foo'
+);
+
+diag(Data::Dumper->new([$config])->Dump()) if($ENV{'TEST_VERBOSE'});
+
+cmp_ok($config->get('first.second'), 'eq', 'value', 'Action similar to Config::Auto works');
+
 # remove_tree($test_dir);
 done_testing();

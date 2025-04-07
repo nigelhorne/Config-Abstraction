@@ -96,6 +96,8 @@ If any file fails to
 load (e.g., due to syntax issues), the module will throw descriptive error
 messages to help with debugging.
 
+=back
+
 =head2 SUPPORTED FILE FORMATS
 
 =over 4
@@ -149,6 +151,8 @@ It loads the following files in order of preference:
 C<base.yaml>, C<local.yaml>, C<base.json>, C<local.json>, C<base.xml>,
 C<local.xml>, C<base.ini>, and C<local.ini>.
 
+If C<config_file> is set, that file is loaded last.
+
 =item 2. Merging and Resolving
 
 The module merges the contents of these files, with more specific configurations
@@ -184,6 +188,10 @@ Options:
 
 An arrayref of directories to look for configuration files (default: C<['config']>).
 
+=item * C<config_file>
+
+Points to a configuration file of any format.
+
 =item * C<env_prefix>
 
 A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DATABASE__USER>,
@@ -198,11 +206,30 @@ If true, returns a flat configuration structure like C<'database.user'> (default
 =cut
 
 sub new {
-	my ($class, %opts) = @_;
+	my $class = shift;
+
+	# Handle hash or hashref arguments
+	my %args;
+	if(@_ == 1) {
+		if(ref $_[0] eq 'HASH') {
+			# If the first argument is a hash reference, dereference it
+			%args = %{$_[0]};
+		} else {
+			$args{'logger'} = shift;
+		}
+	} elsif((scalar(@_) % 2) == 0) {
+		# If there is an even number of arguments, treat them as key-value pairs
+		%args = @_;
+	} else {
+		# If there is an odd number of arguments, treat it as an error
+		croak(__PACKAGE__, ': Invalid arguments passed to new()');
+	}
+
 	my $self = bless {
-		config_dirs => $opts{config_dirs} || ['config'],
-		env_prefix => $opts{env_prefix} || 'APP_',
-		flatten	 => $opts{flatten} // 0,
+		%args,
+		config_dirs => $args{config_dirs} || ['config'],
+		env_prefix => $args{env_prefix} || 'APP_',
+		flatten	 => $args{flatten} // 0,
 		config	=> {},
 	}, $class;
 
@@ -242,7 +269,28 @@ sub _load_config
 			}
 			%merged = %{ merge( $data, \%merged ) };
 		}
-		# TODO: add $self->{script_name} to the list of files to look at, through all parsers, ignoring all errors
+		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
+
+		if(my $config_file = $self->{'config_file'}) {
+			my $path = File::Spec->catfile($dir, $config_file);
+			if((-f $path) && (-r $path)) {
+				my $data;
+				eval {
+					$data = LoadFile($path) or
+						decode_json(read_file($path)) or
+						XMLin($path, ForceArray => 0, KeyAttr => []);
+					if((!defined($data)) && (my $ini = Config::IniFiles->new(-file => $path))) {
+						$data = { map {
+							my $section = $_;
+							$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+						} $ini->Sections };
+					}
+				};
+				if($data) {
+					%merged = %{ merge( $data, \%merged ) };
+				}
+			}
+		}
 	}
 
 	# Merge ENV vars

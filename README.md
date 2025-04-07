@@ -121,6 +121,8 @@ This will override any value set for `database.user` in the configuration files.
     `base.yaml`, `local.yaml`, `base.json`, `local.json`, `base.xml`,
     `local.xml`, `base.ini`, and `local.ini`.
 
+    If `config_file` is set, that file is loaded last.
+
 - 2. Merging and Resolving
 
     The module merges the contents of these files, with more specific configurations
@@ -151,6 +153,10 @@ Options:
 - `config_dirs`
 
     An arrayref of directories to look for configuration files (default: `['config']`).
+
+- `config_file`
+
+    Points to a configuration file of any format.
 
 - `env_prefix`
 
@@ -192,11 +198,3 @@ You can find documentation for this module with the perldoc command.
 # AUTHOR
 
 Nigel Horne, `<njh at nigelhorne.com>`
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 99:
-
-    You forgot a '=back' before '=head2'
