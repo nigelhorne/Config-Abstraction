@@ -14,11 +14,17 @@ use File::Basename;
 use Hash::Merge qw( merge );
 use Hash::Flatten qw(flatten unflatten);
 
-our $VERSION = '0.01';
-
 =head1 NAME
 
 Config::Abstraction - Configuration Abstraction Layer
+
+=head1 VERSION
+
+Version 0.01
+
+=cut
+
+our $VERSION = '0.01';
 
 =head1 SYNOPSIS
 
@@ -130,7 +136,6 @@ This will override any value set for C<database.user> in the configuration files
 Configuration values can be overridden via the command line (C<@ARGV>).
 For instance, if you have a key in the configuration such as C<database.user>,
 you can override it by adding C<"APP_DATABASE__USER=other_user_name"> to the command line arguments.
-
 This will override any value set for C<database.user> in the configuration files.
 
 =head2 EXAMPLE CONFIGURATION FLOW
