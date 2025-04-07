@@ -13,12 +13,14 @@ WriteMakefile(
     MIN_PERL_VERSION => '5.10.0',
     PREREQ_PM    => {
         'Carp'             => 0,
-        'YAML::XS'         => 0,
         'JSON::MaybeXS'    => 0,
+        'YAML::XS'         => 0,
+	'XML::Simple' => 0,
         'File::Slurp'      => 0,
         'File::Spec'       => 0,
         'Hash::Merge'      => 0,
         'Hash::Flatten'    => 0,
+	'Test::TempDir::Tiny' => 0,
     },
     META_MERGE => {
         resources => {

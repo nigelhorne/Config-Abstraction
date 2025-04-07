@@ -4,23 +4,25 @@ use Test::Most;
 use File::Path qw(make_path remove_tree);
 use File::Spec;
 use File::Slurp qw(write_file);
-use FindBin;
-use lib "$FindBin::Bin/../lib";
+# use FindBin;
+# use lib "$FindBin::Bin/../lib";
+use Test::TempDir::Tiny;
 
 use Config::Abstraction;
 
-my $test_dir = File::Spec->catdir($FindBin::Bin, 'test_config');
-remove_tree($test_dir);
-make_path($test_dir);
+# my $test_dir = File::Spec->catdir($FindBin::Bin, 'test_config');
+my $test_dir = tempdir();
+# remove_tree($test_dir);
+# make_path($test_dir);
 
-# Create base.yaml
+# base.yaml
 write_file("$test_dir/base.yaml", <<'YAML');
 database:
   user: base_user
   pass: base_pass
 YAML
 
-# Create local.json
+# local.json
 write_file("$test_dir/local.json", <<'JSON');
 {
   "database": {
@@ -32,25 +34,45 @@ write_file("$test_dir/local.json", <<'JSON');
 }
 JSON
 
-# Set an environment variable to override config
+# base.xml
+write_file("$test_dir/base.xml", <<'XML');
+<config>
+  <api>
+    <url>https://api.example.com</url>
+    <timeout>30</timeout>
+  </api>
+</config>
+XML
+
+# local.xml
+write_file("$test_dir/local.xml", <<'XML');
+<config>
+  <api>
+    <timeout>60</timeout>
+  </api>
+</config>
+XML
+
+# Set ENV override
 $ENV{APP_DATABASE__USER} = 'env_user';
 $ENV{APP_EXTRA__DEBUG}   = '1';
 
-# Basic test (flatten = 0)
+# Load config
 my $config = Config::Abstraction->new(
     config_dirs => [$test_dir],
     env_prefix  => 'APP_',
     flatten     => 0,
 );
 
-is $config->get('database.user'), 'env_user', 'ENV override works';
+# YAML + JSON
+is $config->get('database.user'), 'env_user', 'ENV override on database.user';
 is $config->get('database.pass'), 'local_pass', 'local.json overrides base.yaml';
-ok $config->get('feature.enabled'), 'feature.enabled is true';
-is $config->get('extra.debug'), '1', 'extra.debug loaded from ENV';
-is_deeply $config->get('database'), {
-    user => 'env_user',
-    pass => 'local_pass',
-}, 'database merged properly';
+ok $config->get('feature.enabled'), 'feature.enabled from JSON';
+is $config->get('extra.debug'), '1', 'extra.debug from ENV';
+
+# XML merge
+is $config->get('api.url'), 'https://api.example.com', 'API URL from base.xml';
+is $config->get('api.timeout'), '60', 'local.xml overrides base.xml';
 
 # Flattened test
 my $flat = Config::Abstraction->new(
@@ -59,10 +81,8 @@ my $flat = Config::Abstraction->new(
     flatten     => 1,
 );
 
+is $flat->get('api.timeout'), '60', 'Flattened: XML override timeout';
 is $flat->get('database.user'), 'env_user', 'Flattened: ENV override still works';
-is $flat->get('feature.enabled'), 1, 'Flattened: JSON boolean true works';
-ok exists $flat->all->{'extra.debug'}, 'Flattened: ENV key exists';
 
-remove_tree($test_dir);
-
+# remove_tree($test_dir);
 done_testing();

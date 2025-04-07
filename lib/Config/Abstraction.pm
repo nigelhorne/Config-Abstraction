@@ -6,6 +6,7 @@ use warnings;
 use Carp;
 use YAML::XS qw(LoadFile);
 use JSON::MaybeXS qw(decode_json);
+use XML::Simple qw(XMLin);
 use File::Slurp qw(read_file);
 use File::Spec;
 use File::Basename;
@@ -65,7 +66,7 @@ sub _load_config {
     my %merged;
 
     for my $dir (@{ $self->{config_dirs} }) {
-        for my $file (qw/base.yaml local.yaml base.json local.json/) {
+        for my $file (qw/base.yaml base.json base.xml local.yaml local.json local.xml/) {
             my $path = File::Spec->catfile($dir, $file);
             next unless -f $path;
 
@@ -76,6 +77,9 @@ sub _load_config {
             } elsif ($file =~ /\.json$/) {
                 $data = eval { decode_json(read_file($path)) };
                 croak "Failed to load JSON from $path: $@" if $@;
+	    } elsif ($file =~ /\.xml$/) {
+                $data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
+                croak "Failed to load XML from $path: $@" if $@;
             }
             %merged = %{ merge( $data, \%merged ) };
         }
