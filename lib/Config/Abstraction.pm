@@ -10,8 +10,7 @@ use JSON::MaybeXS qw(decode_json);
 use XML::Simple qw(XMLin);
 use File::Slurp qw(read_file);
 use File::Spec;
-# use File::Basename;
-use Hash::Merge qw( merge );
+use Hash::Merge qw(merge);
 use Hash::Flatten qw(flatten unflatten);
 use Params::Get;
 
