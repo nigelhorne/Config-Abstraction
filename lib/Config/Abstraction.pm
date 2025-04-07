@@ -119,18 +119,16 @@ sub _load_config
 	}
 
 	# Merge command line options
-	if(@ARGV) {
-		foreach my $arg(@ARGV) {
-			next unless($arg =~ /=/);
-			my ($key, $value) = split(/=/, $arg, 2);
-			next unless $key =~ /^$self->{env_prefix}(.*)$/;
+	foreach my $arg(@ARGV) {
+		next unless($arg =~ /=/);
+		my ($key, $value) = split(/=/, $arg, 2);
+		next unless $key =~ /^$self->{env_prefix}(.*)$/;
 
-			my $path = lc $1;
-			my @parts = split /__/, $path;
-			my $ref = \%merged;
-			$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
-			$ref->{ $parts[-1] } = $arg;
-		}
+		my $path = lc $1;
+		my @parts = split /__/, $path;
+		my $ref = \%merged;
+		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
+		$ref->{ $parts[-1] } = $value;
 	}
 
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
