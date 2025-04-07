@@ -7,5 +7,7 @@ README.md
 t/30-basics.t
 t/eof.t
 t/eol.t
+t/strict.t
 t/unused.t
 t/vars.t
+t/xml.t

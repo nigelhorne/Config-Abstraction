@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.03
+0.03	Mon Apr  7 16:22:16 EDT 2025
 	Use Params::Get
 	Needs Test::Most
 	Improved handling of XML files
