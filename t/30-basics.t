@@ -36,6 +36,7 @@ JSON
 
 # base.xml
 write_file("$test_dir/base.xml", <<'XML');
+<?xml version="1.0"?>
 <config>
   <api>
     <url>https://api.example.com</url>
@@ -46,6 +47,7 @@ XML
 
 # local.xml
 write_file("$test_dir/local.xml", <<'XML');
+<?xml version="1.0"?>
 <config>
   <api>
     <timeout>60</timeout>
