@@ -1,28 +1,5 @@
 package Config::Abstraction;
 
-=head1 NAME
-
-Config::Abstraction - Configuration Abstraction Layer
-
-=head1 SYNOPSIS
-
-  use Config::Modern;
-
-  my $config = Config::Modern->new(
-      config_dirs => ['config'],
-      env_prefix  => 'MYAPP_',
-      flatten     => 0,
-  );
-
-  my $db_user = $config->get('database.user');
-
-=head1 DESCRIPTION
-
-This module loads layered configuration files in YAML or JSON format
-and merges them together. It also supports environment variable overrides.
-
-=cut
-
 use strict;
 use warnings;
 
@@ -36,6 +13,27 @@ use Hash::Merge qw( merge );
 use Hash::Flatten qw(flatten unflatten);
 
 our $VERSION = '0.01';
+
+=head1 NAME
+
+Config::Abstraction - Configuration Abstraction Layer
+
+=head1 SYNOPSIS
+
+  use Config::Abstraction;
+
+  my $config = Config::Abstraction->new(
+      config_dirs => ['config'],
+      env_prefix  => 'MYAPP_',
+      flatten     => 0,
+  );
+
+  my $db_user = $config->get('database.user');
+
+=head1 DESCRIPTION
+
+This module loads layered configuration files in YAML or JSON format
+and merges them together. It also supports environment variable overrides.
 
 =head1 METHODS
 
@@ -79,7 +77,7 @@ sub _load_config {
                 $data = eval { decode_json(read_file($path)) };
                 croak "Failed to load JSON from $path: $@" if $@;
             }
-            %merged = %{ merge( \%merged, $data ) };
+            %merged = %{ merge( $data, \%merged ) };
         }
     }
 

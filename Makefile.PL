@@ -6,8 +6,10 @@ WriteMakefile(
     NAME         => 'Config::Abstraction',
     VERSION_FROM => 'lib/Config/Abstraction.pm', # Path to your module
     AUTHOR       => 'Nigel Horne <njh@nigelhorne.com>',
-    ABSTRACT     => 'A modern layered configuration loader with ENV support',
-    LICENSE      => 'perl',
+	ABSTRACT_FROM	=> 'lib/Config/Abstraction.pm',
+	((defined($ExtUtils::MakeMaker::VERSION) && ($ExtUtils::MakeMaker::VERSION >= 6.3002))
+		? ('LICENSE'=> 'GPL')
+		: ()),
     MIN_PERL_VERSION => '5.10.0',
     PREREQ_PM    => {
         'Carp'             => 0,
