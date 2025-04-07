@@ -2,6 +2,15 @@ use strict;
 use warnings;
 use ExtUtils::MakeMaker;
 
+my $dist = {
+	COMPRESS => 'gzip -9f',	# Compress tarball using gzip
+	SUFFIX => 'gz',	# File suffix for tarball
+};
+
+if($^O eq 'darwin') {
+	$dist->{'TAR'} = 'gtar';
+}
+
 WriteMakefile(
 	NAME		 => 'Config::Abstraction',
 	VERSION_FROM => 'lib/Config/Abstraction.pm', # Path to your module
@@ -32,5 +41,6 @@ WriteMakefile(
 		'Test::DescribeMe' => 0,
 		'Test::Needs' => 0,
 		'Test::TempDir::Tiny' => 0,
-	}
+	}, clean => { FILES => 'Config-Abstraction-*' },
+	dist => $dist
 );
