@@ -193,6 +193,8 @@ Retrieve a configuration value using dotted key notation (e.g.,
 Returns the entire configuration hash,
 possibly flattened depending on the `flatten` option.
 
+The entry `config_path` contains a colon separated list of the files that the configuration was loaded from.
+
 # BUGS
 
 It should be possible to escape the separator character either with backslashes or quotes.
