@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Config::Auto;
 use Config::IniFiles;
 use YAML::XS qw(LoadFile);
 use JSON::MaybeXS qw(decode_json);
@@ -42,7 +43,7 @@ our $VERSION = '0.03';
 
 C<Config::Abstraction> is a flexible configuration management module
 that allows loading and merging configuration data from multiple file
-formats: YAML, JSON, XML, and INI.
+formats: YAML, JSON, XML, and INI via a number of different drivers.
 It also integrates environment variable
 overrides and command line arguments for runtime configuration adjustments.
 This module is designed to help developers manage layered configurations that can be loaded from files and overridden by environment variables,
@@ -228,7 +229,7 @@ sub _load_config
 	my %merged;
 
 	for my $dir (@{ $self->{config_dirs} }) {
-		for my $file (qw/base.yaml base.json base.xml base.ini local.yaml local.json local.xml local.ini/) {
+		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
 			my $path = File::Spec->catfile($dir, $file);
 			next unless -f $path;
 
@@ -270,18 +271,21 @@ sub _load_config
 					}
 					if(!$data) {
 						$data = LoadFile($path);
-					}
-					if((!$data) || (ref($data) ne 'HASH')) {
-						if(my $ini = Config::IniFiles->new(-file => $path)) {
-							$data = { map {
-								my $section = $_;
-								$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
-							} $ini->Sections() };
+						if((!$data) || (ref($data) ne 'HASH')) {
+							if(my $ini = Config::IniFiles->new(-file => $path)) {
+								$data = { map {
+									my $section = $_;
+									$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+								} $ini->Sections() };
+							}
+							if((!$data) || (ref($data) ne 'HASH')) {
+								# Maybe XML without the leading XML header
+								eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
+								if((!$data) || (ref($data) ne 'HASH')) {
+									$data = Config::Auto->new(source => $path)->parse();
+								}
+							}
 						}
-					}
-					if((!$data) || (ref($data) ne 'HASH')) {
-						# Maybe XML without the leading XML header
-						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					}
 				};
 				if(scalar(keys %merged)) {
@@ -358,6 +362,12 @@ sub all
 }
 
 1;
+
+=head1 BUGS
+
+Doesn't play well with keys with dots in them, since that's what it uses to separate levels of the keys.
+Might be better to use a symbol that's used less,
+or honour quoting or backslashes.
 
 =head1 SUPPORT
 

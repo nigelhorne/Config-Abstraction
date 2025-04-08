@@ -2,6 +2,7 @@ Revision history for Config::Abstraction - Configuration Abstraction Layer
 
 0.04
 	Better handling of config_file mode when an XML file is missing its header
+	Handle more drivers and document the problem of dot separators.
 
 0.03	Mon Apr  7 16:22:16 EDT 2025
 	Use Params::Get

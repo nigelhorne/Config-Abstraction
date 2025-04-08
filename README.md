@@ -22,7 +22,7 @@ Version 0.03
 
 `Config::Abstraction` is a flexible configuration management module
 that allows loading and merging configuration data from multiple file
-formats: YAML, JSON, XML, and INI.
+formats: YAML, JSON, XML, and INI via a number of different drivers.
 It also integrates environment variable
 overrides and command line arguments for runtime configuration adjustments.
 This module is designed to help developers manage layered configurations that can be loaded from files and overridden by environment variables,
@@ -176,6 +176,12 @@ Retrieve a configuration value using dotted key notation (e.g.,
 
 Returns the entire configuration hash,
 possibly flattened depending on the `flatten` option.
+
+# BUGS
+
+Doesn't play well with keys with dots in them, since that's what it uses to separate levels of the keys.
+Might be better to use a symbol that's used less,
+or honour quoting or backslashes.
 
 # SUPPORT
 

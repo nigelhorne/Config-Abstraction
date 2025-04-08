@@ -25,6 +25,7 @@ WriteMakefile(
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
 	}, PREREQ_PM	=> {
 		'Carp' => 0,
+		'Config::Auto' => 0,
 		'Config::IniFiles' => 0,
 		'JSON::MaybeXS'	=> 0,
 		'Params::Get' => 0,
