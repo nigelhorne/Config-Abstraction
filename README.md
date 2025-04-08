@@ -161,6 +161,8 @@ Options:
 - `config_files`
 
     An arrayref of files to look for in the configration directories.
+    Put the more important files later,
+    since later files override earlier ones.
 
 - `env_prefix`
 

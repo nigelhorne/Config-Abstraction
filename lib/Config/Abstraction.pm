@@ -196,6 +196,8 @@ Points to a configuration file of any format.
 =item * C<config_files>
 
 An arrayref of files to look for in the configration directories.
+Put the more important files later,
+since later files override earlier ones.
 
 =item * C<env_prefix>
 
