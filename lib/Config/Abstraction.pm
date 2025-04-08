@@ -4,15 +4,10 @@ use strict;
 use warnings;
 
 use Carp;
-use Config::Auto;
-use Config::IniFiles;
-use YAML::XS qw(LoadFile);
-use JSON::MaybeXS qw(decode_json);
-use XML::Simple qw(XMLin);
+use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
 use Hash::Merge qw(merge);
-use Hash::Flatten qw(flatten);
 use Params::Get;
 
 =head1 NAME
@@ -265,15 +260,18 @@ sub _load_config
 			my $data;
 			# TODO: only load config modules when they are needed
 			if ($file =~ /\.ya?ml$/) {
+				require YAML::XS && YAML::XS->import('LoadFile') unless YAML::XS->can('LoadFile');
 				$data = eval { LoadFile($path) };
 				croak "Failed to load YAML from $path: $@" if $@;
 			} elsif ($file =~ /\.json$/) {
 				$data = eval { decode_json(read_file($path)) };
 				croak "Failed to load JSON from $path: $@" if $@;
 			} elsif ($file =~ /\.xml$/) {
+				require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
 				$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
 				croak "Failed to load XML from $path: $@" if $@;
 			} elsif ($file =~ /\.ini$/) {
+				require Config::IniFiles && Config::IniFiles->import() unless Config::IniFiles->can('Parameters');
 				my $ini = Config::IniFiles->new(-file => $path);
 				croak "Failed to load INI from $path" unless $ini;
 				$data = { map {
@@ -307,6 +305,7 @@ sub _load_config
 				}
 				eval {
 					if($data =~ /^\s*<\?xml/) {
+						require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					} else {
 						eval { $data = decode_json($data) };
@@ -315,8 +314,10 @@ sub _load_config
 						}
 					}
 					if(!$data) {
+						require YAML::XS && YAML::XS->import('LoadFile') unless YAML::XS->can('LoadFile');
 						$data = LoadFile($path);
 						if((!$data) || (ref($data) ne 'HASH')) {
+							require Config::IniFiles && Config::IniFiles->import() unless Config::IniFiles->can('Parameters');
 							if(my $ini = Config::IniFiles->new(-file => $path)) {
 								$data = { map {
 									my $section = $_;
@@ -325,8 +326,10 @@ sub _load_config
 							}
 							if((!$data) || (ref($data) ne 'HASH')) {
 								# Maybe XML without the leading XML header
+								require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
 								eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
 								if((!$data) || (ref($data) ne 'HASH')) {
+									require Config::Auto && Config::Auto->import() unless Config::Auto->can('parse');
 									$data = Config::Auto->new(source => $path)->parse();
 								}
 							}
@@ -374,6 +377,9 @@ sub _load_config
 		$ref->{ $parts[-1] } = $value;
 	}
 
+	if($self->{'flatten'}) {
+		require Hash::Flatten && Hash::Flatten->import('flatten') unless Hash::Flatten->can('flatten');
+	}
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 }
 
