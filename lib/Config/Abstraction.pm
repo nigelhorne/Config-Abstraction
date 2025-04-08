@@ -202,11 +202,19 @@ A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DA
 
 If true, returns a flat configuration structure like C<'database.user'> (default: C<0>).
 
+=item * C<sep_char>
+
+The separator in keys.
+The default is a C<'.'>,
+as in dotted notation,
+such as C<'database.user'>.
+
 =back
 
 =cut
 
-sub new {
+sub new
+{
 	my $class = shift;
 	my $params = Params::Get::get_params(undef, @_) || {};
 
@@ -216,6 +224,7 @@ sub new {
 		env_prefix => $params->{env_prefix} || 'APP_',
 		flatten	 => $params->{flatten} // 0,
 		config	=> {},
+		sep_char => '.'
 	}, $class;
 
 	$self->_load_config();
@@ -339,8 +348,8 @@ sub get
 	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
-	my $ref = $self->{config};
-	for my $part (split /\./, $key) {
+	my $ref = $self->{'config'};
+	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
 		return undef unless ref $ref eq 'HASH';
 		$ref = $ref->{$part};
 	}
@@ -364,11 +373,6 @@ sub all
 1;
 
 =head1 BUGS
-
-Doesn't play well with keys with dots in them, since that's what it uses to separate levels of the keys.
-Might be better to use a symbol that's used less,
-make the separator configurable,
-or honour quoting or backslashes.
 
 =head1 SUPPORT
 

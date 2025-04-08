@@ -167,6 +167,13 @@ Options:
 
     If true, returns a flat configuration structure like `'database.user'` (default: `0`).
 
+- `sep_char`
+
+    The separator in keys.
+    The default is a `'.'`,
+    as in dotted notation,
+    such as `'database.user'`.
+
 ## get(key)
 
 Retrieve a configuration value using dotted key notation (e.g.,
@@ -178,11 +185,6 @@ Returns the entire configuration hash,
 possibly flattened depending on the `flatten` option.
 
 # BUGS
-
-Doesn't play well with keys with dots in them, since that's what it uses to separate levels of the keys.
-Might be better to use a symbol that's used less,
-make the separator configurable,
-or honour quoting or backslashes.
 
 # SUPPORT
 
