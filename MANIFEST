@@ -7,6 +7,8 @@ README.md
 t/30-basics.t
 t/eof.t
 t/eol.t
+t/pod-cm.t
+t/pod.t
 t/prereq.t
 t/rt-59921.t
 t/rt-59922.t
