@@ -374,6 +374,8 @@ sub all
 
 =head1 BUGS
 
+It should be possible to escape the separator character either with backslashes or quotes.
+
 =head1 SUPPORT
 
 This module is provided as-is without any warranty.

@@ -186,6 +186,8 @@ possibly flattened depending on the `flatten` option.
 
 # BUGS
 
+It should be possible to escape the separator character either with backslashes or quotes.
+
 # SUPPORT
 
 This module is provided as-is without any warranty.
