@@ -165,7 +165,12 @@ Options:
 
 - `flatten`
 
-    If true, returns a flat configuration structure like `'database.user'` (default: `0`).
+    If true, returns a flat hash structure like `{database.user}` (default: `0`) instead of `{database}{user}`.
+    \`
+    &#x3d;item \* `logger`
+
+    Used for warnings and traces.
+    An object that understands debug() and trace() messages.
 
 - `sep_char`
 
@@ -205,6 +210,7 @@ You can find documentation for this module with the perldoc command.
 # SEE ALSO
 
 - [Config::Auto](https://metacpan.org/pod/Config%3A%3AAuto)
+- [Log::Abstraction](https://metacpan.org/pod/Log%3A%3AAbstraction)
 
 # AUTHOR
 

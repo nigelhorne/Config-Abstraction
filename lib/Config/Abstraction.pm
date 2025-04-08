@@ -201,6 +201,11 @@ A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DA
 =item * C<flatten>
 
 If true, returns a flat hash structure like C<{database.user}> (default: C<0>) instead of C<{database}{user}>.
+`
+=item * C<logger>
+
+Used for warnings and traces.
+An object that understands debug() and trace() messages.
 
 =item * C<sep_char>
 
@@ -237,10 +242,19 @@ sub _load_config
 	my $self = shift;
 	my %merged;
 
+	my $logger = $self->{'logger'};
+
 	for my $dir (@{ $self->{config_dirs} }) {
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
 			my $path = File::Spec->catfile($dir, $file);
+			if($logger) {
+				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
+			}
 			next unless -f $path;
+
+			if($logger) {
+				$logger->debug(ref($self), ' ', __LINE__, ": Loading data from $path");
+			}
 
 			my $data;
 			# TODO: only load config modules when they are needed
@@ -261,14 +275,25 @@ sub _load_config
 					$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
 				} $ini->Sections() };
 			}
-			%merged = %{ merge( $data, \%merged ) };
+			if($data) {
+				if($logger) {
+					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
+				}
+				%merged = %{ merge( $data, \%merged ) };
+			}
 		}
 
 		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
 		if(my $config_file = $self->{'config_file'}) {
 			my $path = File::Spec->catfile($dir, $config_file);
+			if($logger) {
+				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
+			}
 			if((-f $path) && (-r $path)) {
 				my $data = read_file($path);
+				if($logger) {
+					$logger->debug(ref($self), ' ', __LINE__, ": Loading data from $path");
+				}
 				eval {
 					if($data =~ /^\s*<\?xml/) {
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
@@ -297,6 +322,9 @@ sub _load_config
 						}
 					}
 				};
+				if($logger) {
+					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
+				}
 				if(scalar(keys %merged)) {
 					if($data) {
 						%merged = %{ merge( $data, \%merged ) };
@@ -395,6 +423,8 @@ You can find documentation for this module with the perldoc command.
 =over 4
 
 =item * L<Config::Auto>
+
+=item * L<Log::Abstraction>
 
 =back
 
