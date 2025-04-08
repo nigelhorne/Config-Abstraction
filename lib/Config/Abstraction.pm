@@ -12,7 +12,7 @@ use XML::Simple qw(XMLin);
 use File::Slurp qw(read_file);
 use File::Spec;
 use Hash::Merge qw(merge);
-use Hash::Flatten qw(flatten unflatten);
+use Hash::Flatten qw(flatten);
 use Params::Get;
 
 =head1 NAME
@@ -200,7 +200,7 @@ A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DA
 
 =item * C<flatten>
 
-If true, returns a flat configuration structure like C<'database.user'> (default: C<0>).
+If true, returns a flat hash structure like C<{database.user}> (default: C<0>) instead of C<{database}{user}>.
 
 =item * C<sep_char>
 
