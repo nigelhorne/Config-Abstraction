@@ -367,6 +367,7 @@ sub all
 
 Doesn't play well with keys with dots in them, since that's what it uses to separate levels of the keys.
 Might be better to use a symbol that's used less,
+make the separator configurable,
 or honour quoting or backslashes.
 
 =head1 SUPPORT
