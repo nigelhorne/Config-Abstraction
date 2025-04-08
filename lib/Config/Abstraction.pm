@@ -21,11 +21,11 @@ Config::Abstraction - Configuration Abstraction Layer
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 =head1 SYNOPSIS
 
@@ -152,7 +152,7 @@ It loads the following files in order of preference:
 C<base.yaml>, C<local.yaml>, C<base.json>, C<local.json>, C<base.xml>,
 C<local.xml>, C<base.ini>, and C<local.ini>.
 
-If C<config_file> is set, that file is loaded last.
+If C<config_file> or C<config_files> is set, those files are loaded last.
 
 =item 2. Merging and Resolving
 
@@ -192,6 +192,10 @@ An arrayref of directories to look for configuration files (default: C<['config'
 =item * C<config_file>
 
 Points to a configuration file of any format.
+
+=item * C<config_files>
+
+An arrayref of files to look for in the configration directories.
 
 =item * C<env_prefix>
 
@@ -284,7 +288,8 @@ sub _load_config
 		}
 
 		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
-		if(my $config_file = $self->{'config_file'}) {
+		for my $config_file ($self->{'config_file'}, @{$self->{'config_files'}}) {
+			next unless defined($config_file);
 			my $path = File::Spec->catfile($dir, $config_file);
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");

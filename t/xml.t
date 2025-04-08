@@ -32,7 +32,7 @@ XML
 
 $config = Config::Abstraction->new(
 	config_dirs => [$test_dir],
-	config_file => 'xml_test'
+	config_files => ['foo', 'xml_test']
 );
 
 diag(Data::Dumper->new([$config])->Dump()) if($ENV{'TEST_VERBOSE'});
