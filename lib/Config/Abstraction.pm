@@ -206,7 +206,7 @@ If true, returns a flat hash structure like C<{database.user}> (default: C<0>) i
 =item * C<logger>
 
 Used for warnings and traces.
-An object that understands debug() and trace() messages.
+An object that understands warn(), debug() and trace() messages.
 
 =item * C<sep_char>
 
@@ -337,9 +337,8 @@ sub _load_config
 					}
 				};
 				if($logger) {
-					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 					if($@) {
-						$logger->debug(ref($self), ' ', __LINE__, $@);
+						$logger->warn(ref($self), ' ', __LINE__, $@);
 					} else {
 						$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 					}
