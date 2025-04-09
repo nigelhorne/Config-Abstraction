@@ -16,11 +16,11 @@ Config::Abstraction - Configuration Abstraction Layer
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 SYNOPSIS
 
@@ -36,10 +36,11 @@ our $VERSION = '0.05';
 
 =head1 DESCRIPTION
 
-C<Config::Abstraction> is a flexible configuration management module
-that allows loading and merging configuration data from multiple file
-formats: YAML, JSON, XML, and INI via a number of different drivers.
-It also integrates environment variable
+C<Config::Abstraction> is a flexible configuration management layer that sits above C<Config::*> modules.
+In addition to using drivers to load configuration data from multiple file
+formats (YAML, JSON, XML, and INI),
+it also allows levels of configuration, each of which overrides the lower levels.
+So, it also integrates environment variable
 overrides and command line arguments for runtime configuration adjustments.
 This module is designed to help developers manage layered configurations that can be loaded from files and overridden by environment variables,
 offering a robust and dynamic approach
