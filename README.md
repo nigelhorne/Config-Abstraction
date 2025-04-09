@@ -26,8 +26,8 @@ formats (YAML, JSON, XML, and INI),
 it also allows levels of configuration, each of which overrides the lower levels.
 So, it also integrates environment variable
 overrides and command line arguments for runtime configuration adjustments.
-This module is designed to help developers manage layered configurations that can be loaded from files and overridden by environment variables,
-offering a robust and dynamic approach
+This module is designed to help developers manage layered configurations that can be loaded from files and overridden by at run-time for debugging,
+offering a modern, robust and dynamic approach
 to configuration management.
 
 ## KEY FEATURES
