@@ -338,6 +338,11 @@ sub _load_config
 				};
 				if($logger) {
 					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
+					if($@) {
+						$logger->debug(ref($self), ' ', __LINE__, $@);
+					} else {
+						$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
+					}
 				}
 				if(scalar(keys %merged)) {
 					if($data) {
