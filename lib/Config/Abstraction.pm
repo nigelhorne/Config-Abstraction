@@ -260,18 +260,18 @@ sub _load_config
 			my $data;
 			# TODO: only load config modules when they are needed
 			if ($file =~ /\.ya?ml$/) {
-				require YAML::XS && YAML::XS->import('LoadFile') unless YAML::XS->can('LoadFile');
+				$self->_load_driver('YAML::XS', ['LoadFile']);
 				$data = eval { LoadFile($path) };
 				croak "Failed to load YAML from $path: $@" if $@;
 			} elsif ($file =~ /\.json$/) {
 				$data = eval { decode_json(read_file($path)) };
 				croak "Failed to load JSON from $path: $@" if $@;
 			} elsif ($file =~ /\.xml$/) {
-				require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
+				$self->_load_driver('XML::Simple', ['XMLin']);
 				$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
 				croak "Failed to load XML from $path: $@" if $@;
 			} elsif ($file =~ /\.ini$/) {
-				require Config::IniFiles && Config::IniFiles->import() unless Config::IniFiles->can('Parameters');
+				$self->_load_driver('Config::IniFiles');
 				my $ini = Config::IniFiles->new(-file => $path);
 				croak "Failed to load INI from $path" unless $ini;
 				$data = { map {
@@ -305,7 +305,7 @@ sub _load_config
 				}
 				eval {
 					if($data =~ /^\s*<\?xml/) {
-						require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
+						$self->_load_driver('XML::Simple', ['XMLin']);
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					} else {
 						eval { $data = decode_json($data) };
@@ -314,10 +314,10 @@ sub _load_config
 						}
 					}
 					if(!$data) {
-						require YAML::XS && YAML::XS->import('LoadFile') unless YAML::XS->can('LoadFile');
+						$self->_load_driver('YAML::XS', ['LoadFile']);
 						$data = LoadFile($path);
 						if((!$data) || (ref($data) ne 'HASH')) {
-							require Config::IniFiles && Config::IniFiles->import() unless Config::IniFiles->can('Parameters');
+							$self->_load_driver('Config::IniFiles');
 							if(my $ini = Config::IniFiles->new(-file => $path)) {
 								$data = { map {
 									my $section = $_;
@@ -326,10 +326,10 @@ sub _load_config
 							}
 							if((!$data) || (ref($data) ne 'HASH')) {
 								# Maybe XML without the leading XML header
-								require XML::Simple && XML::Simple->import('XMLin') unless XML::Simple->can('XMLin');
+								$self->_load_driver('XML::Simple', ['XMLin']);
 								eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
 								if((!$data) || (ref($data) ne 'HASH')) {
-									require Config::Auto && Config::Auto->import() unless Config::Auto->can('parse');
+									$self->_load_driver('Config::Auto');
 									$data = Config::Auto->new(source => $path)->parse();
 								}
 							}
@@ -382,7 +382,7 @@ sub _load_config
 	}
 
 	if($self->{'flatten'}) {
-		require Hash::Flatten && Hash::Flatten->import('flatten') unless Hash::Flatten->can('flatten');
+		$self->_load_driver('Hash::Flatten', ['flatten']);
 	}
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 }
@@ -423,6 +423,18 @@ sub all
 	my $self = shift;
 
 	return $self->{'config'};
+}
+
+# Helper routine to load a driver
+sub _load_driver
+{
+	my($self, $driver, $imports) = @_;
+
+	return if($self->{'loaded'}{$driver});
+
+	eval "require $driver";
+	$driver->import(@{$imports});
+	$self->{'loaded'}{$driver} = 1;
 }
 
 1;
