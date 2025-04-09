@@ -28,7 +28,7 @@ our $VERSION = '0.06';
 
   my $config = Config::Abstraction->new(
     config_dirs => ['config'],
-    env_prefix  => 'MYAPP_',
+    env_prefix => 'MYAPP_',
     flatten => 0,
   );
 
@@ -183,7 +183,7 @@ Options:
 
 =item * C<config_dirs>
 
-An arrayref of directories to look for configuration files (default: C<['config']>).
+An arrayref of directories to look for configuration files (default: C<[$HOME/.conf]>, C<[$DOCUMENT_ROOT/conf]>, or C<['conf']>).
 
 =item * C<config_file>
 
@@ -191,7 +191,7 @@ Points to a configuration file of any format.
 
 =item * C<config_files>
 
-An arrayref of files to look for in the configration directories.
+An arrayref of files to look for in the configuration directories.
 Put the more important files later,
 since later files override earlier ones.
 
@@ -225,12 +225,22 @@ sub new
 	my $class = shift;
 	my $params = Params::Get::get_params(undef, @_) || {};
 
+	if(!defined($params->{'config_dirs'})) {
+		# Set up the default value for config_dirs
+		if($ENV{'HOME'}) {
+			$params->{'config_dirs'} = [File::Spec->catdir($ENV{'HOME'}, '.conf')];
+		} elsif($ENV{'DOCUMENT_ROOT'}) {
+			$params->{'config_dirs'} = [File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf')];
+		} else {
+			$params->{'config_durs'} = ['conf'];
+		}
+	}
+
 	my $self = bless {
 		%{$params},
-		config_dirs => $params->{config_dirs} || ['config'],
 		env_prefix => $params->{env_prefix} || 'APP_',
 		flatten	 => $params->{flatten} // 0,
-		config	=> {},
+		config => {},
 		sep_char => '.'
 	}, $class;
 
@@ -246,7 +256,7 @@ sub _load_config
 
 	my $logger = $self->{'logger'};
 
-	for my $dir (@{ $self->{config_dirs} }) {
+	for my $dir (@{$self->{'config_dirs'}}) {
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
 			my $path = File::Spec->catfile($dir, $file);
 			if($logger) {

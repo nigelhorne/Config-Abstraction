@@ -12,7 +12,7 @@ Version 0.06
 
     my $config = Config::Abstraction->new(
       config_dirs => ['config'],
-      env_prefix  => 'MYAPP_',
+      env_prefix => 'MYAPP_',
       flatten => 0,
     );
 
@@ -153,7 +153,7 @@ Options:
 
 - `config_dirs`
 
-    An arrayref of directories to look for configuration files (default: `['config']`).
+    An arrayref of directories to look for configuration files (default: `[$HOME/.conf]`, `[$DOCUMENT_ROOT/conf]`, or `['conf']`).
 
 - `config_file`
 
@@ -161,7 +161,7 @@ Options:
 
 - `config_files`
 
-    An arrayref of files to look for in the configration directories.
+    An arrayref of files to look for in the configuration directories.
     Put the more important files later,
     since later files override earlier ones.
 
