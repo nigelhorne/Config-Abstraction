@@ -358,7 +358,7 @@ sub _load_config
 					if($data) {
 						%merged = %{ merge( $data, \%merged ) };
 					}
-				} else {
+				} elsif($data) {
 					%merged = %{$data};
 				}
 				if($merged{'config_path'}) {
