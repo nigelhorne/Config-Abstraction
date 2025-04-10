@@ -4,7 +4,7 @@ Config::Abstraction - Configuration Abstraction Layer
 
 # VERSION
 
-Version 0.06
+Version 0.07
 
 # SYNOPSIS
 
@@ -178,6 +178,10 @@ Options:
 
     Used for warnings and traces.
     An object that understands warn(), debug() and trace() messages.
+
+- `path`
+
+    A synonym of `config_dirs`.
 
 - `sep_char`
 

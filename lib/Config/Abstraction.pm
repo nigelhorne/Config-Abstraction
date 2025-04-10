@@ -16,11 +16,11 @@ Config::Abstraction - Configuration Abstraction Layer
 
 =head1 VERSION
 
-Version 0.06
+Version 0.07
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 =head1 SYNOPSIS
 
@@ -208,6 +208,10 @@ If true, returns a flat hash structure like C<{database.user}> (default: C<0>) i
 
 Used for warnings and traces.
 An object that understands warn(), debug() and trace() messages.
+
+=item * C<path>
+
+A synonym of C<config_dirs>.
 
 =item * C<sep_char>
 
