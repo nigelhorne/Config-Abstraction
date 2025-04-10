@@ -326,7 +326,23 @@ sub _load_config
 					}
 					if(!$data) {
 						$self->_load_driver('YAML::XS', ['LoadFile']);
-						$data = LoadFile($path);
+						if(($data = LoadFile($path)) && (ref($data) eq 'HASH')) {
+							# Could be colon file, could be YAML, whichever it is, break the configuration fields
+							foreach my($k, $v) (%{$data}) {
+								next if($v =~ /^".+"$/);	# Quotes to keep in one field
+								if($v =~ /,/) {
+									my @vals = split(/\s*,\s*/, $v);
+									delete $data->{$k};
+									foreach my $val (@vals) {
+										if($val =~ /(.+)=(.+)/) {
+											$data->{$k}{$1} = $2;
+										} else {
+											$data->{$k}{$val} = 1;
+										}
+									}
+								}
+							}
+						}
 						if((!$data) || (ref($data) ne 'HASH')) {
 							$self->_load_driver('Config::IniFiles');
 							if(my $ini = Config::IniFiles->new(-file => $path)) {
