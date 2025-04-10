@@ -225,6 +225,8 @@ sub new
 	my $class = shift;
 	my $params = Params::Get::get_params(undef, @_) || {};
 
+	$params->{'config_dirs'} //= $params->{'path'};	# Compatability with Config::Auto
+
 	if(!defined($params->{'config_dirs'})) {
 		# Set up the default value for config_dirs
 		if($ENV{'HOME'}) {
