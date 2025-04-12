@@ -37,6 +37,7 @@ WriteMakefile(
 		'File::Spec'	=> 0,
 		'Hash::Merge'	=> 0,
 		'Hash::Flatten'	=> 0,
+		'JSON::Parse' => 0,
 	},
 	META_MERGE => {
 		resources => {

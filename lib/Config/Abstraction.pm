@@ -325,10 +325,17 @@ sub _load_config
 						$self->_load_driver('XML::Simple', ['XMLin']);
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
 					} else {
-						eval { $data = decode_json($data) };
-						if($@) {
+						$self->_load_driver('JSON::Parse');
+						# CPanel::JSON is very noisy, so be careful before attempting to use it
+						my $is_json;
+						eval { $is_json = JSON::Parse::parse_json($data) };
+						if($is_json) {
+							eval { $data = decode_json($data) };
+							if($@) {
+								undef $data;
+							}
+						} else {
 							undef $data;
-							$@ = undef;	# Silence error logs
 						}
 					}
 					if(!$data) {
