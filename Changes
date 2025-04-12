@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.09
+	Better fix for old Perls
+
 0.08	Sat Apr 12 10:59:22 EDT 2025
 	Fix code on older Perls
 
