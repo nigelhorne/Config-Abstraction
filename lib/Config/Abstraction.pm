@@ -324,7 +324,7 @@ sub _load_config
 					if($data =~ /^\s*<\?xml/) {
 						$self->_load_driver('XML::Simple', ['XMLin']);
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
-					} else {
+					} elsif($data =~ /</) {
 						$self->_load_driver('JSON::Parse');
 						# CPanel::JSON is very noisy, so be careful before attempting to use it
 						my $is_json;
@@ -337,6 +337,8 @@ sub _load_config
 						} else {
 							undef $data;
 						}
+					} else {
+						undef $data;
 					}
 					if(!$data) {
 						$self->_load_driver('YAML::XS', ['LoadFile']);
