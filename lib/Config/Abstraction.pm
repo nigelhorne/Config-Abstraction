@@ -328,6 +328,7 @@ sub _load_config
 						eval { $data = decode_json($data) };
 						if($@) {
 							undef $data;
+							$@ = undef;	# Silence error logs
 						}
 					}
 					if(!$data) {
