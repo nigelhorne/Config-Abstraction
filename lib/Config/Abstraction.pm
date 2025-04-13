@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp;
+use Data::Reuse;
 use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
@@ -450,6 +451,11 @@ sub get
 	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
 		return undef unless ref $ref eq 'HASH';
 		$ref = $ref->{$part};
+	}
+	if(ref($ref) eq 'HASH') {
+		Data::Reuse::fixate(%{$ref});
+	} elsif(ref($ref) eq 'ARRAY') {
+		Data::Reuse::fixate(@{$ref});
 	}
 	return $ref;
 }
