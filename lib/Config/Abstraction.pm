@@ -325,6 +325,9 @@ sub _load_config
 					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/.+>/)) {
 						$self->_load_driver('XML::Simple', ['XMLin']);
 						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
+						if($data) {
+							$self->{'type'} = 'XML';
+						}
 					} elsif($data =~ /\{.+:.\}/s) {
 						$self->_load_driver('JSON::Parse');
 						# CPanel::JSON is very noisy, so be careful before attempting to use it
@@ -337,6 +340,9 @@ sub _load_config
 							}
 						} else {
 							undef $data;
+						}
+						if($data) {
+							$self->{'type'} = 'JSON';
 						}
 					} else {
 						undef $data;
@@ -361,6 +367,9 @@ sub _load_config
 									}
 								}
 							}
+							if($data) {
+								$self->{'type'} = 'YAML';
+							}
 						}
 						if((!$data) || (ref($data) ne 'HASH')) {
 							$self->_load_driver('Config::IniFiles');
@@ -369,6 +378,9 @@ sub _load_config
 									my $section = $_;
 									$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
 								} $ini->Sections() };
+								if($data) {
+									$self->{'type'} = 'INI';
+								}
 							}
 							if((!$data) || (ref($data) ne 'HASH')) {
 								# Maybe XML without the leading XML header
@@ -376,7 +388,10 @@ sub _load_config
 								eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
 								if((!$data) || (ref($data) ne 'HASH')) {
 									$self->_load_driver('Config::Auto');
-									$data = Config::Auto->new(source => $path)->parse();
+									my $ca = Config::Auto->new(source => $path);
+									if($data = $ca->parse()) {
+										$self->{'type'} = $ca->format();
+									}
 								}
 							}
 						}
@@ -386,7 +401,7 @@ sub _load_config
 					if($@) {
 						$logger->warn(ref($self), ' ', __LINE__, $@);
 					} else {
-						$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
+						$logger->debug(ref($self), ' ', __LINE__, ': Loaded data from', $self->{'type'}, "file $path");
 					}
 				}
 				if(scalar(keys %merged)) {
