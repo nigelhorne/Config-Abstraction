@@ -422,6 +422,7 @@ sub _load_config
 	# Merge ENV vars
 	my $prefix = $self->{env_prefix};
 	$prefix =~ s/_$//;
+	$prefix =~ s/::$//;
 	for my $key (keys %ENV) {
 		next unless $key =~ /^$self->{env_prefix}(.*)$/;
 		my $path = lc $1;
