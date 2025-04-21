@@ -420,13 +420,19 @@ sub _load_config
 	}
 
 	# Merge ENV vars
+	my $prefix = $self->{env_prefix};
+	$prefix =~ s/_$//;
 	for my $key (keys %ENV) {
 		next unless $key =~ /^$self->{env_prefix}(.*)$/;
 		my $path = lc $1;
-		my @parts = split /__/, $path;
-		my $ref = \%merged;
-		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
-		$ref->{ $parts[-1] } = $ENV{$key};
+		if($path =~ /__/) {
+			my @parts = split /__/, $path;
+			my $ref = \%merged;
+			$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
+			$ref->{ $parts[-1] } = $ENV{$key};
+		} else {
+			$merged{$prefix}->{$path} = $ENV{$key};
+		}
 	}
 
 	# Merge command line options

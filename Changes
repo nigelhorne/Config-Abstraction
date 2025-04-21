@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.11
+	Make the environment variable override simpler for simple cases
+
 0.10	Sun Apr 13 21:45:12 EDT 2025
 	Check with JSON::Parse first
 	Use Data::Reuse, but note RT#100461
