@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.12
+0.12	Mon Apr 21 10:29:54 EDT 2025
 	Allow environment variables to use '::' to separate fields
 
 0.11	Mon Apr 21 08:56:35 EDT 2025
