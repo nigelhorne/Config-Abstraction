@@ -248,7 +248,7 @@ sub new
 		} elsif($ENV{'DOCUMENT_ROOT'}) {
 			$params->{'config_dirs'} = [File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf')];
 		} else {
-			$params->{'config_durs'} = ['conf'];
+			$params->{'config_dirs'} = ['conf'];
 		}
 	}
 
@@ -525,7 +525,7 @@ sub _load_driver
 
 =head2 AUTOLOAD
 
-    my $config = Config::Abstraction->new(
+    $config = Config::Abstraction->new(
         data => {
             database => {
                 user => 'alice',
@@ -534,7 +534,7 @@ sub _load_driver
             log_level => 'debug',
         },
         flatten   => 1,
-        sep_char  => '_',   #
+        sep_char  => '_'
     );
 
     # With flattening ON
@@ -549,9 +549,6 @@ sub _load_driver
 This module supports dynamic access to configuration keys via AUTOLOAD.
 When C<flatten> is enabled, nested keys are accessible using a separator,
 so C<$config-E<gt>database_user> resolves to C<< $config->{database}->{user} >>.
-
-If flattening is disabled, only top-level keys can be accessed via AUTOLOAD, and
-you must navigate nested structures manually.
 
 =cut
 

@@ -222,7 +222,7 @@ The entry `config_path` contains a colon-separated list of the files that the co
             log_level => 'debug',
         },
         flatten   => 1,
-        sep_char  => '_',   #
+        sep_char  => '_'
     );
 
     # With flattening ON
