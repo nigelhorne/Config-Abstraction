@@ -566,16 +566,15 @@ sub AUTOLOAD
 
 	# If flattening is ON, assume keys are pre-flattened
 	if ($self->{flatten}) {
-		return $data->{$key} if exists $data->{$key};
+		return $data->{$key} if(exists $data->{$key});
 	}
 
 	my $sep = $self->{'sep_char'};
 
 	# Fallback: try resolving nested structure dynamically
-	my @parts = split /\Q$sep\E/, $key;
 	my $val = $data;
-	for my $part (@parts) {
-		if (ref $val eq 'HASH' && exists $val->{$part}) {
+	foreach my $part(split /\Q$sep\E/, $key) {
+		if((ref($val) eq 'HASH') && (exists $val->{$part})) {
 			$val = $val->{$part};
 		} else {
 			croak "No such config key '$key'";
