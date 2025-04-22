@@ -24,9 +24,9 @@ subtest 'AUTOLOAD with flattening OFF' => sub {
 		sep_char => '_'
 	);
 
-	is($cfg->database_user, 'admin', 'AUTOLOAD: database_user');
-	is($cfg->database_pass, 'secret', 'AUTOLOAD: database_pass');
-	is($cfg->api_key, 'XYZ123', 'AUTOLOAD: api_key');
+	is($cfg->database_user(), 'admin', 'AUTOLOAD: database_user');
+	is($cfg->database_pass(), 'secret', 'AUTOLOAD: database_pass');
+	is($cfg->api_key(), 'XYZ123', 'AUTOLOAD: api_key');
 
 	throws_ok { $cfg->nonexistent_key } qr/No such config key/, 'AUTOLOAD throws for unknown key';
 };

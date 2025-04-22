@@ -525,13 +525,18 @@ sub _load_driver
 
 =head2 AUTOLOAD
 
+This module supports dynamic access to configuration keys via AUTOLOAD.
+Nested keys are accessible using the separator,
+so C<$config-E<gt>database_user()> resolves to C<< $config->{database}->{user} >>,
+when C<sep_char> is set to '_'.
+
     $config = Config::Abstraction->new(
         data => {
             database => {
                 user => 'alice',
-                pass => 'secret',
+                pass => 'secret'
             },
-            log_level => 'debug',
+            log_level => 'debug'
         },
         flatten   => 1,
         sep_char  => '_'
@@ -544,11 +549,6 @@ sub _load_driver
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();	# dies with error
-
-This module supports dynamic access to configuration keys via AUTOLOAD.
-Nested keys are accessible using the separator,
-so C<$config-E<gt>database_user()> resolves to C<< $config->{database}->{user} >>,
-when C<sep_char> is set to '_'.
 
 =cut
 

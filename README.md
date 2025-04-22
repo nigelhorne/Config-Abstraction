@@ -213,13 +213,18 @@ The entry `config_path` contains a colon-separated list of the files that the co
 
 ## AUTOLOAD
 
+This module supports dynamic access to configuration keys via AUTOLOAD.
+Nested keys are accessible using the separator,
+so `$config->database_user()` resolves to `$config->{database}->{user}`,
+when `sep_char` is set to '\_'.
+
     $config = Config::Abstraction->new(
         data => {
             database => {
                 user => 'alice',
-                pass => 'secret',
+                pass => 'secret'
             },
-            log_level => 'debug',
+            log_level => 'debug'
         },
         flatten   => 1,
         sep_char  => '_'
@@ -232,11 +237,6 @@ The entry `config_path` contains a colon-separated list of the files that the co
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();       # dies with error
-
-This module supports dynamic access to configuration keys via AUTOLOAD.
-Nested keys are accessible using the separator,
-so `$config->database_user()` resolves to `$config->{database}->{user}`,
-when `sep_char` is set to '\_'.
 
 # BUGS
 
