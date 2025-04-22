@@ -546,8 +546,9 @@ sub _load_driver
     my $foo = $config->nonexistent_key();	# dies with error
 
 This module supports dynamic access to configuration keys via AUTOLOAD.
-When C<flatten> is enabled, nested keys are accessible using a separator,
-so C<$config-E<gt>database_user> resolves to C<< $config->{database}->{user} >>.
+Nested keys are accessible using the separator,
+so C<$config-E<gt>database_user()> resolves to C<< $config->{database}->{user} >>,
+when C<sep_char> is set to '_'.
 
 =cut
 

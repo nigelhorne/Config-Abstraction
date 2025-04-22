@@ -38,9 +38,9 @@ subtest 'AUTOLOAD with flattening ON' => sub {
 		sep_char => '_'
 	);
 
-	is($cfg->database_user, 'admin', 'AUTOLOAD: database_user (flattened)');
-	is($cfg->database_pass, 'secret', 'AUTOLOAD: database_pass (flattened)');
-	is($cfg->api_key, 'XYZ123', 'AUTOLOAD: api_key (flattened)');
+	is($cfg->database_user(), 'admin', 'AUTOLOAD: database_user (flattened)');
+	is($cfg->database_pass(), 'secret', 'AUTOLOAD: database_pass (flattened)');
+	is($cfg->api_key(), 'XYZ123', 'AUTOLOAD: api_key (flattened)');
 };
 
 done_testing();

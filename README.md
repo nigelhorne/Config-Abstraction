@@ -234,8 +234,9 @@ The entry `config_path` contains a colon-separated list of the files that the co
     my $foo = $config->nonexistent_key();       # dies with error
 
 This module supports dynamic access to configuration keys via AUTOLOAD.
-When `flatten` is enabled, nested keys are accessible using a separator,
-so `$config->database_user` resolves to `$config->{database}->{user}`.
+Nested keys are accessible using the separator,
+so `$config->database_user()` resolves to `$config->{database}->{user}`,
+when `sep_char` is set to '\_'.
 
 # BUGS
 
