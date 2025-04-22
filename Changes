@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.13
+0.13	Tue Apr 22 15:08:00 EDT 2025
 	Added the data option to new()
 	sep_char option to new() wasn't being remembered
 	Added AUTOLOAD support
