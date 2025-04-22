@@ -213,7 +213,7 @@ The entry `config_path` contains a colon-separated list of the files that the co
 
 ## AUTOLOAD
 
-    my $config = Config::Abstraction->new(
+    $config = Config::Abstraction->new(
         data => {
             database => {
                 user => 'alice',
@@ -225,11 +225,10 @@ The entry `config_path` contains a colon-separated list of the files that the co
         sep_char  => '_'
     );
 
-    # With flattening ON
     my $user = $config->database_user();  # returns 'alice'
 
-    # With flattening OFF
-    my $user = $config->database()->{user};  # returns 'alice'
+    # or
+    $user = $config->database()->{'user'};  # returns 'alice'
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();       # dies with error
@@ -237,9 +236,6 @@ The entry `config_path` contains a colon-separated list of the files that the co
 This module supports dynamic access to configuration keys via AUTOLOAD.
 When `flatten` is enabled, nested keys are accessible using a separator,
 so `$config->database_user` resolves to `$config->{database}->{user}`.
-
-If flattening is disabled, only top-level keys can be accessed via AUTOLOAD, and
-you must navigate nested structures manually.
 
 # BUGS
 

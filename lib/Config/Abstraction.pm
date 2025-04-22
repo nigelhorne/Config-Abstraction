@@ -537,11 +537,10 @@ sub _load_driver
         sep_char  => '_'
     );
 
-    # With flattening ON
     my $user = $config->database_user();  # returns 'alice'
 
-    # With flattening OFF
-    my $user = $config->database()->{user};  # returns 'alice'
+    # or
+    $user = $config->database()->{'user'};  # returns 'alice'
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();	# dies with error
