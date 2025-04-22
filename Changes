@@ -1,5 +1,10 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.13
+	Added the data option to new()
+	sep_char option to new() wasn't being remembered
+	Added AUTOLOAD support
+
 0.12	Mon Apr 21 10:29:54 EDT 2025
 	Allow environment variables to use '::' to separate fields
 

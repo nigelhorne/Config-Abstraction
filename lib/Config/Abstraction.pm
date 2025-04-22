@@ -43,7 +43,7 @@ formats (YAML, JSON, XML, and INI),
 it also allows levels of configuration, each of which overrides the lower levels.
 So, it also integrates environment variable
 overrides and command line arguments for runtime configuration adjustments.
-This module is designed to help developers manage layered configurations that can be loaded from files and overridden by at run-time for debugging,
+This module is designed to help developers manage layered configurations that can be loaded from files and overridden at run-time for debugging,
 offering a modern, robust and dynamic approach
 to configuration management.
 
@@ -165,7 +165,11 @@ checked and used to override any conflicting settings.
 
 Next, the command line arguments are checked and used to override any conflicting settings.
 
-=item 5. Accessing Values
+=item 5. Data Argument
+
+Finally the data passed into the constructor via the C<data> argument is merged in.
+
+=item 6. Accessing Values
 
 Values in the configuration can be accessed using a dotted notation
 (e.g., C<'database.user'>), regardless of the file format used.
@@ -195,6 +199,11 @@ Points to a configuration file of any format.
 An arrayref of files to look for in the configuration directories.
 Put the more important files later,
 since later files override earlier ones.
+
+=item * C<data>
+
+A hash ref of data to prime the configuration with.
+Any other data will be overwritten by this.
 
 =item * C<env_prefix>
 
@@ -244,11 +253,11 @@ sub new
 	}
 
 	my $self = bless {
+		sep_char => '.',
 		%{$params},
 		env_prefix => $params->{env_prefix} || 'APP_',
 		flatten	 => $params->{flatten} // 0,
 		config => {},
-		sep_char => '.'
 	}, $class;
 
 	$self->_load_config();
@@ -449,6 +458,10 @@ sub _load_config
 		$ref->{ $parts[-1] } = $value;
 	}
 
+	if($self->{'data'}) {
+		%merged = %{ merge( $self->{'data'}, \%merged ) };
+	}
+
 	if($self->{'flatten'}) {
 		$self->_load_driver('Hash::Flatten', ['flatten']);
 	}
@@ -487,7 +500,7 @@ sub get
 Returns the entire configuration hash,
 possibly flattened depending on the C<flatten> option.
 
-The entry C<config_path> contains a colon separated list of the files that the configuration was loaded from.
+The entry C<config_path> contains a colon-separated list of the files that the configuration was loaded from.
 
 =cut
 
@@ -508,6 +521,70 @@ sub _load_driver
 	eval "require $driver";
 	$driver->import(@{$imports});
 	$self->{'loaded'}{$driver} = 1;
+}
+
+=head2 AUTOLOAD
+
+    my $config = Config::Abstraction->new(
+        data => {
+            database => {
+                user => 'alice',
+                pass => 'secret',
+            },
+            log_level => 'debug',
+        },
+        flatten   => 1,
+        sep_char  => '_',   #
+    );
+
+    # With flattening ON
+    my $user = $config->database_user();  # returns 'alice'
+
+    # With flattening OFF
+    my $user = $config->database()->{user};  # returns 'alice'
+
+    # Attempting to call a nonexistent key
+    my $foo = $config->nonexistent_key();	# dies with error
+
+This module supports dynamic access to configuration keys via AUTOLOAD.
+When C<flatten> is enabled, nested keys are accessible using a separator,
+so C<$config-E<gt>database_user> resolves to C<< $config->{database}->{user} >>.
+
+If flattening is disabled, only top-level keys can be accessed via AUTOLOAD, and
+you must navigate nested structures manually.
+
+=cut
+
+sub AUTOLOAD
+{
+	our $AUTOLOAD;
+
+	my $self = shift;
+	my $key = $AUTOLOAD;
+
+	$key =~ s/.*:://;	# remove package name
+	return if $key eq 'DESTROY';
+
+	my $data = $self->{data};
+
+	# If flattening is ON, assume keys are pre-flattened
+	if ($self->{flatten}) {
+		return $data->{$key} if exists $data->{$key};
+	}
+
+	my $sep = $self->{'sep_char'};
+
+	# Fallback: try resolving nested structure dynamically
+	my @parts = split /\Q$sep\E/, $key;
+	my $val = $data;
+	for my $part (@parts) {
+		if (ref $val eq 'HASH' && exists $val->{$part}) {
+			$val = $val->{$part};
+		} else {
+			croak "No such config key '$key'";
+		}
+	}
+	return $val;
 }
 
 1;
