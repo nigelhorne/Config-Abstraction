@@ -219,7 +219,11 @@ If true, returns a flat hash structure like C<{database.user}> (default: C<0>) i
 =item * C<logger>
 
 Used for warnings and traces.
-An object that understands warn(), debug() and trace() messages.
+It can be an object that understands warn() and trace() messages,
+such as a L<Log::Log4perl> or L<Log::Any> object,
+a reference to code,
+a reference to an array,
+or a filename.
 
 =item * C<path>
 
@@ -262,6 +266,12 @@ sub new
 		config => {},
 	}, $class;
 
+	if(my $logger = $self->{'logger'}) {
+		if(!Scalar::Util::blessed($logger)) {
+			$self->_load_driver('Log::Abstraction');
+			$self->{'logger'} = Log::Abstraction->new($logger);
+		}
+	}
 	$self->_load_config();
 
 	return $self;
@@ -273,6 +283,9 @@ sub _load_config
 	my %merged;
 
 	my $logger = $self->{'logger'};
+	if($logger) {
+		$logger->trace(ref($self), ' ', __LINE__, 'Entered _load_config');
+	}
 
 	for my $dir (@{$self->{'config_dirs'}}) {
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
