@@ -27,6 +27,7 @@ skip_tags: true
 install:
   - cmd: if not exist "C:\strawberry" cinst StrawberryPerl --allow-empty-checksums
   - cmd: path C:\strawberry\perl\bin;C:\strawberry\perl\site\bin;C:\strawberry\c\bin;%PATH%
+  - cmd: set PERL5LIB=C:\strawberry\perl\site\lib;%PERL5LIB%
   # - cmd: cd C:\projects\%APPVEYOR_PROJECT_NAME%
   # Currently fails on http://apt.postgresql.org/pub/repos/apt bionic-pgdg Release
   # - sh: sudo apt update -q -y
@@ -37,8 +38,8 @@ install:
   - cmd: set TMPDIR=%APPVEYOR_BUILD_FOLDER%\tmp
   - cpan App::cpanminus
   - cmd: cpanm -q --showdeps --with-develop --with-suggests . | findstr /v "^perl\>" | cpanm -qin --skip-satisfied
-  - cmd: cpanm --reinstall -n XML::Simple XML::Parser::Expat XML::LibXML Alien::LibXML
-  - cmd: dir "\LibXML.xs.dll" /s
+  # - cmd: cpanm --reinstall -n XML::Simple XML::Parser::Expat XML::LibXML Alien::LibXML
+  # - cmd: dir "\LibXML.xs.dll" /s
   - cpanm -qin --skip-satisfied --installdeps .
   - cmd: 'echo End install at: & time /t'
 
