@@ -11,6 +11,8 @@ use File::Spec;
 use Hash::Merge qw(merge);
 use Params::Get;
 
+# TODO: try XML::LibXML::Simple on systems where XML::Simple doesn't load
+
 =head1 NAME
 
 Config::Abstraction - Configuration Abstraction Layer
@@ -294,9 +296,10 @@ sub _load_config
 				$data = eval { decode_json(read_file($path)) };
 				croak "Failed to load JSON from $path: $@" if $@;
 			} elsif ($file =~ /\.xml$/) {
-				$self->_load_driver('XML::Simple', ['XMLin']);
-				$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
-				croak "Failed to load XML from $path: $@" if $@;
+				if($self->_load_driver('XML::Simple', ['XMLin'])) {
+					$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
+					croak "Failed to load XML from $path: $@" if $@;
+				}
 			} elsif ($file =~ /\.ini$/) {
 				$self->_load_driver('Config::IniFiles');
 				my $ini = Config::IniFiles->new(-file => $path);
@@ -332,10 +335,11 @@ sub _load_config
 				}
 				eval {
 					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/.+>/)) {
-						$self->_load_driver('XML::Simple', ['XMLin']);
-						$data = XMLin($path, ForceArray => 0, KeyAttr => []);
-						if($data) {
-							$self->{'type'} = 'XML';
+						if($self->_load_driver('XML::Simple', ['XMLin'])) {
+							$data = XMLin($path, ForceArray => 0, KeyAttr => []);
+							if($data) {
+								$self->{'type'} = 'XML';
+							}
 						}
 					} elsif($data =~ /\{.+:.\}/s) {
 						$self->_load_driver('JSON::Parse');
@@ -516,11 +520,18 @@ sub _load_driver
 {
 	my($self, $driver, $imports) = @_;
 
-	return if($self->{'loaded'}{$driver});
+	return 1 if($self->{'loaded'}{$driver});
 
 	eval "require $driver";
+	if($@) {
+		if($self->{'logger'}) {
+			$self->warn(ref($self), ": $driver failed to load: $@");
+		}
+		return;
+	}
 	$driver->import(@{$imports});
 	$self->{'loaded'}{$driver} = 1;
+	return 1;
 }
 
 =head2 AUTOLOAD
