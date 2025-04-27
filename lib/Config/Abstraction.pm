@@ -312,6 +312,16 @@ sub _load_config
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
 					$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
 					croak "Failed to load XML from $path: $@" if $@;
+				} elsif($self->_load_driver('XML::PP')) {
+					my $xml_pp = XML::PP->new();
+					if(my $tree = $xml_pp->parse(\$data)) {
+						if($data = $xml_pp->collapse_structure($tree)) {
+							$self->{'type'} = 'XML';
+							if($data->{'config'}) {
+								$data = $data->{'config'};
+							}
+						}
+					}
 				}
 			} elsif ($file =~ /\.ini$/) {
 				$self->_load_driver('Config::IniFiles');
@@ -351,6 +361,16 @@ sub _load_config
 						if($self->_load_driver('XML::Simple', ['XMLin'])) {
 							if($data = XMLin($path, ForceArray => 0, KeyAttr => [])) {
 								$self->{'type'} = 'XML';
+							}
+						} elsif($self->_load_driver('XML::PP')) {
+							my $xml_pp = XML::PP->new();
+							if(my $tree = $xml_pp->parse(\$data)) {
+								if($data = $xml_pp->collapse_structure($tree)) {
+									$self->{'type'} = 'XML';
+									if($data->{'config'}) {
+										$data = $data->{'config'};
+									}
+								}
 							}
 						}
 					} elsif($data =~ /\{.+:.\}/s) {
