@@ -349,8 +349,7 @@ sub _load_config
 				eval {
 					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/.+>/)) {
 						if($self->_load_driver('XML::Simple', ['XMLin'])) {
-							$data = XMLin($path, ForceArray => 0, KeyAttr => []);
-							if($data) {
+							if($data = XMLin($path, ForceArray => 0, KeyAttr => [])) {
 								$self->{'type'} = 'XML';
 							}
 						}
@@ -410,13 +409,14 @@ sub _load_config
 							}
 							if((!$data) || (ref($data) ne 'HASH')) {
 								# Maybe XML without the leading XML header
-								$self->_load_driver('XML::Simple', ['XMLin']);
-								eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
-								if((!$data) || (ref($data) ne 'HASH')) {
-									$self->_load_driver('Config::Auto');
-									my $ca = Config::Auto->new(source => $path);
-									if($data = $ca->parse()) {
-										$self->{'type'} = $ca->format();
+								if($self->_load_driver('XML::Simple', ['XMLin'])) {
+									eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
+									if((!$data) || (ref($data) ne 'HASH')) {
+										$self->_load_driver('Config::Auto');
+										my $ca = Config::Auto->new(source => $path);
+										if($data = $ca->parse()) {
+											$self->{'type'} = $ca->format();
+										}
 									}
 								}
 							}
