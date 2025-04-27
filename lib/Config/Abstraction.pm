@@ -426,6 +426,7 @@ sub _load_config
 				if($logger) {
 					if($@) {
 						$logger->warn(ref($self), ' ', __LINE__, $@);
+						undef $data;
 					} else {
 						$logger->debug(ref($self), ' ', __LINE__, ': Loaded data from', $self->{'type'}, "file $path");
 					}
@@ -434,9 +435,12 @@ sub _load_config
 					if($data) {
 						%merged = %{ merge( $data, \%merged ) };
 					}
-				} elsif($data) {
+				} elsif($data && (ref($data) eq 'HASH')) {
 					%merged = %{$data};
+				} elsif((!$@) && $logger) {
+					$logger->debug(ref($self), ' ', __LINE__, ': No configuration file loaded');
 				}
+					
 				if($merged{'config_path'}) {
 					$merged{'config_path'} .= ':';
 				}

@@ -3,6 +3,7 @@ Revision history for Config::Abstraction - Configuration Abstraction Layer
 0.14
 	XML::Simple seems to be broken on many Windows systems
 	Allow logger to be an array ref
+	Fail more gracefully
 
 0.13	Tue Apr 22 15:08:00 EDT 2025
 	Added the data option to new()
