@@ -83,8 +83,10 @@ is $config->get('extra.debug'), '1', 'extra.debug from ENV';
 is($config->all()->{'database'}{'user'}, 'env_user', 'all() works, when not flattened');
 
 # XML merge
+use Data::Dumper;
+diag(Data::Dumper->new([$config])->Dump());
 is($config->get('api.url'), 'https://api.example.com', 'API URL from base.xml');
-is $config->get('api.timeout'), '60', 'local.xml overrides base.xml';
+is($config->get('api.timeout'), '60', 'local.xml overrides base.xml');
 
 # Check INI merging
 is $config->get('logging.level'), 'debug', 'local.ini overrides base.ini';

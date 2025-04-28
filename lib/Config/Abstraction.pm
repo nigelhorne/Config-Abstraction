@@ -355,7 +355,7 @@ sub _load_config
 				}
 				%merged = %{ merge( $data, \%merged ) };
 				if($merged{'config_path'}) {
-					$merged{'config_path'} .= ':';
+					$merged{'config_path'} .= ';';
 				}
 				$merged{'config_path'} .= $path;
 			}
@@ -479,7 +479,7 @@ sub _load_config
 				}
 
 				if($merged{'config_path'}) {
-					$merged{'config_path'} .= ':';
+					$merged{'config_path'} .= ';';
 				}
 				$merged{'config_path'} .= $path;
 			}
