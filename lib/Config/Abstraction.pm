@@ -260,7 +260,6 @@ sub new
 		sep_char => '.',
 		%{$params},
 		env_prefix => $params->{env_prefix} || 'APP_',
-		flatten	 => $params->{flatten} // 0,
 		config => {},
 	}, $class;
 
@@ -602,10 +601,10 @@ when C<sep_char> is set to '_'.
         sep_char  => '_'
     );
 
-    my $user = $config->database_user();  # returns 'alice'
+    my $user = $config->database_user();	# returns 'alice'
 
     # or
-    $user = $config->database()->{'user'};  # returns 'alice'
+    $user = $config->database()->{'user'};	# returns 'alice'
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();	# dies with error
