@@ -328,7 +328,7 @@ sub _load_config
 					my $xml_pp = XML::PP->new();
 ::diag(__LINE__);
 ::diag($data);
-					if(my $tree = $xml_pp->parse(\$data)) {
+					if(my $tree = $xml_pp->parse(read_file($path))) {
 use Data::Dumper;
 ::diag(Data::Dumper->new([$data])->Dump());
 						if($data = $xml_pp->collapse_structure($tree)) {
