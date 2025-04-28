@@ -284,7 +284,7 @@ sub _load_config
 
 	my $logger = $self->{'logger'};
 	if($logger) {
-		$logger->trace(ref($self), ' ', __LINE__, 'Entered _load_config');
+		$logger->trace(ref($self), ' ', __LINE__, ': Entered _load_config');
 	}
 
 	for my $dir (@{$self->{'config_dirs'}}) {

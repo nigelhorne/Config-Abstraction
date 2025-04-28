@@ -29,7 +29,7 @@ cmp_ok($config->get('UserName'), 'eq', 'njh', 'XML can be read in from a file wi
 my @logs;
 
 $config = Config::Abstraction->new(
-	config_dirs => [File::Spec->rootdir()],
+	config_dirs => [''],	# It's an absolute path
 	config_file => File::Spec->catdir($test_dir, 'xml_test'),
 	logger => \@logs
 );
