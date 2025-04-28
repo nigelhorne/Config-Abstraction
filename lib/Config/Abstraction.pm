@@ -318,6 +318,7 @@ sub _load_config
 						} else {
 							Carp::carp("Failed to load XML from $path: $@");
 						}
+						undef $rc;
 					} elsif($rc) {
 						$data = $rc;
 					}

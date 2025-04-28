@@ -1,7 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
 0.14
-	XML::Simple seems to be broken on many Windows systems
 	Allow logger to be an array ref
 	Fail more gracefully
 	Fall back to XML::PP if XML::Simple can't be loaded
