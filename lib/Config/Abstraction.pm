@@ -347,7 +347,7 @@ sub _load_config
 		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
 		for my $config_file ($self->{'config_file'}, @{$self->{'config_files'}}) {
 			next unless defined($config_file);
-			my $path = File::Spec->catfile($dir, $config_file);
+			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
 			}
