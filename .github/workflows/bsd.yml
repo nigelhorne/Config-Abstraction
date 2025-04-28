@@ -32,12 +32,14 @@ jobs:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
           shell: bash
+          env:
+            AUTOMATED_TESTING: 1
           run: |
             sudo hostname example.com
             sudo ${{ matrix.os.pkginstall }}
             sudo cpan -i XML::PP
             curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
             sudo chown -R runner:runner .
-            AUTOMATED_TESTING=1 perl Makefile.PL
-            AUTOMATED_TESTING=1 make
-            AUTOMATED_TESTING=1 prove -wlmb t
+            perl Makefile.PL
+            make
+            prove -wlmb t
