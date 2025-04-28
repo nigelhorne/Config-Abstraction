@@ -313,7 +313,11 @@ sub _load_config
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
 					eval { $rc = XMLin($path, ForceArray => 0, KeyAttr => []) };
 					if($@) {
-						croak "Failed to load XML from $path: $@";
+						if($logger) {
+							$logger->notice("Failed to load XML from $path: $@");
+						} else {
+							Carp::carp("Failed to load XML from $path: $@");
+						}
 					} elsif($rc) {
 						$data = $rc;
 					}
@@ -331,12 +335,18 @@ sub _load_config
 				}
 			} elsif ($file =~ /\.ini$/) {
 				$self->_load_driver('Config::IniFiles');
-				my $ini = Config::IniFiles->new(-file => $path);
-				croak "Failed to load INI from $path" unless $ini;
-				$data = { map {
-					my $section = $_;
-					$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
-				} $ini->Sections() };
+				if(my $ini = Config::IniFiles->new(-file => $path)) {
+					$data = { map {
+						my $section = $_;
+						$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+					} $ini->Sections() };
+				} else {
+					if($logger) {
+						$logger->notice("Failed to load INI from $path: $@");
+					} else {
+						Carp::carp("Failed to load INI from $path: $@");
+					}
+				}
 			}
 			if($data) {
 				if($logger) {

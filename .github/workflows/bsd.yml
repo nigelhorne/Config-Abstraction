@@ -35,7 +35,7 @@ jobs:
           run: |
             sudo hostname example.com
             sudo ${{ matrix.os.pkginstall }}
-            sudo cpan -i XML::LibXML
+            sudo cpan -i XML::LibXML XML::PP
             curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
             sudo chown -R runner:runner .
             AUTOMATED_TESTING=1 perl Makefile.PL
