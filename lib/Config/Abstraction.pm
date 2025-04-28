@@ -331,6 +331,8 @@ sub _load_config
 							if($data->{'config'}) {
 								$data = $data->{'config'};
 							}
+use Data::Dumper;
+::diag(Data::Dumper->new([$data])->Dump());
 						}
 					}
 				}
@@ -354,7 +356,7 @@ sub _load_config
 					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 				}
 				%merged = %{ merge( $data, \%merged ) };
-				push @{$merged{'config_path'}}, $path;
+				push @{$self->{'config_path'}}, $path;
 			}
 		}
 
@@ -475,7 +477,7 @@ sub _load_config
 					$logger->debug(ref($self), ' ', __LINE__, ': No configuration file loaded');
 				}
 
-				push @{$merged{'config_path'}}, $path;
+				push @{$self->{'config_path'}}, $path;
 			}
 		}
 	}
