@@ -28,12 +28,12 @@ jobs:
           submodules: recursive
       - name: Test on ${{ matrix.os.name }}
         uses: cross-platform-actions/action@master
+        env:
+          AUTOMATED_TESTING: 1
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
           shell: bash
-          env:
-            AUTOMATED_TESTING: 1
           run: |
             sudo hostname example.com
             sudo ${{ matrix.os.pkginstall }}
