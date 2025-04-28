@@ -444,12 +444,12 @@ sub _load_config
 								# Maybe XML without the leading XML header
 								if($self->_load_driver('XML::Simple', ['XMLin'])) {
 									eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
-									if((!$data) || (ref($data) ne 'HASH')) {
-										$self->_load_driver('Config::Auto');
-										my $ca = Config::Auto->new(source => $path);
-										if($data = $ca->parse()) {
-											$self->{'type'} = $ca->format();
-										}
+								}
+								if((!$data) || (ref($data) ne 'HASH')) {
+									$self->_load_driver('Config::Auto');
+									my $ca = Config::Auto->new(source => $path);
+									if($data = $ca->parse()) {
+										$self->{'type'} = $ca->format();
 									}
 								}
 							}
