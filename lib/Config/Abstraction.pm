@@ -354,10 +354,7 @@ sub _load_config
 					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 				}
 				%merged = %{ merge( $data, \%merged ) };
-				if($merged{'config_path'}) {
-					$merged{'config_path'} .= ';';
-				}
-				$merged{'config_path'} .= $path;
+				push @{$merged{'config_path'}}, $path;
 			}
 		}
 
@@ -478,10 +475,7 @@ sub _load_config
 					$logger->debug(ref($self), ' ', __LINE__, ': No configuration file loaded');
 				}
 
-				if($merged{'config_path'}) {
-					$merged{'config_path'} .= ';';
-				}
-				$merged{'config_path'} .= $path;
+				push @{$merged{'config_path'}}, $path;
 			}
 		}
 	}
@@ -558,7 +552,7 @@ sub get
 Returns the entire configuration hash,
 possibly flattened depending on the C<flatten> option.
 
-The entry C<config_path> contains a colon-separated list of the files that the configuration was loaded from.
+The entry C<config_path> contains a list of the files that the configuration was loaded from.
 
 =cut
 
