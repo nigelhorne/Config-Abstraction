@@ -323,22 +323,15 @@ sub _load_config
 						$data = $rc;
 					}
 				}
-::diag(__LINE__);
 				if((!defined($rc)) && $self->_load_driver('XML::PP')) {
 					my $xml_pp = XML::PP->new();
-::diag(__LINE__);
 					$data = read_file($path);
-::diag($data);
 					if(my $tree = $xml_pp->parse(\$data)) {
-use Data::Dumper;
-::diag(Data::Dumper->new([$data])->Dump());
 						if($data = $xml_pp->collapse_structure($tree)) {
 							$self->{'type'} = 'XML';
 							if($data->{'config'}) {
 								$data = $data->{'config'};
 							}
-use Data::Dumper;
-::diag(Data::Dumper->new([$data])->Dump());
 						}
 					}
 				}
