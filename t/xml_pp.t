@@ -31,6 +31,7 @@ $config = Config::Abstraction->new(
 	config_file => File::Spec->catdir($test_dir, 'xml_test')
 );
 
+ok(defined($config));
 cmp_ok($config->get('UserName'), 'eq', 'njh', 'absolute path to config_file works');
 
 write_file(File::Spec->catdir($test_dir, 'xml_test'), <<'XML');
