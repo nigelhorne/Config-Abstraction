@@ -445,7 +445,7 @@ sub _load_config
 				};
 				if($logger) {
 					if($@) {
-						$logger->warn(ref($self), ' ', __LINE__, $@);
+						$logger->warn(ref($self), ' ', __LINE__, ": $@");
 						undef $data;
 					} else {
 						$logger->debug(ref($self), ' ', __LINE__, ': Loaded data from', $self->{'type'}, "file $path");
@@ -558,12 +558,14 @@ sub _load_driver
 	my($self, $driver, $imports) = @_;
 
 	return 1 if($self->{'loaded'}{$driver});
+	return 0 if($self->{'failed'}{$driver});
 
 	eval "require $driver";
 	if($@) {
-		if($self->{'logger'}) {
-			$self->warn(ref($self), ": $driver failed to load: $@");
+		if(my $logger = $self->{'logger'}) {
+			$logger->warn(ref($self), ": $driver failed to load: $@");
 		}
+		$self->{'failed'}{$driver} = 1;
 		return;
 	}
 	$driver->import(@{$imports});
