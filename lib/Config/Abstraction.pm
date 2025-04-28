@@ -308,11 +308,16 @@ sub _load_config
 			} elsif ($file =~ /\.json$/) {
 				$data = eval { decode_json(read_file($path)) };
 				croak "Failed to load JSON from $path: $@" if $@;
-			} elsif ($file =~ /\.xml$/) {
+			} elsif($file =~ /\.xml$/) {
+				my $rc;
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
-					$data = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
+					$rc = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
 					croak "Failed to load XML from $path: $@" if $@;
-				} elsif($self->_load_driver('XML::PP')) {
+					if($rc) {
+						$data = $rc;
+					}
+				}
+				if((!defined($rc)) && $self->_load_driver('XML::PP')) {
 					my $xml_pp = XML::PP->new();
 					if(my $tree = $xml_pp->parse(\$data)) {
 						if($data = $xml_pp->collapse_structure($tree)) {
