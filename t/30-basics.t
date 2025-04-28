@@ -76,7 +76,7 @@ my $config = Config::Abstraction->new(
 );
 
 # YAML + JSON
-is $config->get('database.user'), 'env_user', 'ENV override on database.user';
+is($config->get('database.user'), 'env_user', 'ENV override on database.user');
 is $config->get('database.pass'), 'local_pass', 'local.json overrides base.yaml';
 ok $config->get('feature.enabled'), 'feature.enabled from JSON';
 is $config->get('extra.debug'), '1', 'extra.debug from ENV';

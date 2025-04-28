@@ -311,9 +311,10 @@ sub _load_config
 			} elsif($file =~ /\.xml$/) {
 				my $rc;
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
-					$rc = eval { XMLin($path, ForceArray => 0, KeyAttr => []) };
-					croak "Failed to load XML from $path: $@" if $@;
-					if($rc) {
+					eval { $rc = XMLin($path, ForceArray => 0, KeyAttr => []) };
+					if($@) {
+						croak "Failed to load XML from $path: $@";
+					} elsif($rc) {
 						$data = $rc;
 					}
 				}
@@ -465,7 +466,7 @@ sub _load_config
 				} elsif((!$@) && $logger) {
 					$logger->debug(ref($self), ' ', __LINE__, ': No configuration file loaded');
 				}
-					
+
 				if($merged{'config_path'}) {
 					$merged{'config_path'} .= ':';
 				}
