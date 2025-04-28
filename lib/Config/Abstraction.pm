@@ -11,19 +11,17 @@ use File::Spec;
 use Hash::Merge qw(merge);
 use Params::Get;
 
-# TODO: try XML::LibXML::Simple on systems where XML::Simple doesn't load
-
 =head1 NAME
 
 Config::Abstraction - Configuration Abstraction Layer
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =cut
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 =head1 SYNOPSIS
 
