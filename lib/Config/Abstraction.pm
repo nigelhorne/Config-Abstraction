@@ -323,9 +323,13 @@ sub _load_config
 						$data = $rc;
 					}
 				}
+::diag(__LINE__);
 				if((!defined($rc)) && $self->_load_driver('XML::PP')) {
 					my $xml_pp = XML::PP->new();
+::diag(__LINE__);
 					if(my $tree = $xml_pp->parse(\$data)) {
+use Data::Dumper;
+::diag(Data::Dumper->new([$data])->Dump());
 						if($data = $xml_pp->collapse_structure($tree)) {
 							$self->{'type'} = 'XML';
 							if($data->{'config'}) {
@@ -469,7 +473,7 @@ use Data::Dumper;
 				}
 				if(scalar(keys %merged)) {
 					if($data) {
-						%merged = %{ merge( $data, \%merged ) };
+						%merged = %{ merge($data, \%merged) };
 					}
 				} elsif($data && (ref($data) eq 'HASH')) {
 					%merged = %{$data};
