@@ -32,6 +32,8 @@ $config = Config::Abstraction->new(
 );
 
 ok(defined($config));
+use Data::Dumper;
+diag(Data::Dumper->new([$config])->Dump());
 cmp_ok($config->get('UserName'), 'eq', 'njh', 'absolute path to config_file works');
 
 write_file(File::Spec->catdir($test_dir, 'xml_test'), <<'XML');
