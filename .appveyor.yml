@@ -39,7 +39,7 @@ install:
   - cpan App::cpanminus
   - cmd: cpanm -q --showdeps --with-develop --with-suggests . | findstr /v "^perl\>" | cpanm -qin --skip-satisfied
   # - cmd: cpanm --reinstall -n XML::Simple XML::Parser::Expat XML::LibXML Alien::LibXML
-  - cmd: cpanm -n XML::PP
+  - cpanm -q XML::PP
   - cmd: dir "\Expat.xs.dll" /s
   - cpanm -qin --skip-satisfied --installdeps .
   - cmd: 'echo End install at: & time /t'
