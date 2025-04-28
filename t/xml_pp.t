@@ -26,18 +26,12 @@ my $config = Config::Abstraction->new(
 diag(Data::Dumper->new([$config])->Dump()) if($ENV{'TEST_VERBOSE'});
 cmp_ok($config->get('UserName'), 'eq', 'njh', 'XML can be read in from a file with an XML header');
 
-my @logs;
-
 $config = Config::Abstraction->new(
 	config_dirs => [''],	# It's an absolute path
 	config_file => File::Spec->catdir($test_dir, 'xml_test'),
-	logger => \@logs
 );
 
 ok(defined($config));
-use Data::Dumper;
-diag(Data::Dumper->new([\@logs])->Dump());
-diag(Data::Dumper->new([$config])->Dump());
 cmp_ok($config->get('UserName'), 'eq', 'njh', 'absolute path to config_file works');
 
 write_file(File::Spec->catdir($test_dir, 'xml_test'), <<'XML');
