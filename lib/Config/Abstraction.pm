@@ -271,7 +271,10 @@ sub new
 	}
 	$self->_load_config();
 
-	return $self;
+	if($self->{'config'} && scalar(keys %{$self->{'config'}})) {
+		return $self;
+	}
+	return undef;
 }
 
 sub _load_config
@@ -445,6 +448,20 @@ sub _load_config
 									eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
 								}
 								if((!$data) || (ref($data) ne 'HASH')) {
+									if($self->_load_driver('Config::Abstract')) {
+										eval { $data = Config::Abstract->new($path) };
+										if($@) {
+											undef $data;
+										} elsif($data) {
+											$data = $data->get_all_settings();
+											if(scalar(keys %{$data}) == 0) {
+												undef $data;
+											}
+										}
+										$self->{'type'} = 'Perl';
+									}
+								}
+								if((!$data) || (ref($data) ne 'HASH')) {
 									$self->_load_driver('Config::Auto');
 									my $ca = Config::Auto->new(source => $path);
 									if($data = $ca->parse()) {
@@ -558,7 +575,7 @@ sub all
 {
 	my $self = shift;
 
-	return $self->{'config'};
+	return($self->{'config'} && scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
 
 # Helper routine to load a driver
