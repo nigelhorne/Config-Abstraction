@@ -68,7 +68,7 @@ the file contents.
 
 Optionally supports flattening the configuration structure. This converts deeply
 nested configuration keys into a flat key-value format (e.g., C<database.user>
-instead of C<database->{user}>). This makes accessing values easier for
+instead of C<database-E<gt>{user}>). This makes accessing values easier for
 applications that prefer flat structures or need compatibility with flat
 key-value stores.
 
