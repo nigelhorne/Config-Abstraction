@@ -449,6 +449,9 @@ sub _load_config
 								}
 								if((!$data) || (ref($data) ne 'HASH')) {
 									if($self->_load_driver('Config::Abstract')) {
+										# Handle RT#164587
+										open my $oldSTDERR, ">&STDERR";
+										close STDERR;
 										eval { $data = Config::Abstract->new($path) };
 										if($@) {
 											undef $data;
@@ -458,6 +461,7 @@ sub _load_config
 												undef $data;
 											}
 										}
+										open STDERR, ">&", $oldSTDERR;
 										$self->{'type'} = 'Perl';
 									}
 								}
