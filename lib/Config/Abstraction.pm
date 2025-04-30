@@ -511,6 +511,8 @@ sub _load_config
 			my $ref = \%merged;
 			$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
 			$ref->{ $parts[-1] } = $ENV{$key};
+		} elsif($merged{$path}) {
+			$merged{$path} = $ENV{$key};
 		} else {
 			$merged{$prefix}->{$path} = $ENV{$key};
 		}
