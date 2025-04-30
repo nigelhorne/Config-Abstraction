@@ -504,7 +504,7 @@ sub _load_config
 	$prefix =~ s/_$//;
 	$prefix =~ s/::$//;
 	for my $key (keys %ENV) {
-		next unless $key =~ /^$self->{env_prefix}(.*)$/;
+		next unless $key =~ /^$self->{env_prefix}(.*)$/i;
 		my $path = lc $1;
 		if($path =~ /__/) {
 			my @parts = split /__/, $path;
