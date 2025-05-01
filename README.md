@@ -246,6 +246,9 @@ when `sep_char` is set to '\_'.
 
 It should be possible to escape the separator character either with backslashes or quotes.
 
+Due to the case-insensitive nature of environment variables on Windows,
+it may be challenging to override values using environment variables on that platorm.
+
 # SUPPORT
 
 This module is provided as-is without any warranty.
