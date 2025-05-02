@@ -279,6 +279,10 @@ sub new
 
 sub _load_config
 {
+	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+		Carp::croak('Illegal Operation: This method can only be called by a subclass');
+	}
+
 	my $self = shift;
 	my %merged;
 
