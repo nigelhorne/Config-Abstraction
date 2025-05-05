@@ -252,15 +252,19 @@ sub new
 			$params->{'config_dirs'} = [''];
 		} else {
 			# Set up the default value for config_dirs
-			if($ENV{'HOME'}) {
-				$params->{'config_dirs'} = [File::Spec->catdir($ENV{'HOME'}, '.conf')];
-			} elsif($ENV{'DOCUMENT_ROOT'}) {
-				$params->{'config_dirs'} = [File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf')];
-			}
-			push @{$params->{'config_dirs'}}, 'conf';
 			if($^O ne 'MSWin32') {
 				push @{$params->{'config_dirs'}}, '/etc', '/usr/local/etc';
 			}
+			if($ENV{'HOME'}) {
+				push @{$params->{'config_dirs'}},
+					File::Spec->catdir($ENV{'HOME'}, '.conf'),
+					File::Spec->catdir($ENV{'HOME'}, '.config');
+			} elsif($ENV{'DOCUMENT_ROOT'}) {
+				push @{$params->{'config_dirs'}},
+					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf'),
+					File::Spec->catdir($ENV{'HOME'}, 'config');
+			}
+			push @{$params->{'config_dirs'}}, 'conf', 'config';
 		}
 	}
 
