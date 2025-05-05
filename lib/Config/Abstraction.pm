@@ -190,7 +190,7 @@ Options:
 
 =item * C<config_dirs>
 
-An arrayref of directories to look for configuration files (default: C<[$HOME/.conf]>, C<[$DOCUMENT_ROOT/conf]>, or C<['conf']>).
+An arrayref of directories to look for configuration files (default: C<$CONFIG_DIR>, C<[$HOME/.conf]>, C<[$DOCUMENT_ROOT/conf]>, or C<['conf']>).
 Considers the file C<default> before looking at C<config_file> and C<config_files>.
 
 =item * C<config_file>
@@ -265,7 +265,11 @@ sub new
 					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf'),
 					File::Spec->catdir($ENV{'HOME'}, 'config');
 			}
-			push @{$params->{'config_dirs'}}, 'conf', 'config';
+			if(my $dir = $ENV{'CONFIG_DIR'}) {
+				push @{$params->{'config_dirs'}}, $dir;
+			} else {
+				push @{$params->{'config_dirs'}}, 'conf', 'config';
+			}
 		}
 	}
 

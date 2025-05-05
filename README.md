@@ -159,7 +159,7 @@ Options:
 
 - `config_dirs`
 
-    An arrayref of directories to look for configuration files (default: `[$HOME/.conf]`, `[$DOCUMENT_ROOT/conf]`, or `['conf']`).
+    An arrayref of directories to look for configuration files (default: `$CONFIG_DIR`, `[$HOME/.conf]`, `[$DOCUMENT_ROOT/conf]`, or `['conf']`).
     Considers the file `default` before looking at `config_file` and `config_files`.
 
 - `config_file`
