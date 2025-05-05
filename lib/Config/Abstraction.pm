@@ -686,7 +686,7 @@ sub AUTOLOAD
 It should be possible to escape the separator character either with backslashes or quotes.
 
 Due to the case-insensitive nature of environment variables on Windows,
-it may be challenging to override values using environment variables on that platorm.
+it may be challenging to override values using environment variables on that platform.
 
 =head1 SUPPORT
 
