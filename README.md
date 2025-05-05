@@ -160,6 +160,7 @@ Options:
 - `config_dirs`
 
     An arrayref of directories to look for configuration files (default: `[$HOME/.conf]`, `[$DOCUMENT_ROOT/conf]`, or `['conf']`).
+    Considers the file `default` before looking at `config_file` and `config_files`.
 
 - `config_file`
 
@@ -249,7 +250,7 @@ when `sep_char` is set to '\_'.
 It should be possible to escape the separator character either with backslashes or quotes.
 
 Due to the case-insensitive nature of environment variables on Windows,
-it may be challenging to override values using environment variables on that platorm.
+it may be challenging to override values using environment variables on that platform.
 
 # SUPPORT
 

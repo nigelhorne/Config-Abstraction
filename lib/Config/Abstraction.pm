@@ -191,6 +191,7 @@ Options:
 =item * C<config_dirs>
 
 An arrayref of directories to look for configuration files (default: C<[$HOME/.conf]>, C<[$DOCUMENT_ROOT/conf]>, or C<['conf']>).
+Considers the file C<default> before looking at C<config_file> and C<config_files>.
 
 =item * C<config_file>
 
@@ -376,7 +377,7 @@ sub _load_config
 		}
 
 		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
-		for my $config_file ($self->{'config_file'}, @{$self->{'config_files'}}) {
+		for my $config_file ('default', $self->{'config_file'}, @{$self->{'config_files'}}) {
 			next unless defined($config_file);
 			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
 			if($logger) {
