@@ -151,6 +151,8 @@ C<local.xml>, C<base.ini>, and C<local.ini>.
 
 If C<config_file> or C<config_files> is set, those files are loaded last.
 
+If no C<config_dirs> is given, try hard to find the files in various places.
+
 =item 2. Merging and Resolving
 
 The module merges the contents of these files, with more specific configurations
@@ -246,13 +248,19 @@ sub new
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
 
 	if(!defined($params->{'config_dirs'})) {
-		# Set up the default value for config_dirs
-		if($ENV{'HOME'}) {
-			$params->{'config_dirs'} = [File::Spec->catdir($ENV{'HOME'}, '.conf')];
-		} elsif($ENV{'DOCUMENT_ROOT'}) {
-			$params->{'config_dirs'} = [File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf')];
+		if($params->{'config_file'} && File::Spec->file_name_is_absolute($params->{'config_file'})) {
+			$params->{'config_dirs'} = [''];
 		} else {
-			$params->{'config_dirs'} = ['conf'];
+			# Set up the default value for config_dirs
+			if($ENV{'HOME'}) {
+				$params->{'config_dirs'} = [File::Spec->catdir($ENV{'HOME'}, '.conf')];
+			} elsif($ENV{'DOCUMENT_ROOT'}) {
+				$params->{'config_dirs'} = [File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf')];
+			}
+			push @{$params->{'config_dirs'}}, 'conf';
+			if($^O ne 'MSWin32') {
+				push @{$params->{'config_dirs'}}, '/etc', '/usr/local/etc';
+			}
 		}
 	}
 
