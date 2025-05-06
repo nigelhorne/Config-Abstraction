@@ -219,6 +219,10 @@ possibly flattened depending on the `flatten` option.
 
 The entry `config_path` contains a list of the files that the configuration was loaded from.
 
+## merge\_config
+
+Merge the configuration hash into the given hash.
+
 ## AUTOLOAD
 
 This module supports dynamic access to configuration keys via AUTOLOAD.

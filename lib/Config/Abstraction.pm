@@ -603,6 +603,37 @@ sub all
 	return($self->{'config'} && scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
 
+=head2 merge_config
+
+Merge the configuration hash into the given hash.
+
+=cut
+
+sub merge_config
+{
+	my $self = shift;
+	my $params = Params::Get::get_params('data', @_);
+	my $data = $params->{'data'};
+	my $section = $params->{'section'};
+
+	my $config = $self->all();
+	if($config->{'global'}) {
+		if($data) {
+			$data = { %{$config->{'global'}}, %{$data} };
+		} else {
+			$data = $config->{'global'};
+		}
+		# delete $config->{'global'};
+	}
+	if($section && $config->{$section}) {
+		$config = $config->{$section};
+	}
+	if($data) {
+		return { %{$config}, %{$data} };
+	}
+	return $config;
+}
+
 # Helper routine to load a driver
 sub _load_driver
 {
