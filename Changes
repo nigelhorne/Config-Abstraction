@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.18
+0.18	Tue May  6 08:17:31 EDT 2025
 	Use the file config_dirs/default as the base
 	Honour CONFIG_DIR
 
