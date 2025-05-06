@@ -263,7 +263,7 @@ sub new
 			} elsif($ENV{'DOCUMENT_ROOT'}) {
 				push @{$params->{'config_dirs'}},
 					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf'),
-					File::Spec->catdir($ENV{'HOME'}, 'config');
+					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'config');
 			}
 			if(my $dir = $ENV{'CONFIG_DIR'}) {
 				push @{$params->{'config_dirs'}}, $dir;
