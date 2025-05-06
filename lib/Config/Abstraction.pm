@@ -289,6 +289,10 @@ sub new
 	}
 	$self->_load_config();
 
+	if(my $data = $params->{'data'}) {
+		$self->merge_defaults(defaults => $data) if(scalar keys(%{$data}));
+	}
+
 	if($self->{'config'} && scalar(keys %{$self->{'config'}})) {
 		return $self;
 	}
@@ -603,35 +607,37 @@ sub all
 	return($self->{'config'} && scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
 
-=head2 merge_config
+=head2 merge_defaults
 
 Merge the configuration hash into the given hash.
+What's in the object will overwrite what's in the defaults hash.
 
 =cut
 
-sub merge_config
+sub merge_defaults
 {
 	my $self = shift;
-	my $params = Params::Get::get_params('data', @_);
-	my $data = $params->{'data'};
+	my $config = $self->all();
+
+	return $config if(scalar(@_) == 0);
+
+	my $params = Params::Get::get_params('defaults', @_);
+	my $defaults = $params->{'defaults'};
+	return $config if(!defined($defaults));
 	my $section = $params->{'section'};
 
-	my $config = $self->all();
 	if($config->{'global'}) {
-		if($data) {
-			$data = { %{$config->{'global'}}, %{$data} };
+		if($params->{'deep'}) {
+			$defaults = merge($config->{'global'}, $defaults);
 		} else {
-			$data = $config->{'global'};
+			$defaults = { %{$defaults}, %{$config->{'global'}} };
 		}
-		# delete $config->{'global'};
+		delete $config->{'global'};
 	}
 	if($section && $config->{$section}) {
 		$config = $config->{$section};
 	}
-	if($data) {
-		return { %{$config}, %{$data} };
-	}
-	return $config;
+	return { %{$defaults}, %{$config} };
 }
 
 # Helper routine to load a driver
