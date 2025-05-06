@@ -142,9 +142,14 @@ This will override any value set for C<database.user> in the configuration files
 
 =over 4
 
-=item 1. Loading Files
+=item 1. Data Argument
 
-The module first looks for configuration files in the specified directories.
+The data passed into the constructor via the C<data> argument is the starting point.
+Essentially this contains the default values.
+
+=item 2. Loading Files
+
+The module then looks for configuration files in the specified directories.
 It loads the following files in order of preference:
 C<base.yaml>, C<local.yaml>, C<base.json>, C<local.json>, C<base.xml>,
 C<local.xml>, C<base.ini>, and C<local.ini>.
@@ -153,23 +158,19 @@ If C<config_file> or C<config_files> is set, those files are loaded last.
 
 If no C<config_dirs> is given, try hard to find the files in various places.
 
-=item 2. Merging and Resolving
+=item 3. Merging and Resolving
 
 The module merges the contents of these files, with more specific configurations
 (e.g., C<local.*>) overriding general ones (e.g., C<base.*>).
 
-=item 3. Environment Overrides
+=item 4. Environment Overrides
 
 After loading and merging the configuration files, environment variables are
 checked and used to override any conflicting settings.
 
-=item 4. Command Line
+=item 5. Command Line
 
 Next, the command line arguments are checked and used to override any conflicting settings.
-
-=item 5. Data Argument
-
-Finally the data passed into the constructor via the C<data> argument is merged in.
 
 =item 6. Accessing Values
 
@@ -302,6 +303,9 @@ sub _load_config
 
 	my $self = shift;
 	my %merged;
+	if($self->{'data'}) {
+		%merged = %{$self->{'data'}};
+	}
 
 	my $logger = $self->{'logger'};
 	if($logger) {
@@ -548,10 +552,6 @@ sub _load_config
 		my $ref = \%merged;
 		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
 		$ref->{ $parts[-1] } = $value;
-	}
-
-	if($self->{'data'}) {
-		%merged = %{ merge( $self->{'data'}, \%merged ) };
 	}
 
 	if($self->{'flatten'}) {

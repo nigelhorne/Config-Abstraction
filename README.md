@@ -115,9 +115,14 @@ This will override any value set for `database.user` in the configuration files.
 
 ## EXAMPLE CONFIGURATION FLOW
 
-- 1. Loading Files
+- 1. Data Argument
 
-    The module first looks for configuration files in the specified directories.
+    The data passed into the constructor via the `data` argument is the starting point.
+    Essentially this contains the default values.
+
+- 2. Loading Files
+
+    The module then looks for configuration files in the specified directories.
     It loads the following files in order of preference:
     `base.yaml`, `local.yaml`, `base.json`, `local.json`, `base.xml`,
     `local.xml`, `base.ini`, and `local.ini`.
@@ -126,23 +131,19 @@ This will override any value set for `database.user` in the configuration files.
 
     If no `config_dirs` is given, try hard to find the files in various places.
 
-- 2. Merging and Resolving
+- 3. Merging and Resolving
 
     The module merges the contents of these files, with more specific configurations
     (e.g., `local.*`) overriding general ones (e.g., `base.*`).
 
-- 3. Environment Overrides
+- 4. Environment Overrides
 
     After loading and merging the configuration files, environment variables are
     checked and used to override any conflicting settings.
 
-- 4. Command Line
+- 5. Command Line
 
     Next, the command line arguments are checked and used to override any conflicting settings.
-
-- 5. Data Argument
-
-    Finally the data passed into the constructor via the `data` argument is merged in.
 
 - 6. Accessing Values
 
