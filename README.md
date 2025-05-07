@@ -4,7 +4,7 @@ Config::Abstraction - Configuration Abstraction Layer
 
 # VERSION
 
-Version 0.19
+Version 0.20
 
 # SYNOPSIS
 
@@ -219,9 +219,10 @@ possibly flattened depending on the `flatten` option.
 
 The entry `config_path` contains a list of the files that the configuration was loaded from.
 
-## merge\_config
+## merge\_defaults
 
 Merge the configuration hash into the given hash.
+What's in the object will overwrite what's in the defaults hash.
 
 ## AUTOLOAD
 
