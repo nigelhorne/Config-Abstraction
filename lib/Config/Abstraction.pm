@@ -207,7 +207,7 @@ since later files override earlier ones.
 =item * C<data>
 
 A hash ref of data to prime the configuration with.
-Any other data will be overwritten by this.
+Any other data will overwrite by this.
 
 =item * C<env_prefix>
 
@@ -289,10 +289,6 @@ sub new
 	}
 	$self->_load_config();
 
-	if(my $data = $params->{'data'}) {
-		$self->merge_defaults(defaults => $data) if(scalar keys(%{$data}));
-	}
-
 	if($self->{'config'} && scalar(keys %{$self->{'config'}})) {
 		return $self;
 	}
@@ -307,7 +303,9 @@ sub _load_config
 
 	my $self = shift;
 	my %merged;
+
 	if($self->{'data'}) {
+		# The data argument given to 'new' contains defaults that this routine will override
 		%merged = %{$self->{'data'}};
 	}
 
