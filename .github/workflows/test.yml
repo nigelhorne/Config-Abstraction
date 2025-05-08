@@ -36,7 +36,7 @@ jobs:
           AUTOMATED_TESTING: 1
         run: |
           cpanm -i ExtUtils::MakeMaker Test::Most
-	  cpanm -iv XML::PP
+          cpanm -iv XML::PP
           cpanm -in --skip-satisfied --installdeps --notest .
       - name: Make Module
         env:
