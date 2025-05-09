@@ -26,50 +26,37 @@ subtest 'basic hash merge' => sub {
 	# is_deeply $merged->{nested}, { a => 1, b => 2 }, 'nested hash merged correctly';
 };
 
-subtest 'merge with undefined base' => sub {
-	my $conf = Config::Abstraction->new(data => {});
-
-	ok(defined($conf));
-	diag($@) if($@);
-
-	my $defaults = { foo => 1 };
-	my $merged = $conf->merge_defaults(defaults => $defaults);
-
-	is $merged->{'foo'}, 1, 'undefined base treated as empty hash';
-};
-
 subtest 'merge with undefined override' => sub {
 	my $conf = Config::Abstraction->new(data => {'foo' => 1});
-	my $a = { };
-	my $merged = $conf->merge_defaults($a);
+	my $merged = $conf->merge_defaults({});
 
-	is $merged->{'foo'}, 1, 'undefined override treated as empty hash';
+	is($merged->{'foo'}, 1, 'undefined override treated as empty hash');
 };
 
 subtest 'deep nested merge' => sub {
-    my $a = {
-        outer => {
-            inner => {
-                setting1 => 'yes',
-                setting2 => 'no'
-            }
-        }
-    };
-    my $b = {
-        outer => {
-            inner => {
-                setting2 => 'maybe',
-                setting3 => 'sure'
-            }
-        }
-    };
+	my $a = {
+		outer => {
+			inner => {
+				setting1 => 'yes',
+				setting2 => 'no'
+			}
+		}
+	};
+	my $b = {
+		outer => {
+			inner => {
+				setting2 => 'maybe',
+				setting3 => 'sure'
+			}
+		}
+	};
 	my $conf = Config::Abstraction->new(data => $b);
 
-    my $merged = $conf->merge_defaults(defaults => $a, deep => 1);
+	my $merged = $conf->merge_defaults(defaults => $a, deep => 1);
 
-    # is $merged->{outer}{inner}{setting1}, 'yes', 'retains original setting1';
-    is $merged->{outer}{inner}{setting2}, 'maybe', 'overrides setting2';
-    is $merged->{outer}{inner}{setting3}, 'sure', 'adds setting3';
+	# is $merged->{outer}{inner}{setting1}, 'yes', 'retains original setting1';
+	is($merged->{outer}{inner}{setting2}, 'maybe', 'overrides setting2');
+	is($merged->{outer}{inner}{setting3}, 'sure', 'adds setting3');
 };
 
 done_testing();
