@@ -30,6 +30,7 @@ subtest 'merge with undefined base' => sub {
 	my $conf = Config::Abstraction->new(data => {});
 
 	ok(defined($conf));
+	diag($@) if($@);
 
 	my $defaults = { foo => 1 };
 	my $merged = $conf->merge_defaults(defaults => $defaults);
