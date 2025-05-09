@@ -29,6 +29,8 @@ subtest 'basic hash merge' => sub {
 subtest 'merge with undefined base' => sub {
 	my $conf = Config::Abstraction->new(data => {});
 
+	ok(defined($conf));
+
 	my $defaults = { foo => 1 };
 	my $merged = $conf->merge_defaults(defaults => $defaults);
 
