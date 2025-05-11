@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.23
+	Fix tests on machines that have configuration files installed elsewhere
+
 0.22	Fri May  9 14:31:28 EDT 2025
 	Fix CI tests
 
