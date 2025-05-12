@@ -600,10 +600,12 @@ sub get
 		return undef unless ref $ref eq 'HASH';
 		$ref = $ref->{$part};
 	}
-	if(ref($ref) eq 'HASH') {
-		Data::Reuse::fixate(%{$ref});
-	} elsif(ref($ref) eq 'ARRAY') {
-		Data::Reuse::fixate(@{$ref});
+	if(!$self->{'no_fixate'}) {
+		if(ref($ref) eq 'HASH') {
+			Data::Reuse::fixate(%{$ref});
+		} elsif(ref($ref) eq 'ARRAY') {
+			Data::Reuse::fixate(@{$ref});
+		}
 	}
 	return $ref;
 }
