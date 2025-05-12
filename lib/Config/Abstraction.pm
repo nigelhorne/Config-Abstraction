@@ -193,7 +193,6 @@ Options:
 
 An arrayref of directories to look for configuration files
 (default: C<$CONFIG_DIR>, C<$HOME/.conf>, C<$HOME/config>, C<$HOME/conf>, C<$DOCUMENT_ROOT/conf>, C<$DOCUMENT_ROOT/../conf>, C<conf>).
-Considers the file C<default> before looking at C<config_file> and C<config_files>.
 
 =item * C<config_file>
 
@@ -204,6 +203,8 @@ Points to a configuration file of any format.
 An arrayref of files to look for in the configuration directories.
 Put the more important files later,
 since later files override earlier ones.
+
+Considers the files C<default> and C<$script_name> before looking at C<config_file> and C<config_files>.
 
 =item * C<data>
 
@@ -398,7 +399,14 @@ sub _load_config
 		}
 
 		# Put $self->{config_file} through all parsers, ignoring all errors, then merge that in
-		for my $config_file ('default', $self->{'config_file'}, @{$self->{'config_files'}}) {
+		if(!$self->{'script_name'}) {
+			require File::Basename && File::Basename->import() unless File::Basename->can('basename');
+
+			# Determine script name
+			$self->{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
+		}
+
+		for my $config_file ('default', $self->{'script_name'}, $self->{'config_file'}, @{$self->{'config_files'}}) {
 			next unless defined($config_file);
 			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
 			if($logger) {

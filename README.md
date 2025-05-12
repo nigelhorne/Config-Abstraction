@@ -162,7 +162,6 @@ Options:
 
     An arrayref of directories to look for configuration files
     (default: `$CONFIG_DIR`, `$HOME/.conf`, `$HOME/config`, `$HOME/conf`, `$DOCUMENT_ROOT/conf`, `$DOCUMENT_ROOT/../conf`, `conf`).
-    Considers the file `default` before looking at `config_file` and `config_files`.
 
 - `config_file`
 
@@ -173,6 +172,8 @@ Options:
     An arrayref of files to look for in the configuration directories.
     Put the more important files later,
     since later files override earlier ones.
+
+    Considers the files `default` and `$script_name` before looking at `config_file` and `config_files`.
 
 - `data`
 
