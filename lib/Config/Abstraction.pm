@@ -215,6 +215,10 @@ Any other data will overwrite by this.
 A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DATABASE__USER>,
 (default: C<'APP_'>).
 
+=item * C<file>
+
+Synonym for C<config_file>
+
 =item * C<flatten>
 
 If true, returns a flat hash structure like C<{database.user}> (default: C<0>) instead of C<{database}{user}>.
@@ -249,6 +253,10 @@ sub new
 	my $params = Params::Get::get_params(undef, @_) || {};
 
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
+
+	if((!defined($params->{'config_dirs'})) && $params->{'file'}) {
+		$params->{'config_file'} = $params->{'file'};
+	}
 
 	if(!defined($params->{'config_dirs'})) {
 		if($params->{'config_file'} && File::Spec->file_name_is_absolute($params->{'config_file'})) {

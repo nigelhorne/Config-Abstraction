@@ -160,7 +160,8 @@ Options:
 
 - `config_dirs`
 
-    An arrayref of directories to look for configuration files (default: `$CONFIG_DIR`, `[$HOME/.conf]`, `[$DOCUMENT_ROOT/conf]`, or `['conf']`).
+    An arrayref of directories to look for configuration files
+    (default: `$CONFIG_DIR`, `$HOME/.conf`, `$HOME/config`, `$HOME/conf`, `$DOCUMENT_ROOT/conf`, `$DOCUMENT_ROOT/../conf`, `conf`).
     Considers the file `default` before looking at `config_file` and `config_files`.
 
 - `config_file`
@@ -182,6 +183,10 @@ Options:
 
     A prefix for environment variable keys and comment line options, e.g. `MYAPP_DATABASE__USER`,
     (default: `'APP_'`).
+
+- `file`
+
+    Synonym for `config_file`
 
 - `flatten`
 
