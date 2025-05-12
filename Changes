@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.24
+0.24	Mon May 12 16:15:09 EDT 2025
 	Added the 'no_fixate' option
 
 0.23	Mon May 12 12:01:49 EDT 2025
