@@ -717,7 +717,7 @@ sub AUTOLOAD
 	$key =~ s/.*:://;	# remove package name
 	return if $key eq 'DESTROY';
 
-	my $data = $self->{data};
+	my $data = $self->{data} || $self->{'config'};
 
 	# If flattening is ON, assume keys are pre-flattened
 	if ($self->{flatten}) {
