@@ -630,10 +630,42 @@ sub all
 
 Merge the configuration hash into the given hash.
 
-If merge given,
-the result will be a combination of the hashes,
-otherwise
-what's in the object will overwrite what's in the defaults hash.
+Options:
+
+=over 4
+
+=item * merge
+
+Usually what's in the object will overwrite what's in the defaults hash,
+if given,
+the result will be a combination of the hashes.
+
+=item * section
+
+Merge in that section from the configuration file.
+
+=item * deep
+
+Try harder to merge in all configuration from the global section of the configuration file.
+
+=back
+
+  package MyPackage;
+  use Params::Get;
+  use Config::Abstraction;
+
+  sub new
+  {
+    my $class = shift;
+
+    my $params = Params::Get::get_params(undef, \@_) || {};
+
+    if(my $config = Config::Abstraction->new(env_prefix => "${class}::")) {
+      $params = $config->merge_defaults(defaults => $params, merge => 1, section => $class);
+    }
+
+    return bless $params, $class;
+}
 
 =cut
 
