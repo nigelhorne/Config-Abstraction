@@ -260,7 +260,7 @@ Options:
       }
 
       return bless $params, $class;
-  }
+}
 
 ## AUTOLOAD
 

@@ -650,21 +650,21 @@ Try harder to merge in all configuration from the global section of the configur
 
 =back
 
-  package MyPackage;
-  use Params::Get;
-  use Config::Abstraction;
+    package MyPackage;
+    use Params::Get;
+    use Config::Abstraction;
 
-  sub new
-  {
-    my $class = shift;
+    sub new
+    {
+      my $class = shift;
 
-    my $params = Params::Get::get_params(undef, \@_) || {};
+      my $params = Params::Get::get_params(undef, \@_) || {};
 
-    if(my $config = Config::Abstraction->new(env_prefix => "${class}::")) {
-      $params = $config->merge_defaults(defaults => $params, merge => 1, section => $class);
-    }
+      if(my $config = Config::Abstraction->new(env_prefix => "${class}::")) {
+        $params = $config->merge_defaults(defaults => $params, merge => 1, section => $class);
+      }
 
-    return bless $params, $class;
+      return bless $params, $class;
 }
 
 =cut
