@@ -4,7 +4,7 @@ Config::Abstraction - Configuration Abstraction Layer
 
 # VERSION
 
-Version 0.24
+Version 0.25
 
 # SYNOPSIS
 
@@ -228,7 +228,11 @@ The entry `config_path` contains a list of the files that the configuration was 
 ## merge\_defaults
 
 Merge the configuration hash into the given hash.
-What's in the object will overwrite what's in the defaults hash.
+
+If merge given,
+the result will be a combination of the hashes,
+otherwise
+what's in the object will overwrite what's in the defaults hash.
 
 ## AUTOLOAD
 

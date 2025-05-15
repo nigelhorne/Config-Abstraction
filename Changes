@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.25	Thu May 15 07:57:07 EDT 2025
+	Added the 'merge' option
+
 0.24	Mon May 12 16:15:09 EDT 2025
 	Added the 'no_fixate' option
 

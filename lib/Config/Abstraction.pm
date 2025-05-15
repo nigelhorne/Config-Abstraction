@@ -17,11 +17,11 @@ Config::Abstraction - Configuration Abstraction Layer
 
 =head1 VERSION
 
-Version 0.24
+Version 0.25
 
 =cut
 
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 =head1 SYNOPSIS
 
@@ -629,7 +629,11 @@ sub all
 =head2 merge_defaults
 
 Merge the configuration hash into the given hash.
-What's in the object will overwrite what's in the defaults hash.
+
+If merge given,
+the result will be a combination of the hashes,
+otherwise
+what's in the object will overwrite what's in the defaults hash.
 
 =cut
 
@@ -655,6 +659,9 @@ sub merge_defaults
 	}
 	if($section && $config->{$section}) {
 		$config = $config->{$section};
+	}
+	if($params->{'merge'}) {
+		return merge($config, $defaults);
 	}
 	return { %{$defaults}, %{$config} };
 }
