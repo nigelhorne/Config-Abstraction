@@ -244,7 +244,7 @@ Merge the configuration hash into the given hash.
       }
 
       return bless $params, $class;
-  }
+    }
 
 Options:
 
