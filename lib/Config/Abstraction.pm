@@ -630,6 +630,23 @@ sub all
 
 Merge the configuration hash into the given hash.
 
+  package MyPackage;
+  use Params::Get;
+  use Config::Abstraction;
+
+  sub new
+  {
+    my $class = shift;
+
+    my $params = Params::Get::get_params(undef, \@_) || {};
+
+    if(my $config = Config::Abstraction->new(env_prefix => "${class}::")) {
+      $params = $config->merge_defaults(defaults => $params, merge => 1, section => $class);
+    }
+
+    return bless $params, $class;
+}
+
 Options:
 
 =over 4
@@ -649,23 +666,6 @@ Merge in that section from the configuration file.
 Try harder to merge in all configuration from the global section of the configuration file.
 
 =back
-
-    package MyPackage;
-    use Params::Get;
-    use Config::Abstraction;
-
-    sub new
-    {
-      my $class = shift;
-
-      my $params = Params::Get::get_params(undef, \@_) || {};
-
-      if(my $config = Config::Abstraction->new(env_prefix => "${class}::")) {
-        $params = $config->merge_defaults(defaults => $params, merge => 1, section => $class);
-      }
-
-      return bless $params, $class;
-}
 
 =cut
 

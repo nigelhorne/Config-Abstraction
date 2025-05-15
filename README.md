@@ -229,22 +229,6 @@ The entry `config_path` contains a list of the files that the configuration was 
 
 Merge the configuration hash into the given hash.
 
-Options:
-
-- merge
-
-    Usually what's in the object will overwrite what's in the defaults hash,
-    if given,
-    the result will be a combination of the hashes.
-
-- section
-
-    Merge in that section from the configuration file.
-
-- deep
-
-    Try harder to merge in all configuration from the global section of the configuration file.
-
     package MyPackage;
     use Params::Get;
     use Config::Abstraction;
@@ -260,7 +244,23 @@ Options:
       }
 
       return bless $params, $class;
-}
+  }
+
+Options:
+
+- merge
+
+    Usually what's in the object will overwrite what's in the defaults hash,
+    if given,
+    the result will be a combination of the hashes.
+
+- section
+
+    Merge in that section from the configuration file.
+
+- deep
+
+    Try harder to merge in all configuration from the global section of the configuration file.
 
 ## AUTOLOAD
 
