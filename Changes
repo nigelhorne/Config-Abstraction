@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.26
+0.26	Fri May 16 21:10:49 EDT 2025
 	Change location of bug reports to RT
 	Bumped minimum version of XML::PP (GitHub#1 - ANDK)
 	Turn off clone behavior
