@@ -681,6 +681,8 @@ sub merge_defaults
 	return $config if(!defined($defaults));
 	my $section = $params->{'section'};
 
+	Hash::Merge::set_clone_behavior(0);
+
 	if($config->{'global'}) {
 		if($params->{'deep'}) {
 			$defaults = merge($config->{'global'}, $defaults);
