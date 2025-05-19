@@ -274,9 +274,9 @@ sub new
 					File::Spec->catdir($ENV{'HOME'}, 'conf'),
 			} elsif($ENV{'DOCUMENT_ROOT'}) {
 				push @{$params->{'config_dirs'}},
+					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, File::Spec->updir(), 'conf'),
 					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'conf'),
-					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'config'),
-					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, File::Spec->updir(), 'conf');
+					File::Spec->catdir($ENV{'DOCUMENT_ROOT'}, 'config');
 			}
 			if(my $dir = $ENV{'CONFIG_DIR'}) {
 				push @{$params->{'config_dirs'}}, $dir;
