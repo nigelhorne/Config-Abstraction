@@ -226,6 +226,10 @@ Synonym for C<config_file>
 
 If true, returns a flat hash structure like C<{database.user}> (default: C<0>) instead of C<{database}{user}>.
 `
+=item * C<level>
+
+Level for logging.
+
 =item * C<logger>
 
 Used for warnings and traces.
@@ -299,6 +303,9 @@ sub new
 		if(!Scalar::Util::blessed($logger)) {
 			$self->_load_driver('Log::Abstraction');
 			$self->{'logger'} = Log::Abstraction->new($logger);
+			if($params->{'level'}) {
+				$self->{'logger'}->level($params->{'level'});
+			}
 		}
 	}
 	$self->_load_config();
