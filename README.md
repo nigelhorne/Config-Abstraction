@@ -4,7 +4,7 @@ Config::Abstraction - Configuration Abstraction Layer
 
 # VERSION
 
-Version 0.26
+Version 0.27
 
 # SYNOPSIS
 
@@ -195,7 +195,11 @@ Options:
 
     If true, returns a flat hash structure like `{database.user}` (default: `0`) instead of `{database}{user}`.
     \`
-    &#x3d;item \* `logger`
+    &#x3d;item \* `level`
+
+    Level for logging.
+
+- `logger`
 
     Used for warnings and traces.
     It can be an object that understands warn() and trace() messages,
