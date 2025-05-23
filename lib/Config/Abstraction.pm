@@ -335,7 +335,8 @@ sub _load_config
 		$logger->trace(ref($self), ' ', __LINE__, ': Entered _load_config');
 	}
 
-	for my $dir (@{$self->{'config_dirs'}}) {
+	# Look in the current directory (if the config_file starts with a '/' it'll treat that as an absolute pathname, if config_dirs has been passed in)
+	for my $dir (@{$self->{'config_dirs'}}, '') {
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
 			my $path = File::Spec->catfile($dir, $file);
 			if($logger) {
