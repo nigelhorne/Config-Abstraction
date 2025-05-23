@@ -339,7 +339,7 @@ sub _load_config
 	if($self->{'config_file'} && (scalar(@dirs) > 1)) {
 		if(File::Spec->file_name_is_absolute($self->{'config_file'})) {
 			# Handle absolute paths
-			push @dirs, '';
+			@dirs = ('');
 		} else {
 			# Look in the current directory
 			push @dirs, File::Spec->curdir();
