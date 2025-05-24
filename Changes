@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
-0.28
+0.28	Sat May 24 09:00:10 EDT 2025
 	Look in the current directory, unless given an absolute path
 
 0.27	Fri May 23 17:04:52 EDT 2025
