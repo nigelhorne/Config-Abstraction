@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.29
+	Also look in ${script_name}.cfg
+
 0.28	Sat May 24 09:00:10 EDT 2025
 	Look in the current directory, unless given an absolute path
 
