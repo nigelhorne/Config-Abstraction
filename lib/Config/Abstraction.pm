@@ -252,12 +252,21 @@ such as C<'database.user'>.
 
 =back
 
+If just one argument is given, it is assumed to be the name of a file.
+
 =cut
 
 sub new
 {
 	my $class = shift;
-	my $params = Params::Get::get_params(undef, @_) || {};
+	my $params;
+
+	if(scalar(@_) == 1) {
+		# Just one parameter - the name of a file
+		$params = Params::Get::get_params('file', @_);
+	} else {
+		$params = Params::Get::get_params(undef, @_) || {};
+	}
 
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
 
