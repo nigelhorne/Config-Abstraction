@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
+0.30
+	Try harder to ensure the running script isn't loaded as it's own configuration
+
 0.29	Mon May 26 20:55:38 EDT 2025
 	Also look in ${script_name}.cfg, ${script_name}.conf and ${script_name}.config
 	Allow new() to accept just one parameter - the name of a file
