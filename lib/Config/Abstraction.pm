@@ -434,7 +434,8 @@ sub _load_config
 			$self->{'script_name'} = File::Basename::basename($ENV{'SCRIPT_NAME'} || $0);
 		}
 
-		for my $config_file ('default', $self->{'script_name'}, $self->{'script_name'} . 'cfg', $self->{'config_file'}, @{$self->{'config_files'}}) {
+		my $script_name = $self->{'script_name'};
+		for my $config_file ('default', $script_name, "$script_name.cfg", "$script_name.conf", "$script_name.config", $self->{'config_file'}, @{$self->{'config_files'}}) {
 			next unless defined($config_file);
 			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
 			if($logger) {
