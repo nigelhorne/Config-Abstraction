@@ -135,7 +135,7 @@ This will override any value set for C<database.user> in the configuration files
 
 Configuration values can be overridden via the command line (C<@ARGV>).
 For instance, if you have a key in the configuration such as C<database.user>,
-you can override it by adding C<"APP_DATABASE__USER=other_user_name"> to the command line arguments.
+you can override it by adding C<"--APP_DATABASE__USER=other_user_name"> to the command line arguments.
 This will override any value set for C<database.user> in the configuration files.
 
 =head2 EXAMPLE CONFIGURATION FLOW
@@ -598,7 +598,7 @@ sub _load_config
 	foreach my $arg(@ARGV) {
 		next unless($arg =~ /=/);
 		my ($key, $value) = split(/=/, $arg, 2);
-		next unless $key =~ /^$self->{env_prefix}(.*)$/;
+		next unless $key =~ /^\-\-$self->{env_prefix}(.*)$/;
 
 		my $path = lc($1);
 		my @parts = split(/__/, $path);
@@ -624,6 +624,10 @@ sub get
 {
 	my ($self, $key) = @_;
 
+	my $prefix = lc($self->{env_prefix});
+	my $rc;
+	return $rc if(defined($rc));
+
 	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
@@ -632,12 +636,15 @@ sub get
 		return undef unless ref $ref eq 'HASH';
 		$ref = $ref->{$part};
 	}
-	if(!$self->{'no_fixate'}) {
-		if(ref($ref) eq 'HASH') {
-			Data::Reuse::fixate(%{$ref});
-		} elsif(ref($ref) eq 'ARRAY') {
-			Data::Reuse::fixate(@{$ref});
+	if(defined($ref)) {
+		if(!$self->{'no_fixate'}) {
+			if(ref($ref) eq 'HASH') {
+				Data::Reuse::fixate(%{$ref});
+			} elsif(ref($ref) eq 'ARRAY') {
+				Data::Reuse::fixate(@{$ref});
+			}
 		}
+	} else {
 	}
 	return $ref;
 }
@@ -792,6 +799,9 @@ sub AUTOLOAD
 
 	$key =~ s/.*:://;	# remove package name
 	return if $key eq 'DESTROY';
+
+	# my $val = $self->get($key);
+	# return $val if(defined($val));
 
 	my $data = $self->{data} || $self->{'config'};
 

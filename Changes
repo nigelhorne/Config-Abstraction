@@ -1,7 +1,8 @@
 Revision history for Config::Abstraction - Configuration Abstraction Layer
 
 0.30
-	Try harder to ensure the running script isn't loaded as it's own configuration
+	Try harder to ensure the running script isn't loaded as its own configuration
+	Test argv and note that argv now need to start with --
 
 0.29	Mon May 26 20:55:38 EDT 2025
 	Also look in ${script_name}.cfg, ${script_name}.conf and ${script_name}.config
