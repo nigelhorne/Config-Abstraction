@@ -624,10 +624,6 @@ sub get
 {
 	my ($self, $key) = @_;
 
-	my $prefix = lc($self->{env_prefix});
-	my $rc;
-	return $rc if(defined($rc));
-
 	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
