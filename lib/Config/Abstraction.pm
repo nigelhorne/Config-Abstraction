@@ -609,7 +609,11 @@ sub _load_config
 
 	if($self->{'flatten'}) {
 		$self->_load_driver('Hash::Flatten', ['flatten']);
+	} else {
+		$self->_load_driver('Hash::Flatten', ['unflatten']);
 	}
+	# $self->{config} = $self->{flatten} ? flatten(\%merged) : unflatten(\%merged);
+	# Don't unflatten because of RT#166761
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 }
 
