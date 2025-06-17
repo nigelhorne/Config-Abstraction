@@ -312,7 +312,7 @@ sub new
 		if(!Scalar::Util::blessed($logger)) {
 			$self->_load_driver('Log::Abstraction');
 			$self->{'logger'} = Log::Abstraction->new($logger);
-			if($params->{'level'}) {
+			if($params->{'level'} && $self->{'logger'}->can('level')) {
 				$self->{'logger'}->level($params->{'level'});
 			}
 		}
