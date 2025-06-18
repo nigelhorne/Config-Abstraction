@@ -12,7 +12,7 @@ Version 0.31
 
     my $config = Config::Abstraction->new(
       config_dirs => ['config'],
-      env_prefix => 'MYAPP_',
+      env_prefix => 'APP_',
       flatten => 0,
     );
 
