@@ -263,9 +263,9 @@ sub new
 
 	if(scalar(@_) == 1) {
 		# Just one parameter - the name of a file
-		$params = Params::Get::get_params('file', @_);
+		$params = Params::Get::get_params('file', \@_);
 	} else {
-		$params = Params::Get::get_params(undef, @_) || {};
+		$params = Params::Get::get_params(undef, \@_) || {};
 	}
 
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
@@ -637,15 +637,12 @@ sub get
 		return undef unless ref $ref eq 'HASH';
 		$ref = $ref->{$part};
 	}
-	if(defined($ref)) {
-		if(!$self->{'no_fixate'}) {
-			if(ref($ref) eq 'HASH') {
-				Data::Reuse::fixate(%{$ref});
-			} elsif(ref($ref) eq 'ARRAY') {
-				Data::Reuse::fixate(@{$ref});
-			}
+	if((defined($ref) && !$self->{'no_fixate'})) {
+		if(ref($ref) eq 'HASH') {
+			Data::Reuse::fixate(%{$ref});
+		} elsif(ref($ref) eq 'ARRAY') {
+			Data::Reuse::fixate(@{$ref});
 		}
-	} else {
 	}
 	return $ref;
 }
