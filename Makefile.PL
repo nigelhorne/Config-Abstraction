@@ -23,14 +23,15 @@ WriteMakefile(
 	PL_FILES => {},
 	CONFIGURE_REQUIRES => {
 		'ExtUtils::MakeMaker' => 6.64,	# Minimum version for TEST_REQUIRES
-	}, PREREQ_PM	=> {
+	}, EXE_FILES => [ 'bin/config-dump' ],
+	PREREQ_PM => {
 		'Carp' => 0,
 		'Config::Auto' => 0,
 		'Config::IniFiles' => 0,
 		'Data::Reuse' => 0,	# Fails installation tests on recent Perls, RT#100461
 		'File::Basename' => 0,
 		'File::Slurp' => 0,
-		'JSON::MaybeXS'	=> 0,
+		'JSON::MaybeXS' => 0,
 		'Params::Get' => 0.04,
 		'YAML::XS' => 0,
 		# 'XML::Parser::Expat' => 0,	# Seems to be needed for Windows

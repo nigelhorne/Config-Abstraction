@@ -1,5 +1,8 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
+0.34
+	Added bin/config-dump
+
 0.33	Thu Jul 17 08:19:41 EDT 2025
 	The config_path value wasn't being stashed properly
 

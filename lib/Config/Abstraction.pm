@@ -25,6 +25,10 @@ our $VERSION = '0.33';
 
 =head1 SYNOPSIS
 
+C<Config::Abstraction> lets you load configuration from multiple sources—such as files, environment variables, and in-code defaults—and merge them with predictable precedence.
+It provides a consistent API for accessing the configuration settings, regardless of where they came from,
+this helps keep your application’s or class's configuration flexible, centralized, and easy to override.
+
   use Config::Abstraction;
 
   my $config = Config::Abstraction->new(
@@ -394,6 +398,8 @@ sub _load_config
 		}
 	}
 	for my $dir (@dirs) {
+		next if(!defined($dir));
+
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
 			my $path = File::Spec->catfile($dir, $file);
 			if($logger) {
