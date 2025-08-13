@@ -1,3 +1,4 @@
+bin/config-dump
 Changes
 lib/Config/Abstraction.pm
 LICENSE
