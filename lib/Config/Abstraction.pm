@@ -13,7 +13,7 @@ use Params::Get 0.04;
 
 =head1 NAME
 
-Config::Abstraction - Configuration Abstraction Layer
+Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
@@ -38,6 +38,24 @@ our $VERSION = '0.33';
 =head1 DESCRIPTION
 
 C<Config::Abstraction> is a flexible configuration management layer that sits above C<Config::*> modules.
+It provides a simple way to layer multiple configuration sources with predictable merge order.
+It lets you define sources such as:
+
+=over 4
+
+=item * Perl hashes (in-memory defaults or dynamic values)
+
+=item * Environment variables (with optional prefixes)
+
+=item * Configuration files (YAML, JSON, INI, or plain key=value)
+
+=item * Command-line arguments
+
+=back
+
+Sources are applied in the order they are provided. Later sources override
+earlier ones unless a key is explicitly set to C<undef> in the later source.
+
 In addition to using drivers to load configuration data from multiple file
 formats (YAML, JSON, XML, and INI),
 it also allows levels of configuration, each of which overrides the lower levels.
@@ -46,6 +64,18 @@ overrides and command line arguments for runtime configuration adjustments.
 This module is designed to help developers manage layered configurations that can be loaded from files and overridden at run-time for debugging,
 offering a modern, robust and dynamic approach
 to configuration management.
+
+=head2 Merge Precedence Diagram
+
+  +----------------+
+  |   CLI args     |  (Highest priority)
+  +----------------+
+  | Environment    |
+  +----------------+
+  | Config file(s) |
+  +----------------+
+  | Defaults       |  (Lowest priority)
+  +----------------+
 
 =head2 KEY FEATURES
 
@@ -210,8 +240,17 @@ Considers the files C<default> and C<$script_name> before looking at C<config_fi
 
 =item * C<data>
 
-A hash ref of data to prime the configuration with.
-Any other data will overwrite by this.
+A hash ref of default data to prime the configuration with.
+These are applied before loading
+other sources and can be overridden by later sources or by explicitly passing
+options directly to C<new>.
+
+  $config = Config::Abstraction->new(
+      data => {
+          log_level => 'info',
+          retries => 3,
+      }
+  );
 
 =item * C<env_prefix>
 
@@ -303,7 +342,7 @@ sub new
 
 	my $self = bless {
 		sep_char => '.',
-		%{$params},
+		%{$params->{defaults} ? $params->{defaults} : $params},
 		env_prefix => $params->{env_prefix} || 'APP_',
 		config => {},
 	}, $class;
@@ -774,8 +813,8 @@ when C<sep_char> is set to '_'.
             },
             log_level => 'debug'
         },
-        flatten   => 1,
-        sep_char  => '_'
+        flatten => 1,
+        sep_char => '_'
     );
 
     my $user = $config->database_user();	# returns 'alice'
@@ -824,6 +863,20 @@ sub AUTOLOAD
 
 1;
 
+=head1 COMMON PITFALLS
+
+=over 4
+
+=item * Nested hashes
+
+Merging replaces entire nested hashes unless you enable deep merging.
+
+=item * Undef values
+
+Keys explicitly set to C<undef> in a later source override earlier values.
+
+=back
+
 =head1 BUGS
 
 It should be possible to escape the separator character either with backslashes or quotes.
@@ -849,7 +902,11 @@ You can find documentation for this module with the perldoc command.
 
 =over 4
 
+=item * L<Config::Any>
+
 =item * L<Config::Auto>
+
+=item * L<Hash::Merge>
 
 =item * L<Log::Abstraction>
 
