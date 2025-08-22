@@ -6,7 +6,6 @@ use warnings;
 use Config::Abstraction;
 use Getopt::Long qw(GetOptions);
 use Pod::Usage;
-use Data::Dumper;
 
 my $config_dirs;
 my $file;
@@ -29,22 +28,24 @@ $args->{'env_prefix'} = $env_prefix if($env_prefix);
 $args->{'file'} = $file if($file);
 $args->{'config_dirs'} = split(/,/, $config_dirs) if($config_dirs);
 
-my $cfg = Config::Abstraction->new($args);
+if(my $cfg = Config::Abstraction->new($args)) {
+	my $data = $cfg->all();
 
-my $data = $cfg->all();
+	if($format eq 'json') {
+		require JSON;
+		print JSON::encode_json($data), "\n";
+	} elsif($format eq 'yaml') {
+		require YAML;
+		print YAML::Dump($data);
+	} else {
+		require Data::Dumper;
+		Data::Dumper->import();
+		no warnings 'once';	# Silence Sortkeys message
 
-if ($format eq 'json') {
-	require JSON;
-	print JSON::encode_json($data), "\n";
-}
-elsif ($format eq 'yaml') {
-	require YAML;
-	print YAML::Dump($data);
-}
-else {
-	local $Data::Dumper::Terse = 1;
-	local $Data::Dumper::Sortkeys = 1;
-	print Dumper($data);
+		local $Data::Dumper::Terse = 1;
+		local $Data::Dumper::Sortkeys = 1;
+		print Dumper($data);
+	}
 }
 
 __END__

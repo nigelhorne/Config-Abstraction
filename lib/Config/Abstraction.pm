@@ -533,7 +533,7 @@ sub _load_config
 					if(!$data) {
 						$self->_load_driver('YAML::XS', ['LoadFile']);
 						if((eval { $data = LoadFile($path) }) && (ref($data) eq 'HASH')) {
-							# Could be colon file, could be YAML, whichever it is, break the configuration fields
+							# Could be colon file, could be YAML, whichever it is break the configuration fields
 							# foreach my($k, $v) (%{$data}) {
 							foreach my $k (keys %{$data}) {
 								my $v = $data->{$k};
