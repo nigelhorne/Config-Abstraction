@@ -10,6 +10,7 @@ use File::Slurp qw(read_file);
 use File::Spec;
 use Hash::Merge qw(merge);
 use Params::Get 0.04;
+use Params::Validate::Strict;
 
 =head1 NAME
 
@@ -293,6 +294,10 @@ The default is a C<'.'>,
 as in dotted notation,
 such as C<'database.user'>.
 
+=item * C<schema>
+
+A L<Params::Validate::Strict> compatible schema to validate the configuration file against.
+
 =back
 
 If just one argument is given, it is assumed to be the name of a file.
@@ -361,6 +366,10 @@ sub new
 		}
 	}
 	$self->_load_config();
+
+	if(my $schema = $params->{'schema'}) {
+		$self->{'config'} = Params::Validate::Strict::validate_strict(schema => $schema, input => $self->{'config'});
+	}
 
 	if($self->{'config'} && scalar(keys %{$self->{'config'}})) {
 		return $self;
