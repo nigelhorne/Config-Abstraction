@@ -1,5 +1,9 @@
 package Config::Abstraction;
 
+# TODO: add TOML file support
+# TODO: environment-specific encodings - automatic loading of dev/staging/prod
+# TODO: devise a scheme to encrypt passwords in config files
+
 use strict;
 use warnings;
 
