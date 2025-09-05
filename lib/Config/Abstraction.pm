@@ -23,11 +23,11 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
-Version 0.33
+Version 0.34
 
 =cut
 
-our $VERSION = '0.33';
+our $VERSION = '0.34';
 
 =head1 SYNOPSIS
 
@@ -931,6 +931,8 @@ You can find documentation for this module with the perldoc command.
 =item * L<Hash::Merge>
 
 =item * L<Log::Abstraction>
+
+=item * Test Dashboard L<https://nigelhorne.github.io/Config-Abstraction/coverage/>
 
 =back
 

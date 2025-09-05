@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.34
+0.34	Fri Sep  5 08:37:21 EDT 2025
 	Added bin/config-dump
 	If schema is passed in, validate the config file against it
 

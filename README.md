@@ -4,9 +4,13 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 # VERSION
 
-Version 0.33
+Version 0.34
 
 # SYNOPSIS
+
+`Config::Abstraction` lets you load configuration from multiple sources—such as files, environment variables, and in-code defaults—and merge them with predictable precedence.
+It provides a consistent API for accessing the configuration settings, regardless of where they came from,
+this helps keep your application’s or class's configuration flexible, centralized, and easy to override.
 
     use Config::Abstraction;
 
@@ -251,6 +255,10 @@ Options:
     as in dotted notation,
     such as `'database.user'`.
 
+- `schema`
+
+    A [Params::Validate::Strict](https://metacpan.org/pod/Params%3A%3AValidate%3A%3AStrict) compatible schema to validate the configuration file against.
+
 If just one argument is given, it is assumed to be the name of a file.
 
 ## get(key)
@@ -367,7 +375,16 @@ You can find documentation for this module with the perldoc command.
 - [Config::Auto](https://metacpan.org/pod/Config%3A%3AAuto)
 - [Hash::Merge](https://metacpan.org/pod/Hash%3A%3AMerge)
 - [Log::Abstraction](https://metacpan.org/pod/Log%3A%3AAbstraction)
+- Test Dashboard [https://nigelhorne.github.io/Config-Abstraction/coverage/](https://nigelhorne.github.io/Config-Abstraction/coverage/)
 
 # AUTHOR
 
 Nigel Horne, `<njh at nigelhorne.com>`
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 34:
+
+    Non-ASCII character seen before =encoding in 'sources—such'. Assuming UTF-8
