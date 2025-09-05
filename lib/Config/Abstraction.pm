@@ -15,6 +15,7 @@ use File::Spec;
 use Hash::Merge qw(merge);
 use Params::Get 0.04;
 use Params::Validate::Strict;
+use Scalar::Util;
 
 =head1 NAME
 
@@ -332,7 +333,9 @@ sub new
 		} else {
 			# Set up the default value for config_dirs
 			if($^O ne 'MSWin32') {
-				push @{$params->{'config_dirs'}}, '/etc', '/usr/local/etc';
+				$params->{'config_dirs'} = [ '/etc', '/usr/local/etc' ];
+			} else {
+				$params->{'config_dirs'} = [''];
 			}
 			if($ENV{'HOME'}) {
 				push @{$params->{'config_dirs'}},
@@ -812,7 +815,7 @@ sub _load_driver
 		$self->{'failed'}{$driver} = 1;
 		return;
 	}
-	$driver->import(@{$imports});
+	$driver->import(@{ $imports // [] });
 	$self->{'loaded'}{$driver} = 1;
 	return 1;
 }

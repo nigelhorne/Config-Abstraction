@@ -42,6 +42,7 @@ WriteMakefile(
 		'Hash::Flatten'	=> 0,
 		'JSON::Parse' => 0,
 		'Params::Validate::Strict' => 0,
+		'Scalar::Util' => 0,
 		'YAML::XS' => 0
 	},
 	META_MERGE => {
