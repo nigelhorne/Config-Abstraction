@@ -51,10 +51,16 @@
 <h1>Config::Abstraction</h1><h2>Coverage Report</h2>
 <table>
 <tr><th>File</th><th>Stmt</th><th>Branch</th><th>Cond</th><th>Sub</th><th>Total</th><th>&Delta;</th></tr>
-<tr class="low"><td><a href="blib-lib-Config-Abstraction-pm.html" title="View coverage line by line">blib/lib/Config/Abstraction.pm</a> <a href="https://github.com/nigelhorne/Config-Abstraction/blob/f108cd41b04a60d6c6f1a4ddab5c6069ea170422/blib/lib/Config/Abstraction.pm" class="icon-link" title="View source on GitHub">&#128269;</a></td><td>75.7</td><td>58.2</td><td>54.2</td><td>100.0</td><td><span class="coverage-badge badge-bad" title="Needs improvement">67.8%</span></td><td class="neutral" title="No previous data">&#9679;</td></tr>
+<tr class="low"><td><a href="blib-lib-Config-Abstraction-pm.html" title="View coverage line by line">blib/lib/Config/Abstraction.pm</a> <a href="https://github.com/nigelhorne/Config-Abstraction/blob/4e592ce6989b642ed8b75c10fe2ead3ef4babbaf/blib/lib/Config/Abstraction.pm" class="icon-link" title="View source on GitHub">&#128269;</a></td><td>75.7</td><td>58.2</td><td>54.2</td><td>100.0</td><td><span class="coverage-badge badge-bad" title="Needs improvement">67.8%</span></td><td class="neutral" title="Previous: 67.8%">&#9679; 0.0%</td></tr>
 <tr class="summary-row"><td colspan="2"><strong>Summary</strong></td><td colspan="2">1 files</td><td colspan="3">Avg: 67%, Low: 1</td></tr>
 <tr class="med"><td><strong>Total</strong></td><td>75.7</td><td>58.2</td><td>54.2</td><td>100.0</td><td colspan="2"><strong>67.8</strong></td></tr>
 </table>
+<p>
+	<label>
+		<input type="checkbox" id="toggleTrend" checked>
+		Show regression trend
+	</label>
+</p>
 <canvas id="coverageTrend" width="600" height="300"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -78,7 +84,7 @@ function linearRegression(data) {
 	}));
 }
 
-const dataPoints = [  ];
+const dataPoints = [ { x: "2025-09-05T08:26:43-04:00", y: 67.7862595419847, delta: 0, url: "https://github.com/nigelhorne/Config-Abstraction/commit/f108cd4", label: "2025-09-05T08:26:43-04:00", pointBackgroundColor: "gray", comment: "Quicker initialization of config_dirs" } ];
 const regressionPoints = linearRegression(dataPoints);
 const ctx = document.getElementById('coverageTrend').getContext('2d');
 const chart = new Chart(ctx, {
@@ -161,7 +167,7 @@ document.getElementById('toggleTrend').addEventListener('change', function(e) {
 </script>
 <footer>
 	<p>Project: <a href="https://github.com/nigelhorne/Config-Abstraction">Config-Abstraction</a></p>
-	<p><em>Last updated: 2025-09-05 12:29:30 - <a href="https://github.com/nigelhorne/Config-Abstraction/commit/f108cd41b04a60d6c6f1a4ddab5c6069ea170422">commit <code>f108cd4</code></a></em></p>
+	<p><em>Last updated: 2025-09-05 12:42:13 - <a href="https://github.com/nigelhorne/Config-Abstraction/commit/4e592ce6989b642ed8b75c10fe2ead3ef4babbaf">commit <code>4e592ce</code></a></em></p>
 </footer>
 </body>
 </html>
