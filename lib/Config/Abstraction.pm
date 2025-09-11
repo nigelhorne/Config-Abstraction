@@ -13,8 +13,8 @@ use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
 use Hash::Merge qw(merge);
-use Params::Get 0.04;
-use Params::Validate::Strict;
+use Params::Get 0.13;
+use Params::Validate::Strict 0.11;
 use Scalar::Util;
 
 =head1 NAME

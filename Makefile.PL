@@ -32,7 +32,7 @@ WriteMakefile(
 		'File::Basename' => 0,
 		'File::Slurp' => 0,
 		'JSON::MaybeXS' => 0,
-		'Params::Get' => 0.04,
+		'Params::Get' => 0.13,
 		# 'XML::Parser::Expat' => 0,	# Seems to be needed for Windows
 		# 'XML::LibXML' => 0,	# do.
 		# 'XML::Simple' => 0,
@@ -41,7 +41,7 @@ WriteMakefile(
 		'Hash::Merge'	=> 0,
 		'Hash::Flatten'	=> 0,
 		'JSON::Parse' => 0,
-		'Params::Validate::Strict' => 0,
+		'Params::Validate::Strict' => 0.11,
 		'Scalar::Util' => 0,
 		'YAML::XS' => 0
 	},
