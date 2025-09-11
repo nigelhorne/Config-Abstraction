@@ -62,6 +62,7 @@ WriteMakefile(
 			}
 		},
 	}, TEST_REQUIRES => {
+		'IPC::System::Simple' => 0,	# for scripts/generate_index
 		'Test::DescribeMe' => 0,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
