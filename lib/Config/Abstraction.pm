@@ -600,7 +600,7 @@ sub _load_config
 												undef $data;
 											}
 										}
-										open STDERR, ">&", $oldSTDERR;
+										open STDERR, '>&', $oldSTDERR;
 										$self->{'type'} = 'Perl';
 									}
 								}
