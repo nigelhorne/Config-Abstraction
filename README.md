@@ -122,18 +122,21 @@ to configuration management.
 
 ## ENVIRONMENT VARIABLE HANDLING
 
-Configuration values can be overridden via environment variables. For
-instance, if you have a key in the configuration such as `database.user`,
-you can override it by setting the corresponding environment variable
-`APP_DATABASE__USER` in your system.
+Configuration values can be overridden via environment variables. Environment variables use double underscores (\_\_) to denote nested configuration keys and single underscores remain as part of the key name under the prefix namespace.
 
 For example:
 
-    $ export APP_DATABASE__USER="env_user"
+    APP_DATABASE__USER becomes database.user (nested structure)
 
-This will override any value set for `database.user` in the configuration files.
+      $ export APP_DATABASE__USER="env_user"
 
-## COMMAND LINE HANDLING
+will override any value set for \`database.user\` in the configuration files.
+
+    APP_LOGLEVEL becomes APP.loglevel (flat under prefix namespace)
+
+    APP_API__RATE_LIMIT becomes api.rate_limit (mixed usage)
+
+This allows you to override both top-level and nested configuration values using environment variables.
 
 Configuration values can be overridden via the command line (`@ARGV`).
 For instance, if you have a key in the configuration such as `database.user`,
@@ -347,6 +350,12 @@ when `sep_char` is set to '\_'.
 - Undef values
 
     Keys explicitly set to `undef` in a later source override earlier values.
+
+- Environrment
+
+    When using environment variables,
+    remember that double underscores (\_\_) create nested structures,
+    while single underscores remain as part of the key name under the prefix namespace.
 
 # BUGS
 

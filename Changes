@@ -1,7 +1,8 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.35
-	Bunp some minimum versions - GitHub#6
+	Bump some minimum versions - GitHub#6
+	Fix remote possibility where STDERR could close if Config::Abstract dies
 
 0.34	Fri Sep  5 08:37:21 EDT 2025
 	Added bin/config-dump
