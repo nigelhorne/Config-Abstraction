@@ -23,17 +23,19 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
-Version 0.34
+Version 0.35
 
 =cut
 
-our $VERSION = '0.34';
+our $VERSION = '0.35';
 
 =head1 SYNOPSIS
 
-C<Config::Abstraction> lets you load configuration from multiple sources—such as files, environment variables, and in-code defaults—and merge them with predictable precedence.
+C<Config::Abstraction> lets you load configuration from multiple sources,
+such as files, environment variables, and in-code defaults,
+and merge them with predictable precedence.
 It provides a consistent API for accessing the configuration settings, regardless of where they came from,
-this helps keep your application’s or class's configuration flexible, centralized, and easy to override.
+this helps keep your application's or class's configuration flexible, centralized, and easy to override.
 
   use Config::Abstraction;
 

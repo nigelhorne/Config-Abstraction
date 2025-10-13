@@ -4,13 +4,15 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 # VERSION
 
-Version 0.34
+Version 0.35
 
 # SYNOPSIS
 
-`Config::Abstraction` lets you load configuration from multiple sources—such as files, environment variables, and in-code defaults—and merge them with predictable precedence.
+`Config::Abstraction` lets you load configuration from multiple sources,
+such as files, environment variables, and in-code defaults,
+and merge them with predictable precedence.
 It provides a consistent API for accessing the configuration settings, regardless of where they came from,
-this helps keep your application’s or class's configuration flexible, centralized, and easy to override.
+this helps keep your application's or class's configuration flexible, centralized, and easy to override.
 
     use Config::Abstraction;
 
@@ -389,11 +391,3 @@ You can find documentation for this module with the perldoc command.
 # AUTHOR
 
 Nigel Horne, `<njh at nigelhorne.com>`
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 34:
-
-    Non-ASCII character seen before =encoding in 'sources—such'. Assuming UTF-8
