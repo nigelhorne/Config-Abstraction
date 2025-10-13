@@ -672,9 +672,13 @@ sub _load_config
 
 		my $path = lc($1);
 		my @parts = split(/__/, $path);
-		my $ref = \%merged;
-		$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
-		$ref->{ $parts[-1] } = $value;
+		if(scalar(@parts) > 0) {
+			my $ref = \%merged;
+			if(scalar(@parts) > 1) {
+				$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
+			}
+			$ref->{$parts[-1]} = $value;
+		}
 	}
 
 	if($self->{'flatten'}) {
