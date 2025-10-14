@@ -387,6 +387,7 @@ You can find documentation for this module with the perldoc command.
 - [Hash::Merge](https://metacpan.org/pod/Hash%3A%3AMerge)
 - [Log::Abstraction](https://metacpan.org/pod/Log%3A%3AAbstraction)
 - Test Dashboard [https://nigelhorne.github.io/Config-Abstraction/coverage/](https://nigelhorne.github.io/Config-Abstraction/coverage/)
+- Development version on GitHub [https://github.com/nigelhorne/Config-Abstraction](https://github.com/nigelhorne/Config-Abstraction)
 
 # AUTHOR
 

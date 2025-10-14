@@ -966,6 +966,8 @@ You can find documentation for this module with the perldoc command.
 
 =item * Test Dashboard L<https://nigelhorne.github.io/Config-Abstraction/coverage/>
 
+=item * Development version on GitHub L<https://github.com/nigelhorne/Config-Abstraction>
+
 =back
 
 =head1 AUTHOR
