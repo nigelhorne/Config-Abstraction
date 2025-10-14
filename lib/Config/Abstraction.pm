@@ -488,6 +488,18 @@ sub _load_config
 				}
 			}
 			if($data) {
+				if(!ref($data)) {
+					if($logger) {
+						$logger->debug(ref($self), ' ', __LINE__, ": ignoring data from $path ($data)");
+					}
+					next;
+				}
+				if(ref($data) ne 'HASH') {
+					if($logger) {
+						$logger->debug(ref($self), ' ', __LINE__, ": ignoring data from $path (not a hashref)");
+					}
+					next;
+				}
 				if($logger) {
 					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 				}
