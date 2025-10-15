@@ -63,7 +63,11 @@ WriteMakefile(
 			}
 		},
 	}, TEST_REQUIRES => {
+		'File::Glob' => 0,
+		'File::stat' => 0,
 		'IPC::System::Simple' => 0,	# for scripts/generate_index
+		'POSIX' => 0,
+		'Readonly' => 0,
 		'Test::DescribeMe' => 0,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
