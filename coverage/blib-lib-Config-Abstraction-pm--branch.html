@@ -20,7 +20,7 @@ https://pjcj.net
 <h1>Branch Coverage</h1>
 <table>
 <tr><td class="h" align="right">File:</td><td align="left">blib/lib/Config/Abstraction.pm</td></tr>
-<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">57.2%</td></tr>
+<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">57.0%</td></tr>
 </table>
 <div><br/></div>
 <table>
@@ -97,56 +97,60 @@ https://pjcj.net
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$data = LoadFile($path)
 }
 } and ref $data eq &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L577">577</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $v =~ /^&quot;.+&quot;$/</td></tr>
-<tr><td class="h"><a id="L578">578</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($v =~ /,/)</td></tr>
-<tr><td class="h"><a id="L582">582</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($val =~ /(.+)=(.+)/) { }</td></tr>
-<tr><td class="h"><a id="L590">590</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
-<tr><td class="h"><a id="L594">594</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L596">596</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $ini = &quot;Config::IniFiles&quot;-&gt;new(&quot;-file&quot;, $path))</td></tr>
-<tr><td class="h"><a id="L601">601</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
-<tr><td class="h"><a id="L605">605</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L607">607</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;XML::Simple&quot;, [&quot;XMLin&quot;]))</td></tr>
-<tr><td class="h"><a id="L610">610</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L611">611</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;Config::Abstract&quot;))</td></tr>
-<tr><td class="h"><a id="L618">618</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($err) { }</td></tr>
+<tr><td class="h"><a id="L577">577</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (defined $v)</td></tr>
+<tr><td class="h"><a id="L584">584</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $v =~ /^&quot;.+&quot;$/</td></tr>
+<tr><td class="h"><a id="L585">585</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($v =~ /,/)</td></tr>
+<tr><td class="h"><a id="L589">589</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($val =~ /(.+)=(.+)/) { }</td></tr>
+<tr><td class="h"><a id="L597">597</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
+<tr><td class="h"><a id="L601">601</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L603">603</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $ini = &quot;Config::IniFiles&quot;-&gt;new(&quot;-file&quot;, $path))</td></tr>
+<tr><td class="h"><a id="L608">608</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
+<tr><td class="h"><a id="L612">612</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L614">614</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;XML::Simple&quot;, [&quot;XMLin&quot;]))</td></tr>
+<tr><td class="h"><a id="L617">617</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L618">618</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;Config::Abstract&quot;))</td></tr>
+<tr><td class="h"><a id="L625">625</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($err) { }</td></tr>
 <tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif ($data) { }</td></tr>
-<tr><td class="h"><a id="L622">622</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (scalar keys %{$data;} == 0)</td></tr>
-<tr><td class="h"><a id="L629">629</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L632">632</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data = $ca-&gt;parse)</td></tr>
-<tr><td class="h"><a id="L640">640</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($logger)</td></tr>
-<tr><td class="h"><a id="L641">641</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@) { }</td></tr>
-<tr><td class="h"><a id="L648">648</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar keys %merged) { }</td></tr>
+<tr><td class="h"><a id="L629">629</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (scalar keys %{$data;} == 0)</td></tr>
+<tr><td class="h"><a id="L636">636</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L639">639</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data = $ca-&gt;parse)</td></tr>
+<tr><td class="h"><a id="L647">647</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($logger)</td></tr>
+<tr><td class="h"><a id="L648">648</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@) { }</td></tr>
+<tr><td class="h"><a id="L655">655</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (scalar keys %merged) { }</td></tr>
 <tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif ($data and ref $data eq &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif (not $@ and $logger) { }</td></tr>
-<tr><td class="h"><a id="L649">649</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
-<tr><td class="h"><a id="L669">669</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless $key =~ /^$$self{&quot;env_prefix&quot;}(.*)$/i</td></tr>
-<tr><td class="h"><a id="L671">671</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($path =~ /__/) { }</td></tr>
-<tr><td class="h"><a id="L683">683</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $arg =~ /=/</td></tr>
-<tr><td class="h"><a id="L685">685</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $key =~ /^\-\-$$self{&quot;env_prefix&quot;}(.*)$/</td></tr>
-<tr><td class="h"><a id="L689">689</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (scalar @parts &gt; 0)</td></tr>
-<tr><td class="h"><a id="L691">691</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar @parts &gt; 1)</td></tr>
-<tr><td class="h"><a id="L698">698</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&#39;flatten&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L705">705</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$$self{&#39;flatten&#39;} ? :</td></tr>
-<tr><td class="h"><a id="L719">719</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;flatten&quot;})</td></tr>
-<tr><td class="h"><a id="L724">724</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless ref $ref eq &quot;HASH&quot;</td></tr>
-<tr><td class="h"><a id="L727">727</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $ref and not $$self{&quot;no_fixate&quot;})</td></tr>
-<tr><td class="h"><a id="L728">728</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (ref $ref eq &#39;HASH&#39;) { }</td></tr>
+<tr><td class="h"><a id="L656">656</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
+<tr><td class="h"><a id="L676">676</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless $key =~ /^$$self{&quot;env_prefix&quot;}(.*)$/i</td></tr>
+<tr><td class="h"><a id="L678">678</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($path =~ /__/) { }</td></tr>
+<tr><td class="h"><a id="L690">690</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $arg =~ /=/</td></tr>
+<tr><td class="h"><a id="L692">692</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $key =~ /^\-\-$$self{&quot;env_prefix&quot;}(.*)$/</td></tr>
+<tr><td class="h"><a id="L696">696</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (scalar @parts &gt; 0)</td></tr>
+<tr><td class="h"><a id="L698">698</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (scalar @parts &gt; 1)</td></tr>
+<tr><td class="h"><a id="L705">705</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&#39;flatten&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L712">712</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$$self{&#39;flatten&#39;} ? :</td></tr>
+<tr><td class="h"><a id="L726">726</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;flatten&quot;})</td></tr>
+<tr><td class="h"><a id="L731">731</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless ref $ref eq &quot;HASH&quot;</td></tr>
+<tr><td class="h"><a id="L734">734</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $ref and not $$self{&quot;no_fixate&quot;})</td></tr>
+<tr><td class="h"><a id="L735">735</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (ref $ref eq &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $ref eq &#39;ARRAY&#39;) { }</td></tr>
-<tr><td class="h"><a id="L750">750</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">$$self{&#39;config&#39;} &amp;&amp; scalar keys %{$$self{&#39;config&#39;};} ? :</td></tr>
-<tr><td class="h"><a id="L802">802</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
-<tr><td class="h"><a id="L806">806</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $defaults</td></tr>
-<tr><td class="h"><a id="L811">811</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$config{&quot;global&quot;})</td></tr>
-<tr><td class="h"><a id="L812">812</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($$params{&#39;deep&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L819">819</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($section and $$config{$section})</td></tr>
-<tr><td class="h"><a id="L822">822</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$params{&quot;merge&quot;})</td></tr>
-<tr><td class="h"><a id="L833">833</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $$self{&quot;loaded&quot;}{$driver}</td></tr>
-<tr><td class="h"><a id="L834">834</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $$self{&quot;failed&quot;}{$driver}</td></tr>
-<tr><td class="h"><a id="L837">837</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L838">838</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $logger = $$self{&quot;logger&quot;})</td></tr>
-<tr><td class="h"><a id="L886">886</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $key eq &quot;DESTROY&quot;</td></tr>
-<tr><td class="h"><a id="L894">894</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;flatten&quot;})</td></tr>
-<tr><td class="h"><a id="L895">895</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if exists $data-&gt;{$key}</td></tr>
-<tr><td class="h"><a id="L903">903</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $val eq &#39;HASH&#39; and exists $val-&gt;{$part}) { }</td></tr>
+<tr><td class="h"><a id="L755">755</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;flatten&quot;})</td></tr>
+<tr><td class="h"><a id="L760">760</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless ref $ref eq &quot;HASH&quot;</td></tr>
+<tr><td class="h"><a id="L761">761</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless exists $ref-&gt;{$part}</td></tr>
+<tr><td class="h"><a id="L780">780</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">$$self{&#39;config&#39;} &amp;&amp; scalar keys %{$$self{&#39;config&#39;};} ? :</td></tr>
+<tr><td class="h"><a id="L832">832</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
+<tr><td class="h"><a id="L836">836</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $defaults</td></tr>
+<tr><td class="h"><a id="L841">841</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($$config{&quot;global&quot;})</td></tr>
+<tr><td class="h"><a id="L842">842</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($$params{&#39;deep&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L849">849</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($section and $$config{$section})</td></tr>
+<tr><td class="h"><a id="L852">852</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$params{&quot;merge&quot;})</td></tr>
+<tr><td class="h"><a id="L863">863</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $$self{&quot;loaded&quot;}{$driver}</td></tr>
+<tr><td class="h"><a id="L864">864</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $$self{&quot;failed&quot;}{$driver}</td></tr>
+<tr><td class="h"><a id="L867">867</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
+<tr><td class="h"><a id="L868">868</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $logger = $$self{&quot;logger&quot;})</td></tr>
+<tr><td class="h"><a id="L916">916</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $key eq &quot;DESTROY&quot;</td></tr>
+<tr><td class="h"><a id="L924">924</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($$self{&quot;flatten&quot;})</td></tr>
+<tr><td class="h"><a id="L925">925</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if exists $data-&gt;{$key}</td></tr>
+<tr><td class="h"><a id="L933">933</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $val eq &#39;HASH&#39; and exists $val-&gt;{$part}) { }</td></tr>
 </table>
 </body>
 </html>
