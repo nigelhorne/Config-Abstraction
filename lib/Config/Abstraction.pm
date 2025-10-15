@@ -574,6 +574,13 @@ sub _load_config
 							# foreach my($k, $v) (%{$data}) {
 							foreach my $k (keys %{$data}) {
 								my $v = $data->{$k};
+								if(!defined($v)) {
+									# e.g. a simple line
+									#	foo:
+									# with nothing under it
+									$data->{$k} = undef;
+									next;
+								}
 								next if($v =~ /^".+"$/);	# Quotes to keep in one field
 								if($v =~ /,/) {
 									my @vals = split(/\s*,\s*/, $v);
@@ -732,6 +739,29 @@ sub get
 		}
 	}
 	return $ref;
+}
+
+=head2 exists(key)
+
+Does a configuration value using dotted key notation (e.g., C<'database.user'>) exist?
+Returns 0 or 1.
+
+=cut
+
+sub exists
+{
+	my ($self, $key) = @_;
+
+	if($self->{flatten}) {
+		return exists($self->{config}{$key});
+	}
+	my $ref = $self->{'config'};
+	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
+		return 0 unless ref $ref eq 'HASH';
+		return 0 if(!exists($ref->{$part}));
+		$ref = $ref->{$part};
+	}
+	return 1;
 }
 
 =head2 all()
