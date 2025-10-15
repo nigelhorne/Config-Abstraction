@@ -23,11 +23,11 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
-Version 0.35
+Version 0.36
 
 =cut
 
-our $VERSION = '0.35';
+our $VERSION = '0.36';
 
 =head1 SYNOPSIS
 
@@ -953,7 +953,7 @@ Merging replaces entire nested hashes unless you enable deep merging.
 
 Keys explicitly set to C<undef> in a later source override earlier values.
 
-=item * Environrment
+=item * Environment
 
 When using environment variables,
 remember that double underscores (__) create nested structures,

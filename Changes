@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.36
+0.36	Wed Oct 15 08:12:49 EDT 2025
 	Ignore files that don't parse
 	Added the exists() method
 
