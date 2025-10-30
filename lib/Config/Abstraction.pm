@@ -437,7 +437,7 @@ sub _load_config
 			}
 
 			my $data;
-			# TODO: only load config modules when they are needed
+			# Only load config modules when they are needed
 			if ($file =~ /\.ya?ml$/) {
 				$self->_load_driver('YAML::XS', ['LoadFile']);
 				$data = eval { LoadFile($path) };
