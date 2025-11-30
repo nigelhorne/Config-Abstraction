@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use Carp;
-use Data::Reuse;
+# use Data::Reuse;
 use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
@@ -732,10 +732,22 @@ sub get
 		$ref = $ref->{$part};
 	}
 	if((defined($ref) && !$self->{'no_fixate'})) {
-		if(ref($ref) eq 'HASH') {
-			Data::Reuse::fixate(%{$ref});
-		} elsif(ref($ref) eq 'ARRAY') {
-			Data::Reuse::fixate(@{$ref});
+		if(!$self->{reuse_loaded}) {
+			eval {
+				require Data::Reuse;
+				Data::Reuse->import();
+			};
+			unless($@) {
+				$self->{reuse_loaded} = 1;
+			}
+		}
+		if($self->{reuse_loaded}) {
+			if(ref($ref) eq 'HASH') {
+				Data::Reuse::fixate(%{$ref});
+			} elsif(ref($ref) eq 'ARRAY') {
+				# RT#171980
+				# Data::Reuse::fixate(@{$ref});
+			}
 		}
 	}
 	return $ref;
