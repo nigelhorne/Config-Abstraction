@@ -389,6 +389,10 @@ You can find documentation for this module with the perldoc command.
 
 - [Config::Any](https://metacpan.org/pod/Config%3A%3AAny)
 - [Config::Auto](https://metacpan.org/pod/Config%3A%3AAuto)
+- [Data::Reuse](https://metacpan.org/pod/Data%3A%3AReuse)
+
+    Used to `fixate()` elements when installed, unless `no-fixate` is given
+
 - [Hash::Merge](https://metacpan.org/pod/Hash%3A%3AMerge)
 - [Log::Abstraction](https://metacpan.org/pod/Log%3A%3AAbstraction)
 - Test Dashboard [https://nigelhorne.github.io/Config-Abstraction/coverage/](https://nigelhorne.github.io/Config-Abstraction/coverage/)

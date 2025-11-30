@@ -8,7 +8,6 @@ use strict;
 use warnings;
 
 use Carp;
-# use Data::Reuse;
 use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
@@ -1001,6 +1000,10 @@ You can find documentation for this module with the perldoc command.
 =item * L<Config::Any>
 
 =item * L<Config::Auto>
+
+=item * L<Data::Reuse>
+
+Used to C<fixate()> elements when installed, unless C<no-fixate> is given
 
 =item * L<Hash::Merge>
 
