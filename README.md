@@ -4,7 +4,7 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 # VERSION
 
-Version 0.36
+Version 0.37
 
 # SYNOPSIS
 
@@ -370,6 +370,10 @@ It should be possible to escape the separator character either with backslashes 
 
 Due to the case-insensitive nature of environment variables on Windows,
 it may be challenging to override values using environment variables on that platform.
+
+# REPOSITORY
+
+[https://github.com/nigelhorne/Config-Abstraction](https://github.com/nigelhorne/Config-Abstraction)
 
 # SUPPORT
 

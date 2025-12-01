@@ -30,6 +30,7 @@ WriteMakefile(
 		'Config::IniFiles' => 0,
 		'File::Basename' => 0,
 		'File::Slurp' => 0,
+		'Getopt::Long' => 0,
 		'JSON::MaybeXS' => 0,
 		'Params::Get' => 0.13,
 		# 'XML::Parser::Expat' => 0,	# Seems to be needed for Windows
@@ -41,6 +42,7 @@ WriteMakefile(
 		'Hash::Flatten'	=> 0,
 		'JSON::Parse' => 0,
 		'Params::Validate::Strict' => 0.11,
+		'Pod::Usage' => 0,
 		'Scalar::Util' => 0,
 		'YAML::XS' => 0
 	},

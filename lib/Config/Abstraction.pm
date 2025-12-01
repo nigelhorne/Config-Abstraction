@@ -22,11 +22,11 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
-Version 0.36
+Version 0.37
 
 =cut
 
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 
 =head1 SYNOPSIS
 
@@ -978,6 +978,10 @@ It should be possible to escape the separator character either with backslashes 
 
 Due to the case-insensitive nature of environment variables on Windows,
 it may be challenging to override values using environment variables on that platform.
+
+=head1 REPOSITORY
+
+L<https://github.com/nigelhorne/Config-Abstraction>
 
 =head1 SUPPORT
 
