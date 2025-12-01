@@ -2,6 +2,7 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.37
 	Only use Data::Reuse if it's installed - its installation often fails
+	Added the --version option to config-dump
 
 0.36	Wed Oct 15 08:12:49 EDT 2025
 	Ignore files that don't parse
