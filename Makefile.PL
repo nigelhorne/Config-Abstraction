@@ -28,6 +28,7 @@ WriteMakefile(
 		'Carp' => 0,
 		'Config::Auto' => 0,
 		'Config::IniFiles' => 0,
+		# 'Data::Reuse' => 0,	# Fails installation tests on recent Perls, RT#100461
 		'File::Basename' => 0,
 		'File::Slurp' => 0,
 		'Getopt::Long' => 0,
