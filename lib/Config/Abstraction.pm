@@ -266,6 +266,19 @@ options directly to C<new>.
       }
   );
 
+=item * C<defaults>
+
+A hash reference that provides default values for the object's own attributes (such as C<config_dirs>, C<logger>, C<flatten>, etc.).
+If this option is supplied,
+the object is initialized using the keys in this hash as the base;
+any other options passed directly to C<new()> (aside from C<env_prefix>) are ignored.
+This allows you to pre-define a standard configuration profile for the object itself.
+Note that C<defaults> is distinct from the C<data> option - C<data> supplies the initial configuration values that will be merged with files, environment, and command line,
+while C<defaults> sets the object's internal parameters.
+The C<env_prefix> value,
+if provided as a top-level argument,
+still takes precedence over any C<env_prefix> that might exist inside the C<defaults> hash.
+
 =item * C<env_prefix>
 
 A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DATABASE__USER>,
