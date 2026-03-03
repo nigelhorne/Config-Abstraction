@@ -814,9 +814,10 @@ sub all
 
 	return if(!$self->{config});
 
-	if($self->_load_data_reuse()) {
-		Data::Reuse::fixate($self->{config});
-	}
+	# This is good for debugging, but not much more and it breaks inheritance, so disabled
+	# if($self->_load_data_reuse()) {
+		# Data::Reuse::fixate($self->{config});
+	# }
 
 	return(scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
