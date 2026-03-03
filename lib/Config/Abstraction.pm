@@ -887,7 +887,7 @@ sub merge_defaults
 		}
 		delete $config->{'global'};
 	}
-	if($section && $config->{$section}) {
+	if($section && exists $config->{$section}) {
 		$config = $config->{$section};
 	}
 	if($params->{'merge'}) {
