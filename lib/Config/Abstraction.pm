@@ -741,19 +741,11 @@ sub get
 	my $ref = $self->{'config'};
 	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
 		return undef unless ref $ref eq 'HASH';
+		return unless exists $ref->{$part};
 		$ref = $ref->{$part};
 	}
-	if((defined($ref) && !$self->{'no_fixate'})) {
-		if(!$self->{reuse_loaded}) {
-			eval {
-				require Data::Reuse;
-				Data::Reuse->import();
-			};
-			unless($@) {
-				$self->{reuse_loaded} = 1;
-			}
-		}
-		if($self->{reuse_loaded}) {
+	if((defined($ref) && (ref($ref) eq 'HASH') && !$self->{'no_fixate'})) {
+		if($self->_load_data_reuse()) {
 			if(ref($ref) eq 'HASH') {
 				Data::Reuse::fixate(%{$ref});
 			} elsif(ref($ref) eq 'ARRAY') {
@@ -763,6 +755,25 @@ sub get
 		}
 	}
 	return $ref;
+}
+
+sub _load_data_reuse
+{
+	my $self = $_[0];
+
+	return 0 if($self->{'no_fixate'});
+
+	return 1 if($self->{reuse_loaded});
+
+	eval {
+		require Data::Reuse;
+		Data::Reuse->import();
+	};
+	unless($@) {
+		$self->{reuse_loaded} = 1;
+		return 1;
+	}
+	return 0;
 }
 
 =head2 exists(key)
@@ -801,7 +812,13 @@ sub all
 {
 	my $self = shift;
 
-	return($self->{'config'} && scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
+	return if(!$self->{config});
+
+	if($self->_load_data_reuse()) {
+		Data::Reuse::fixate($self->{config});
+	}
+
+	return(scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
 
 =head2 merge_defaults
