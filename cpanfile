@@ -5,7 +5,6 @@ requires 'perl', '5.10.0';
 requires 'Carp';
 requires 'Config::Auto';
 requires 'Config::IniFiles';
-requires 'Data::Reuse';
 requires 'File::Basename';
 requires 'File::Slurp';
 requires 'File::Spec';
@@ -18,15 +17,13 @@ requires 'Params::Get', '0.13';
 requires 'Params::Validate::Strict', '0.11';
 requires 'Pod::Usage';
 requires 'Scalar::Util';
-requires 'XML::LibXML';
 requires 'XML::PP', '0.06';
-requires 'XML::Parser::Expat';
-requires 'XML::Simple';
 requires 'YAML::XS';
 
 on 'configure' => sub {
 	requires 'ExtUtils::MakeMaker', '6.64';
 };
+
 on 'test' => sub {
 	requires 'File::Glob';
 	requires 'File::stat';
@@ -39,6 +36,7 @@ on 'test' => sub {
 	requires 'Test::TempDir::Tiny';
 	requires 'Test::Without::Module';
 };
+
 on 'develop' => sub {
 	requires 'Devel::Cover';
 	requires 'Perl::Critic';
