@@ -1,7 +1,14 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.38
-	Document the "defaults" argument to new()
+	[ Enhancements ]
+	- Document the "defaults" argument to new()
+
+	[ Bug Fixes]
+	- Fix corruption of coderefs and blessed objects passed via the 'data' argument;
+		added _is_plain_scalar() guard to skip non-string scalars in the YAML colon-file
+		value-munging loop, and fixed Data::Reuse::fixate() being called with a
+		dereferenced hash instead of a hashref in get()
 
 0.37	Mon Dec  1 07:43:07 EST 2025
 	Only use Data::Reuse if it's installed - its installation often fails

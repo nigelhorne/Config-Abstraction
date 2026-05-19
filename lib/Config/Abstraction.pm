@@ -3,6 +3,7 @@ package Config::Abstraction;
 # TODO: add TOML file support
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
 # TODO: devise a scheme to encrypt passwords in config files
+# TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
 
 use strict;
 use warnings;
@@ -401,6 +402,19 @@ sub new
 	return undef;
 }
 
+# Determine if a value is a plain, unblessed, non-reference scalar
+# safe to use in regex/string operations.
+# Args:   value to test
+# Returns: 1 if plain scalar, 0 otherwise
+sub _is_plain_scalar
+{
+	my $val = $_[0];
+
+	return 0 if Scalar::Util::blessed($val);
+	return 0 if ref($val);
+	return 1;
+}
+
 sub _load_config
 {
 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
@@ -593,6 +607,9 @@ sub _load_config
 									$data->{$k} = undef;
 									next;
 								}
+								# Do not inspect or modify coderefs, blessed objects, or any reference
+								next unless _is_plain_scalar($v);
+
 								next if($v =~ /^".+"$/);	# Quotes to keep in one field
 								if($v =~ /,/) {
 									my @vals = split(/\s*,\s*/, $v);
@@ -747,7 +764,9 @@ sub get
 	if((defined($ref) && (ref($ref) eq 'HASH') && !$self->{'no_fixate'})) {
 		if($self->_load_data_reuse()) {
 			if(ref($ref) eq 'HASH') {
-				Data::Reuse::fixate(%{$ref});
+				# Pass the hashref directly (not dereferenced) so fixate receives
+				# a named scalar it can make read-only without flattening the hash
+				Data::Reuse::fixate($ref) if scalar(keys %{$ref});
 			} elsif(ref($ref) eq 'ARRAY') {
 				# RT#171980
 				# Data::Reuse::fixate(@{$ref});
