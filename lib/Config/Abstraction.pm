@@ -1063,7 +1063,7 @@ Used to C<fixate()> elements when installed, unless C<no-fixate> is given
 
 =item * L<Log::Abstraction>
 
-=item * Test Dashboard L<https://nigelhorne.github.io/Config-Abstraction/coverage/>
+=item * L<Test Dashboard|https://nigelhorne.github.io/Config-Abstraction/coverage/>
 
 =item * Development version on GitHub L<https://github.com/nigelhorne/Config-Abstraction>
 
