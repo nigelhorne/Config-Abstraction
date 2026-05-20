@@ -13,7 +13,7 @@ requires 'Hash::Flatten';
 requires 'Hash::Merge';
 requires 'JSON::MaybeXS';
 requires 'JSON::Parse';
-requires 'Params::Get', '0.13';
+requires 'Params::Get', '0.14';
 requires 'Params::Validate::Strict', '0.11';
 requires 'Pod::Usage';
 requires 'Scalar::Util';

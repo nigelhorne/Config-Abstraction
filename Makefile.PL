@@ -33,7 +33,7 @@ WriteMakefile(
 		'File::Slurp' => 0,
 		'Getopt::Long' => 0,
 		'JSON::MaybeXS' => 0,
-		'Params::Get' => 0.13,
+		'Params::Get' => 0.14,
 		# 'XML::Parser::Expat' => 0,	# Seems to be needed for Windows
 		# 'XML::LibXML' => 0,	# do.
 		# 'XML::Simple' => 0,
