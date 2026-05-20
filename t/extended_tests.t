@@ -567,6 +567,7 @@ subtest 'CLI - non-option ARGV entries ignored' => sub {
 
 # Exercise the logger with a filename (Log::Abstraction wraps it)
 subtest 'logger - filename logger accepted' => sub {
+	test_needs 'Log::Abstraction';
 	my $dir = tempdir(CLEANUP => 1);
 	my $logfile = File::Spec->catfile($dir, 'test.log');
 
@@ -584,6 +585,7 @@ subtest 'logger - filename logger accepted' => sub {
 
 # Exercise the level option with a logger
 subtest 'logger - level option applied to logger when supported' => sub {
+	test_needs 'Log::Abstraction';
 	my @log;
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),
