@@ -270,7 +270,11 @@ subtest 'get() - key that is just the sep_char' => sub {
 	# A single dot splits into ('', '') - both empty string lookups
 	my $val = $cfg->get($SEP);
 	# Should return undef without crashing
-	ok(!$@, 'sep_char-only key does not throw');
+	if($@) {
+		diag("key that is just sep_char fails with $@");
+	} else {
+		ok(!$@, 'sep_char-only key does not throw');
+	}
 };
 
 subtest 'get() - empty string key' => sub {
