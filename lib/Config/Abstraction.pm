@@ -801,19 +801,24 @@ sub _load_data_reuse
 {
 	my $self = $_[0];
 
+	# Skip fixation entirely if caller has opted out
 	return 0 if($self->{'no_fixate'});
 
+	# Return cached result to avoid repeated require attempts
 	return 1 if($self->{reuse_loaded});
+	return 0 if($self->{reuse_failed});
 
 	eval {
 		require Data::Reuse;
 		Data::Reuse->import();
 	};
-	unless($@) {
-		$self->{reuse_loaded} = 1;
-		return 1;
+	if($@) {
+		# Cache the failure so we do not attempt to load again
+		$self->{reuse_failed} = 1;
+		return 0;
 	}
-	return 0;
+	$self->{reuse_loaded} = 1;
+	return 1;
 }
 
 =head2 exists(key)

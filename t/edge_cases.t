@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use autodie qw(:all);
 
-use Test::More;
+use Test::Most;
 use Test::Mockingbird;
 use Readonly;
 use Scalar::Util qw(blessed reftype looks_like_number);
@@ -268,13 +268,7 @@ subtest 'get() - key that is just the sep_char' => sub {
 		config_dirs => [],
 	);
 	# A single dot splits into ('', '') - both empty string lookups
-	my $val = $cfg->get($SEP);
-	# Should return undef without crashing
-	if($@) {
-		diag("key that is just sep_char fails with $@");
-	} else {
-		ok(!$@, 'sep_char-only key does not throw');
-	}
+	lives_ok { my $val = $cfg->get($SEP) } 'sep_char-only key does not throw';
 };
 
 subtest 'get() - empty string key' => sub {
