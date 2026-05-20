@@ -493,6 +493,7 @@ subtest 'end-to-end: logger integration - arrayref logger captures messages' => 
 };
 
 subtest 'end-to-end: logger integration - coderef logger receives calls' => sub {
+	test_needs 'Log::Abstraction';
 	my @calls;
 	my $logger_cb = sub { push @calls, [@_] };
 
