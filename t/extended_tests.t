@@ -8,8 +8,8 @@ use strict;
 use warnings;
 use autodie qw(:all);
 
-use Test::More;
-use Test::Mockingbird;
+use Test::Most;
+use Test::Needs;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
 use File::Temp qw(tempdir);
@@ -109,6 +109,7 @@ subtest '_load_driver() - imports arrayref executed on load' => sub {
 
 # Exercise the logger warning path in _load_driver on failure
 subtest '_load_driver() - logger warned on failure' => sub {
+	test_needs 'Log::Abstraction';
 	my @log;
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),
