@@ -410,6 +410,7 @@ sub _is_plain_scalar
 {
 	my $val = $_[0];
 
+	return 0 if !defined($val);
 	return 0 if Scalar::Util::blessed($val);
 	return 0 if ref($val);
 	return 1;
@@ -764,9 +765,11 @@ sub get
 	if((defined($ref) && (ref($ref) eq 'HASH') && !$self->{'no_fixate'})) {
 		if($self->_load_data_reuse()) {
 			if(ref($ref) eq 'HASH') {
-				# Pass the hashref directly (not dereferenced) so fixate receives
-				# a named scalar it can make read-only without flattening the hash
-				Data::Reuse::fixate($ref) if scalar(keys %{$ref});
+				if(!tied %$ref) {
+					# Pass the hashref directly (not dereferenced) so fixate receives
+					# a named scalar it can make read-only without flattening the hash
+					Data::Reuse::fixate($ref) if scalar(keys %{$ref});
+				}
 			} elsif(ref($ref) eq 'ARRAY') {
 				# RT#171980
 				# Data::Reuse::fixate(@{$ref});
@@ -807,7 +810,7 @@ sub exists
 	my ($self, $key) = @_;
 
 	if($self->{flatten}) {
-		return exists($self->{config}{$key});
+		return exists($self->{config}{$key}) ? 1 : 0;
 	}
 	my $ref = $self->{'config'};
 	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {

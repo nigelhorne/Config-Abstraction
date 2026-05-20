@@ -9,6 +9,9 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 		added _is_plain_scalar() guard to skip non-string scalars in the YAML colon-file
 		value-munging loop, and fixed Data::Reuse::fixate() being called with a
 		dereferenced hash instead of a hashref in get()
+	- Fix Data::Reuse::fixate() crash in get() by passing hashref scalar directly
+	  rather than dereferencing, and guard against double-fixation with !tied check
+	- Fix exists() to return explicit 0 rather than empty string in flat mode
 
 0.37	Mon Dec  1 07:43:07 EST 2025
 	Only use Data::Reuse if it's installed - its installation often fails
