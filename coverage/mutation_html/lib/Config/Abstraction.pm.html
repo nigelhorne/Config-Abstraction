@@ -244,10 +244,10 @@ pre details.mutant-details ul {
 <div class="nav"><a href="../../../index.html">Index</a>
 </div><div class='summary'>
 <strong>Structural Coverage (Approximate)</strong><p>
-TER1 (Statement): 75.99%<br>
-TER2 (Branch): 60.66%<br>
-TER3 (LCSAJ): 100.0% (60/60)<br>
-Approximate LCSAJ segments: 273<br>
+TER1 (Statement): 79.64%<br>
+TER2 (Branch): 66.91%<br>
+TER3 (LCSAJ): 98.3% (57/58)<br>
+Approximate LCSAJ segments: 279<br>
 </div>
 
     <div class="legend">
@@ -631,158 +631,158 @@ Approximate LCSAJ segments: 273<br>
 </span><span class="">  339: 		$params = Params::Get::get_params(undef, \@_) || {};
 </span><span class="">  340: 	}
 </span><span class="">  341: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 344 → 348</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 344 → 0</span></span>  342: 	$params-&gt;{&#39;config_dirs&#39;} //= $params-&gt;{&#39;path&#39;};	# Compatibility with Config::Auto
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 346 → 375</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">342 → 346 → 0</span></span>  342: 	$params-&gt;{&#39;config_dirs&#39;} //= $params-&gt;{&#39;path&#39;};	# Compatibility with Config::Auto
 </span><span class="">  343: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  344: 	if((!defined($params-&gt;{&#39;config_dirs&#39;})) &amp;&amp; $params-&gt;{&#39;file&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  345: 		$params-&gt;{&#39;config_file&#39;} = $params-&gt;{&#39;file&#39;};
-</span><span class="">  346: 	}
-</span><span class="">  347: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">348 → 348 → 377</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">348 → 348 → 0</span></span>  348: 	if(!defined($params-&gt;{&#39;config_dirs&#39;})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  349: 		if($params-&gt;{&#39;config_file&#39;} &amp;&amp; File::Spec-&gt;file_name_is_absolute($params-&gt;{&#39;config_file&#39;})) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  344: 	$params-&gt;{&#39;config_file&#39;} //= $params-&gt;{&#39;file&#39;} if($params-&gt;{&#39;file&#39;});
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  345: 
+</span><span class="">  346: 	if(!defined($params-&gt;{&#39;config_dirs&#39;})) {
+</span><span class="">  347: 		if($params-&gt;{&#39;config_file&#39;} &amp;&amp; File::Spec-&gt;file_name_is_absolute($params-&gt;{&#39;config_file&#39;})) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  348: 			$params-&gt;{&#39;config_dirs&#39;} = [&#39;&#39;];
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  349: 		} else {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_349_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  350: 			$params-&gt;{&#39;config_dirs&#39;} = [&#39;&#39;];
-</span><span class="">  351: 		} else {
-</span><span class="">  352: 			# Set up the default value for config_dirs
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  353: 			if($^O ne &#39;MSWin32&#39;) {
+<span class="">  350: 			# Set up the default value for config_dirs
+</span><span class="">  351: 			if($^O ne &#39;MSWin32&#39;) {
+</span><span class="">  352: 				$params-&gt;{&#39;config_dirs&#39;} = [ &#39;/etc&#39;, &#39;/usr/local/etc&#39; ];
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  353: 			} else {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_353_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  354: 				$params-&gt;{&#39;config_dirs&#39;} = [ &#39;/etc&#39;, &#39;/usr/local/etc&#39; ];
-</span><span class="">  355: 			} else {
-</span><span class="">  356: 				$params-&gt;{&#39;config_dirs&#39;} = [&#39;&#39;];
-</span><span class="">  357: 			}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  358: 			if($ENV{&#39;HOME&#39;}) {
+<span class="">  354: 				$params-&gt;{&#39;config_dirs&#39;} = [&#39;&#39;];
+</span><span class="">  355: 			}
+</span><span class="">  356: 			if($ENV{&#39;HOME&#39;}) {
+</span><span class="">  357: 				push @{$params-&gt;{&#39;config_dirs&#39;}},
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  358: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;.conf&#39;),
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_358_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  359: 				push @{$params-&gt;{&#39;config_dirs&#39;}},
-</span><span class="">  360: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;.conf&#39;),
-</span><span class="">  361: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;.config&#39;),
-</span><span class="">  362: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;conf&#39;),
-</span><span class="">  363: 			} elsif($ENV{&#39;DOCUMENT_ROOT&#39;}) {
-</span><span class="">  364: 				push @{$params-&gt;{&#39;config_dirs&#39;}},
-</span><span class="">  365: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, File::Spec-&gt;updir(), &#39;conf&#39;),
-</span><span class="">  366: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, &#39;conf&#39;),
-</span><span class="">  367: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, &#39;config&#39;);
-</span><span class="">  368: 			}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  369: 			if(my $dir = $ENV{&#39;CONFIG_DIR&#39;}) {
+<span class="">  359: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;.config&#39;),
+</span><span class="">  360: 					File::Spec-&gt;catdir($ENV{&#39;HOME&#39;}, &#39;conf&#39;),
+</span><span class="">  361: 			} elsif($ENV{&#39;DOCUMENT_ROOT&#39;}) {
+</span><span class="">  362: 				push @{$params-&gt;{&#39;config_dirs&#39;}},
+</span><span class="">  363: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, File::Spec-&gt;updir(), &#39;conf&#39;),
+</span><span class="">  364: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, &#39;conf&#39;),
+</span><span class="">  365: 					File::Spec-&gt;catdir($ENV{&#39;DOCUMENT_ROOT&#39;}, &#39;config&#39;);
+</span><span class="">  366: 			}
+</span><span class="">  367: 			if(my $dir = $ENV{&#39;CONFIG_DIR&#39;}) {
+</span><span class="">  368: 				push @{$params-&gt;{&#39;config_dirs&#39;}}, $dir;
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  369: 			} else {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_369_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  370: 				push @{$params-&gt;{&#39;config_dirs&#39;}}, $dir;
-</span><span class="">  371: 			} else {
-</span><span class="">  372: 				push @{$params-&gt;{&#39;config_dirs&#39;}}, &#39;conf&#39;, &#39;config&#39;;
-</span><span class="">  373: 			}
-</span><span class="">  374: 		}
-</span><span class="">  375: 	}
-</span><span class="">  376: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">377 → 384 → 399</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">377 → 384 → 0</span></span>  377: 	my $self = bless {
-</span><span class="">  378: 		sep_char =&gt; &#39;.&#39;,
-</span><span class="">  379: 		%{$params-&gt;{defaults} ? $params-&gt;{defaults} : $params},
-</span><span class="">  380: 		env_prefix =&gt; $params-&gt;{env_prefix} || &#39;APP_&#39;,
-</span><span class="">  381: 		config =&gt; {},
-</span><span class="">  382: 	}, $class;
-</span><span class="">  383: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  384: 	if(my $logger = $self-&gt;{&#39;logger&#39;}) {
+<span class="">  370: 				push @{$params-&gt;{&#39;config_dirs&#39;}}, &#39;conf&#39;, &#39;config&#39;;
+</span><span class="">  371: 			}
+</span><span class="">  372: 		}
+</span><span class="">  373: 	}
+</span><span class="">  374: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">375 → 382 → 397</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">375 → 382 → 0</span></span>  375: 	my $self = bless {
+</span><span class="">  376: 		sep_char =&gt; &#39;.&#39;,
+</span><span class="">  377: 		%{$params-&gt;{defaults} ? $params-&gt;{defaults} : $params},
+</span><span class="">  378: 		env_prefix =&gt; $params-&gt;{env_prefix} || &#39;APP_&#39;,
+</span><span class="">  379: 		config =&gt; {},
+</span><span class="">  380: 	}, $class;
+</span><span class="">  381: 
+</span><span class="">  382: 	if(my $logger = $self-&gt;{&#39;logger&#39;}) {
+</span><span class="">  383: 		if(!Scalar::Util::blessed($logger)) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  384: 			# Don&#39;t call $self-&gt;_load_driver(&#39;Log::Abstraction&#39;) as it can make a call to logger, which is yet to be set up
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_384_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  385: 		if(!Scalar::Util::blessed($logger)) {
+<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  385: 			eval &quot;require Log::Abstraction&quot;;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_385_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  386: 			# Don&#39;t call $self-&gt;_load_driver(&#39;Log::Abstraction&#39;) as it can make a call to logger which is yet to be set up
-</span><span class="">  387: 			eval &quot;require Log::Abstraction&quot;;
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  388: 			if($@) {
+<span class="">  386: 			if($@) {
+</span><span class="">  387: 				carp(ref($self), &quot;: Log::Abstraction failed to load: $@&quot;);
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  388: 			} else {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_388_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  389: 				carp(ref($self), &quot;: Log::Abstraction failed to load: $@&quot;);
-</span><span class="">  390: 			} else {
-</span><span class="">  391: 				Log::Abstraction-&gt;import();
-</span><span class="">  392: 				$self-&gt;{&#39;logger&#39;} = Log::Abstraction-&gt;new($logger);
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  393: 				if($params-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;logger&#39;}-&gt;can(&#39;level&#39;)) {
+<span class="">  389: 				Log::Abstraction-&gt;import();
+</span><span class="">  390: 				$self-&gt;{&#39;logger&#39;} = Log::Abstraction-&gt;new($logger);
+</span><span class="">  391: 				if($params-&gt;{&#39;level&#39;} &amp;&amp; $self-&gt;{&#39;logger&#39;}-&gt;can(&#39;level&#39;)) {
+</span><span class="">  392: 					$self-&gt;{&#39;logger&#39;}-&gt;level($params-&gt;{&#39;level&#39;});
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  393: 				}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_393_5: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  394: 					$self-&gt;{&#39;logger&#39;}-&gt;level($params-&gt;{&#39;level&#39;});
-</span><span class="">  395: 				}
-</span><span class="">  396: 			}
-</span><span class="">  397: 		}
-</span><span class="">  398: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">399 → 401 → 405</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">399 → 401 → 0</span></span>  399: 	$self-&gt;_load_config();
-</span><span class="">  400: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  401: 	if(my $schema = $params-&gt;{&#39;schema&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  402: 		$self-&gt;{&#39;config&#39;} = Params::Validate::Strict::validate_strict(schema =&gt; $schema, input =&gt; $self-&gt;{&#39;config&#39;});
-</span><span class="">  403: 	}
-</span><span class="">  404: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">405 → 405 → 408</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">405 → 405 → 0</span></span>  405: 	if(defined($self-&gt;{&#39;config&#39;}) &amp;&amp; scalar(keys %{$self-&gt;{&#39;config&#39;}})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  406: 		return $self;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  407: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">408 → 408 → 0</span></span>  408: 	return undef;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  409: }
-</span><span class="">  410: 
-</span><span class="">  411: # Determine if a value is a plain, unblessed, non-reference scalar
-</span><span class="">  412: # safe to use in regex/string operations.
-</span><span class="">  413: # Args:   value to test
-</span><span class="">  414: # Returns: 1 if plain scalar, 0 otherwise
-</span><span class="">  415: sub _is_plain_scalar
-</span><span class="">  416: {
-</span><span class="">  417: 	my $val = $_[0];
-</span><span class="">  418: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  419: 	return 0 if !defined($val);
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  420: 	return 0 if Scalar::Util::blessed($val);
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  421: 	return 0 if ref($val);
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  422: 	return 1;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  423: }
-</span><span class="">  424: 
-</span><span class="">  425: sub _load_config
-</span><span class="">  426: {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">427 → 427 → 431</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">427 → 427 → 0</span></span>  427: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  428: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
-</span><span class="">  429: 	}
-</span><span class="">  430: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">431 → 434 → 439</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">431 → 434 → 0</span></span>  431: 	my $self = shift;
-</span><span class="">  432: 	my %merged;
-</span><span class="">  433: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  434: 	if($self-&gt;{&#39;data&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  435: 		# The data argument given to &#39;new&#39; contains defaults that this routine will override
-</span><span class="">  436: 		%merged = %{$self-&gt;{&#39;data&#39;}};
-</span><span class="">  437: 	}
-</span><span class="">  438: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">439 → 440 → 444</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">439 → 440 → 0</span></span>  439: 	my $logger = $self-&gt;{&#39;logger&#39;};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  440: 	if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  441: 		$logger-&gt;trace(ref($self), &#39; &#39;, __LINE__, &#39;: Entered _load_config&#39;);
-</span><span class="">  442: 	}
-</span><span class="">  443: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">444 → 445 → 454</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">444 → 445 → 0</span></span>  444: 	my @dirs = @{$self-&gt;{&#39;config_dirs&#39;}};
-</span><span class="survived-3 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one). Mutation survived. Add targeted tests to validate this branch.">  445: 	if($self-&gt;{&#39;config_file&#39;} &amp;&amp; (scalar(@dirs) &gt; 1)) {
+<span class="">  394: 			}
+</span><span class="">  395: 		}
+</span><span class="">  396: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">397 → 399 → 403</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">397 → 399 → 0</span></span>  397: 	$self-&gt;_load_config();
+</span><span class="">  398: 
+</span><span class="">  399: 	if(my $schema = $params-&gt;{&#39;schema&#39;}) {
+</span><span class="">  400: 		$self-&gt;{&#39;config&#39;} = Params::Validate::Strict::validate_strict(schema =&gt; $schema, input =&gt; $self-&gt;{&#39;config&#39;});
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  401: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  402: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">403 → 403 → 406</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">403 → 403 → 0</span></span>  403: 	if(defined($self-&gt;{&#39;config&#39;}) &amp;&amp; scalar(keys %{$self-&gt;{&#39;config&#39;}})) {
+</span><span class="">  404: 		return $self;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  405: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">406 → 406 → 0</span></span>  406: 	return undef;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  407: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  408: 
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  409: # Determine if a value is a plain, unblessed, non-reference scalar
+</span><span class="">  410: # safe to use in regex/string operations.
+</span><span class="">  411: # Args:   value to test
+</span><span class="">  412: # Returns: 1 if plain scalar, 0 otherwise
+</span><span class="">  413: sub _is_plain_scalar
+</span><span class="">  414: {
+</span><span class="">  415: 	my $val = $_[0];
+</span><span class="">  416: 
+</span><span class="">  417: 	return 0 if !defined($val);
+</span><span class="">  418: 	return 0 if Scalar::Util::blessed($val);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  419: 	return 0 if ref($val);
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  420: 	return 1;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  421: }
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  422: 
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  423: sub _load_config
+</span><span class="">  424: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">425 → 425 → 429</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">425 → 425 → 0</span></span>  425: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+</span><span class="">  426: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  427: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  428: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">429 → 432 → 437</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">429 → 432 → 0</span></span>  429: 	my $self = shift;
+</span><span class="">  430: 	my %merged;
+</span><span class="">  431: 
+</span><span class="">  432: 	if($self-&gt;{&#39;data&#39;}) {
+</span><span class="">  433: 		# The data argument given to &#39;new&#39; contains defaults that this routine will override
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  434: 		%merged = %{$self-&gt;{&#39;data&#39;}};
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  435: 	}
+</span><span class="">  436: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">437 → 438 → 442</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">437 → 438 → 0</span></span>  437: 	my $logger = $self-&gt;{&#39;logger&#39;};
+</span><span class="">  438: 	if($logger) {
+</span><span class="">  439: 		$logger-&gt;trace(ref($self), &#39; &#39;, __LINE__, &#39;: Entered _load_config&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  440: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  441: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">442 → 443 → 452</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">442 → 443 → 0</span></span>  442: 	my @dirs = @{$self-&gt;{&#39;config_dirs&#39;}};
+</span><span class="">  443: 	if($self-&gt;{&#39;config_file&#39;} &amp;&amp; (scalar(@dirs) &gt; 1)) {
+</span><span class="">  444: 		if(File::Spec-&gt;file_name_is_absolute($self-&gt;{&#39;config_file&#39;})) {
+</span><span class="survived-3 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  445: 			# Handle absolute paths
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 4, Killed: 0, Survived: 4)</summary>
@@ -813,57 +813,57 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 								</div>
 							</li><li><b>COND_INV_445_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  446: 		if(File::Spec-&gt;file_name_is_absolute($self-&gt;{&#39;config_file&#39;})) {
+<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  446: 			@dirs = (&#39;&#39;);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_446_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  447: 			# Handle absolute paths
-</span><span class="">  448: 			@dirs = (&#39;&#39;);
-</span><span class="">  449: 		} else {
-</span><span class="">  450: 			# Look in the current directory
-</span><span class="">  451: 			push @dirs, File::Spec-&gt;curdir();
-</span><span class="">  452: 		}
-</span><span class="">  453: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">454 → 454 → 707</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">454 → 454 → 0</span></span>  454: 	for my $dir (@dirs) {
-</span><span class="">  455: 		next if(!defined($dir));
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  456: 		if(length($dir) &amp;&amp; !-d $dir) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  457: 			next;
-</span><span class="">  458: 		}
-</span><span class="">  459: 
-</span><span class="">  460: 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
-</span><span class="">  461: 			my $path = File::Spec-&gt;catfile($dir, $file);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  462: 			if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  463: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for configuration $path&quot;);
-</span><span class="">  464: 			}
-</span><span class="">  465: 			next unless -f $path;
-</span><span class="">  466: 			next unless -r $path;
-</span><span class="">  467: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  468: 			if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  469: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading data from $path&quot;);
-</span><span class="">  470: 			}
-</span><span class="">  471: 
-</span><span class="">  472: 			my $data;
-</span><span class="">  473: 			# Only load config modules when they are needed
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  474: 			if ($file =~ /\.ya?ml$/) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  475: 				$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;LoadFile&#39;]);
-</span><span class="">  476: 				$data = eval { LoadFile($path) };
-</span><span class="">  477: 				croak &quot;Failed to load YAML from $path: $@&quot; if $@;
-</span><span class="">  478: 			} elsif ($file =~ /\.json$/) {
-</span><span class="">  479: 				$data = eval { decode_json(read_file($path)) };
-</span><span class="">  480: 				croak &quot;Failed to load JSON from $path: $@&quot; if $@;
-</span><span class="">  481: 			} elsif($file =~ /\.xml$/) {
-</span><span class="">  482: 				my $rc;
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  483: 				if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+<span class="">  447: 		} else {
+</span><span class="">  448: 			# Look in the current directory
+</span><span class="">  449: 			push @dirs, File::Spec-&gt;curdir();
+</span><span class="">  450: 		}
+</span><span class="">  451: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">452 → 452 → 719</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">452 → 452 → 0</span></span>  452: 	for my $dir (@dirs) {
+</span><span class="">  453: 		next if(!defined($dir));
+</span><span class="">  454: 		if(length($dir) &amp;&amp; !-d $dir) {
+</span><span class="">  455: 			next;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  456: 		}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  457: 
+</span><span class="">  458: 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
+</span><span class="">  459: 			my $path = File::Spec-&gt;catfile($dir, $file);
+</span><span class="">  460: 			if($logger) {
+</span><span class="">  461: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for configuration $path&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  462: 			}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  463: 			next unless -f $path;
+</span><span class="">  464: 			next unless -r $path;
+</span><span class="">  465: 
+</span><span class="">  466: 			if($logger) {
+</span><span class="">  467: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading data from $path&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  468: 			}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  469: 
+</span><span class="">  470: 			my $data;
+</span><span class="">  471: 			# Only load config modules when they are needed
+</span><span class="">  472: 			if ($file =~ /\.ya?ml$/) {
+</span><span class="">  473: 				$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;LoadFile&#39;]);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  474: 				$data = eval { LoadFile($path) };
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  475: 				if($@) {
+</span><span class="">  476: 					if($logger) {
+</span><span class="">  477: 						$logger-&gt;notice(&quot;Failed to load YAML from $path: $@&quot;);
+</span><span class="">  478: 					} else {
+</span><span class="">  479: 						Carp::carp(&quot;Failed to load YAML from $path: $@&quot;);
+</span><span class="">  480: 					}
+</span><span class="">  481: 					next;
+</span><span class="">  482: 				}
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  483: 			} elsif ($file =~ /\.json$/) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_483_5: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  484: 					eval { $rc = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; []) };
+<span class="">  484: 				$data = eval { decode_json(read_file($path)) };
 </span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  485: 					if($@) {
 </span>
 					<details class="mutant-details">
@@ -878,101 +878,101 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 					<ul>
 				<li><b>COND_INV_486_7: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  487: 							$logger-&gt;notice(&quot;Failed to load XML from $path: $@&quot;);
+<span class="">  487: 							$logger-&gt;notice(&quot;Failed to load JSON from $path: $@&quot;);
 </span><span class="">  488: 						} else {
-</span><span class="">  489: 							Carp::carp(&quot;Failed to load XML from $path: $@&quot;);
+</span><span class="">  489: 							Carp::carp(&quot;Failed to load JSON from $path: $@&quot;);
 </span><span class="">  490: 						}
-</span><span class="">  491: 						undef $rc;
-</span><span class="">  492: 					} elsif($rc) {
-</span><span class="">  493: 						$data = $rc;
-</span><span class="">  494: 					}
-</span><span class="">  495: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  496: 				if((!defined($rc)) &amp;&amp; $self-&gt;_load_driver(&#39;XML::PP&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  497: 					my $xml_pp = XML::PP-&gt;new();
-</span><span class="">  498: 					$data = read_file($path);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  499: 					if(my $tree = $xml_pp-&gt;parse(\$data)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  500: 						if($data = $xml_pp-&gt;collapse_structure($tree)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  501: 							$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  502: 							if($data-&gt;{&#39;config&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  503: 								$data = $data-&gt;{&#39;config&#39;};
-</span><span class="">  504: 							}
-</span><span class="">  505: 						}
+</span><span class="">  491: 						next;
+</span><span class="">  492: 					}
+</span><span class="">  493: 			} elsif($file =~ /\.xml$/) {
+</span><span class="">  494: 				my $rc;
+</span><span class="">  495: 				if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  496: 					eval { $rc = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; []) };
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  497: 					if($@) {
+</span><span class="">  498: 						if($logger) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  499: 							$logger-&gt;notice(&quot;Failed to load XML from $path: $@&quot;);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  500: 						} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  501: 							Carp::carp(&quot;Failed to load XML from $path: $@&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  502: 						}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  503: 						undef $rc;
+</span><span class="">  504: 					} elsif($rc) {
+</span><span class="">  505: 						$data = $rc;
 </span><span class="">  506: 					}
 </span><span class="">  507: 				}
-</span><span class="">  508: 			} elsif ($file =~ /\.ini$/) {
-</span><span class="">  509: 				$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  510: 				if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $path)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  511: 					$data = { map {
-</span><span class="">  512: 						my $section = $_;
-</span><span class="">  513: 						$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
-</span><span class="">  514: 					} $ini-&gt;Sections() };
-</span><span class="">  515: 				} else {
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  516: 					if($logger) {
+</span><span class="">  508: 				if((!defined($rc)) &amp;&amp; $self-&gt;_load_driver(&#39;XML::PP&#39;)) {
+</span><span class="">  509: 					my $xml_pp = XML::PP-&gt;new();
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  510: 					$data = read_file($path);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  511: 					if(my $tree = $xml_pp-&gt;parse(\$data)) {
+</span><span class="">  512: 						if($data = $xml_pp-&gt;collapse_structure($tree)) {
+</span><span class="">  513: 							$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
+</span><span class="">  514: 							if($data-&gt;{&#39;config&#39;}) {
+</span><span class="">  515: 								$data = $data-&gt;{&#39;config&#39;};
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  516: 							}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_516_6: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  517: 						$logger-&gt;notice(&quot;Failed to load INI from $path: $@&quot;);
-</span><span class="">  518: 					} else {
-</span><span class="">  519: 						Carp::carp(&quot;Failed to load INI from $path: $@&quot;);
-</span><span class="">  520: 					}
-</span><span class="">  521: 				}
-</span><span class="">  522: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  523: 			if($data) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  524: 				if(!ref($data)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  525: 					if($logger) {
+<span class="">  517: 						}
+</span><span class="">  518: 					}
+</span><span class="">  519: 				}
+</span><span class="">  520: 			} elsif ($file =~ /\.ini$/) {
+</span><span class="">  521: 				$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
+</span><span class="">  522: 				if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $path)) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  523: 					$data = { map {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  524: 						my $section = $_;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  525: 						$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_525_6: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  526: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: ignoring data from $path ($data)&quot;);
-</span><span class="">  527: 					}
-</span><span class="">  528: 					next;
-</span><span class="">  529: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  530: 				if(ref($data) ne &#39;HASH&#39;) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  531: 					if($logger) {
+<span class="">  526: 					} $ini-&gt;Sections() };
+</span><span class="">  527: 				} else {
+</span><span class="">  528: 					if($logger) {
+</span><span class="">  529: 						$logger-&gt;notice(&quot;Failed to load INI from $path: $@&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  530: 					} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  531: 						Carp::carp(&quot;Failed to load INI from $path: $@&quot;);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_531_6: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  532: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: ignoring data from $path (not a hashref)&quot;);
-</span><span class="">  533: 					}
-</span><span class="">  534: 					next;
-</span><span class="">  535: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  536: 				if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  537: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loaded data from $path&quot;);
-</span><span class="">  538: 				}
-</span><span class="">  539: 				%merged = %{ merge( $data, \%merged ) };
-</span><span class="">  540: 				push @{$merged{&#39;config_path&#39;}}, $path;
-</span><span class="">  541: 			}
-</span><span class="">  542: 		}
-</span><span class="">  543: 
-</span><span class="">  544: 		# Put $self-&gt;{config_file} through all parsers, ignoring all errors, then merge that in
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  545: 		if(!$self-&gt;{&#39;script_name&#39;}) {
+<span class="">  532: 					}
+</span><span class="">  533: 				}
+</span><span class="">  534: 			}
+</span><span class="">  535: 			if($data) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  536: 				if(!ref($data)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  537: 					if($logger) {
+</span><span class="">  538: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: ignoring data from $path ($data)&quot;);
+</span><span class="">  539: 					}
+</span><span class="">  540: 					next;
+</span><span class="">  541: 				}
+</span><span class="">  542: 				if(ref($data) ne &#39;HASH&#39;) {
+</span><span class="">  543: 					if($logger) {
+</span><span class="">  544: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: ignoring data from $path (not a hashref)&quot;);
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  545: 					}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_545_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  546: 			require File::Basename &amp;&amp; File::Basename-&gt;import() unless File::Basename-&gt;can(&#39;basename&#39;);
-</span><span class="">  547: 
-</span><span class="">  548: 			# Determine script name
-</span><span class="">  549: 			$self-&gt;{&#39;script_name&#39;} = File::Basename::basename($ENV{&#39;SCRIPT_NAME&#39;} || $0);
-</span><span class="">  550: 		}
-</span><span class="">  551: 
-</span><span class="">  552: 		my $script_name = $self-&gt;{&#39;script_name&#39;};
-</span><span class="">  553: 		for my $config_file (&#39;default&#39;, $script_name, &quot;$script_name.cfg&quot;, &quot;$script_name.conf&quot;, &quot;$script_name.config&quot;, $self-&gt;{&#39;config_file&#39;}, @{$self-&gt;{&#39;config_files&#39;}}) {
-</span><span class="">  554: 			next unless defined($config_file);
-</span><span class="">  555: 			# Note that loading $script_name in the current directory could mean loading the script as it&#39;s own config.
-</span><span class="">  556: 			# This test is not foolproof, buyer beware
-</span><span class="survived-1 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  557: 			next if(($config_file eq $script_name) &amp;&amp; ((length($dir) == 0) || ($dir eq File::Spec-&gt;curdir())));
+<span class="">  546: 					next;
+</span><span class="">  547: 				}
+</span><span class="">  548: 				if($logger) {
+</span><span class="">  549: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loaded data from $path&quot;);
+</span><span class="">  550: 				}
+</span><span class="">  551: 				%merged = %{ merge( $data, \%merged ) };
+</span><span class="">  552: 				push @{$merged{&#39;config_path&#39;}}, $path;
+</span><span class="">  553: 			}
+</span><span class="">  554: 		}
+</span><span class="">  555: 
+</span><span class="">  556: 		# Put $self-&gt;{config_file} through all parsers, ignoring all errors, then merge that in
+</span><span class="survived-1 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  557: 		if(!$self-&gt;{&#39;script_name&#39;}) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
@@ -986,174 +986,174 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  558: 			my $path = length($dir) ? File::Spec-&gt;catfile($dir, $config_file) : $config_file;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  559: 			if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  560: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for configuration $path&quot;);
-</span><span class="">  561: 			}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  562: 			if((-f $path) &amp;&amp; (-r $path)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  563: 				my $data = read_file($path);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  564: 				if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  565: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading data from $path&quot;);
-</span><span class="">  566: 				}
-</span><span class="">  567: 				eval {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  568: 					if(($data =~ /^\s*&lt;\?xml/) || ($data =~ /&lt;\/.+&gt;/)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  569: 						if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  570: 							if($data = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; [])) {
+<span class="">  558: 			require File::Basename &amp;&amp; File::Basename-&gt;import() unless File::Basename-&gt;can(&#39;basename&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  559: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  560: 			# Determine script name
+</span><span class="">  561: 			$self-&gt;{&#39;script_name&#39;} = File::Basename::basename($ENV{&#39;SCRIPT_NAME&#39;} || $0);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  562: 		}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  563: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  564: 		my $script_name = $self-&gt;{&#39;script_name&#39;};
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  565: 		for my $config_file (&#39;default&#39;, $script_name, &quot;$script_name.cfg&quot;, &quot;$script_name.conf&quot;, &quot;$script_name.config&quot;, $self-&gt;{&#39;config_file&#39;}, @{$self-&gt;{&#39;config_files&#39;}}) {
+</span><span class="">  566: 			next unless defined($config_file);
+</span><span class="">  567: 			# Note that loading $script_name in the current directory could mean loading the script as it&#39;s own config.
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  568: 			# This test is not foolproof, buyer beware
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  569: 			next if(($config_file eq $script_name) &amp;&amp; ((length($dir) == 0) || ($dir eq File::Spec-&gt;curdir())));
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  570: 			my $path = length($dir) ? File::Spec-&gt;catfile($dir, $config_file) : $config_file;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_570_8: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  571: 								$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
-</span><span class="">  572: 							}
-</span><span class="">  573: 						} elsif($self-&gt;_load_driver(&#39;XML::PP&#39;)) {
-</span><span class="">  574: 							my $xml_pp = XML::PP-&gt;new();
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  575: 							if(my $tree = $xml_pp-&gt;parse(\$data)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  576: 								if($data = $xml_pp-&gt;collapse_structure($tree)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  577: 									$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  578: 									if($data-&gt;{&#39;config&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  579: 										$data = $data-&gt;{&#39;config&#39;};
-</span><span class="">  580: 									}
-</span><span class="">  581: 								}
-</span><span class="">  582: 							}
-</span><span class="">  583: 						}
-</span><span class="">  584: 					} elsif($data =~ /\{.+:.\}/s) {
-</span><span class="">  585: 						$self-&gt;_load_driver(&#39;JSON::Parse&#39;);
-</span><span class="">  586: 						# CPanel::JSON is very noisy, so be careful before attempting to use it
-</span><span class="">  587: 						my $is_json;
-</span><span class="">  588: 						eval { $is_json = JSON::Parse::parse_json($data) };
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  589: 						if($is_json) {
+<span class="">  571: 			if($logger) {
+</span><span class="">  572: 				$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for configuration $path&quot;);
+</span><span class="">  573: 			}
+</span><span class="">  574: 			if((-f $path) &amp;&amp; (-r $path)) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  575: 				my $data = read_file($path);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  576: 				if($logger) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  577: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading data from $path&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  578: 				}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  579: 				eval {
+</span><span class="">  580: 					if(($data =~ /^\s*&lt;\?xml/) || ($data =~ /&lt;\/.+&gt;/)) {
+</span><span class="">  581: 						if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+</span><span class="">  582: 							if($data = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; [])) {
+</span><span class="">  583: 								$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
+</span><span class="">  584: 							}
+</span><span class="">  585: 						} elsif($self-&gt;_load_driver(&#39;XML::PP&#39;)) {
+</span><span class="">  586: 							my $xml_pp = XML::PP-&gt;new();
+</span><span class="">  587: 							if(my $tree = $xml_pp-&gt;parse(\$data)) {
+</span><span class="">  588: 								if($data = $xml_pp-&gt;collapse_structure($tree)) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  589: 									$self-&gt;{&#39;type&#39;} = &#39;XML&#39;;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_589_7: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  590: 							eval { $data = decode_json($data) };
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  591: 							if($@) {
+<span class="">  590: 									if($data-&gt;{&#39;config&#39;}) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  591: 										$data = $data-&gt;{&#39;config&#39;};
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_591_8: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  592: 								undef $data;
-</span><span class="">  593: 							}
-</span><span class="">  594: 						} else {
-</span><span class="">  595: 							undef $data;
-</span><span class="">  596: 						}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  597: 						if($data) {
+<span class="">  592: 									}
+</span><span class="">  593: 								}
+</span><span class="">  594: 							}
+</span><span class="">  595: 						}
+</span><span class="">  596: 					} elsif($data =~ /\{.+:.\}/s) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  597: 						$self-&gt;_load_driver(&#39;JSON::Parse&#39;);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_597_7: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  598: 							$self-&gt;{&#39;type&#39;} = &#39;JSON&#39;;
-</span><span class="">  599: 						}
-</span><span class="">  600: 					} else {
-</span><span class="">  601: 						undef $data;
-</span><span class="">  602: 					}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  603: 					if(!$data) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  604: 						$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;LoadFile&#39;]);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  605: 						if((eval { $data = LoadFile($path) }) &amp;&amp; (ref($data) eq &#39;HASH&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  606: 							# Could be colon file, could be YAML, whichever it is break the configuration fields
-</span><span class="">  607: 							# foreach my($k, $v) (%{$data}) {
-</span><span class="">  608: 							foreach my $k (keys %{$data}) {
-</span><span class="">  609: 								my $v = $data-&gt;{$k};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  610: 								if(!defined($v)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  611: 									# e.g. a simple line
-</span><span class="">  612: 									#	foo:
-</span><span class="">  613: 									# with nothing under it
-</span><span class="">  614: 									$data-&gt;{$k} = undef;
-</span><span class="">  615: 									next;
-</span><span class="">  616: 								}
-</span><span class="">  617: 								# Do not inspect or modify coderefs, blessed objects, or any reference
-</span><span class="">  618: 								next unless _is_plain_scalar($v);
-</span><span class="">  619: 
-</span><span class="">  620: 								next if($v =~ /^&quot;.+&quot;$/);	# Quotes to keep in one field
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  621: 								if($v =~ /,/) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  622: 									my @vals = split(/\s*,\s*/, $v);
-</span><span class="">  623: 									delete $data-&gt;{$k};
-</span><span class="">  624: 									foreach my $val (@vals) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  625: 										if($val =~ /(.+)=(.+)/) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  626: 											$data-&gt;{$k}{$1} = $2;
-</span><span class="">  627: 										} else {
-</span><span class="">  628: 											$data-&gt;{$k}{$val} = 1;
-</span><span class="">  629: 										}
-</span><span class="">  630: 									}
-</span><span class="">  631: 								}
-</span><span class="">  632: 							}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  633: 							if($data) {
+<span class="">  598: 						# CPanel::JSON is very noisy, so be careful before attempting to use it
+</span><span class="">  599: 						my $is_json;
+</span><span class="">  600: 						eval { $is_json = JSON::Parse::parse_json($data) };
+</span><span class="">  601: 						if($is_json) {
+</span><span class="">  602: 							eval { $data = decode_json($data) };
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  603: 							if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  604: 								undef $data;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  605: 							}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  606: 						} else {
+</span><span class="">  607: 							undef $data;
+</span><span class="">  608: 						}
+</span><span class="">  609: 						if($data) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  610: 							$self-&gt;{&#39;type&#39;} = &#39;JSON&#39;;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  611: 						}
+</span><span class="">  612: 					} else {
+</span><span class="">  613: 						undef $data;
+</span><span class="">  614: 					}
+</span><span class="">  615: 					if(!$data) {
+</span><span class="">  616: 						$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;LoadFile&#39;]);
+</span><span class="">  617: 						if((eval { $data = LoadFile($path) }) &amp;&amp; (ref($data) eq &#39;HASH&#39;)) {
+</span><span class="">  618: 							# Could be colon file, could be YAML, whichever it is break the configuration fields
+</span><span class="">  619: 							# foreach my($k, $v) (%{$data}) {
+</span><span class="">  620: 							foreach my $k (keys %{$data}) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  621: 								my $v = $data-&gt;{$k};
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  622: 								if(!defined($v)) {
+</span><span class="">  623: 									# e.g. a simple line
+</span><span class="">  624: 									#	foo:
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  625: 									# with nothing under it
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  626: 									$data-&gt;{$k} = undef;
+</span><span class="">  627: 									next;
+</span><span class="">  628: 								}
+</span><span class="">  629: 								# Do not inspect or modify coderefs, blessed objects, or any reference
+</span><span class="">  630: 								next unless _is_plain_scalar($v);
+</span><span class="">  631: 
+</span><span class="">  632: 								next if($v =~ /^&quot;.+&quot;$/);	# Quotes to keep in one field
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  633: 								if($v =~ /,/) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_633_8: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  634: 								$self-&gt;{&#39;type&#39;} = &#39;YAML&#39;;
-</span><span class="">  635: 							}
-</span><span class="">  636: 						}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  637: 						if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  638: 							$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  639: 							if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $path)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  640: 								$data = { map {
-</span><span class="">  641: 									my $section = $_;
-</span><span class="">  642: 									$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
-</span><span class="">  643: 								} $ini-&gt;Sections() };
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  644: 								if($data) {
+<span class="">  634: 									my @vals = split(/\s*,\s*/, $v);
+</span><span class="">  635: 									delete $data-&gt;{$k};
+</span><span class="">  636: 									foreach my $val (@vals) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  637: 										if($val =~ /(.+)=(.+)/) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  638: 											$data-&gt;{$k}{$1} = $2;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  639: 										} else {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  640: 											$data-&gt;{$k}{$val} = 1;
+</span><span class="">  641: 										}
+</span><span class="">  642: 									}
+</span><span class="">  643: 								}
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  644: 							}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_644_9: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  645: 									$self-&gt;{&#39;type&#39;} = &#39;INI&#39;;
-</span><span class="">  646: 								}
+<span class="">  645: 							if($data) {
+</span><span class="">  646: 								$self-&gt;{&#39;type&#39;} = &#39;YAML&#39;;
 </span><span class="">  647: 							}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  648: 							if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  649: 								# Maybe XML without the leading XML header
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  650: 								if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  648: 						}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  649: 						if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  650: 							$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_650_9: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  651: 									eval { $data = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; []) };
-</span><span class="">  652: 								}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  653: 								if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
+<span class="">  651: 							if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $path)) {
+</span><span class="">  652: 								$data = { map {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  653: 									my $section = $_;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_653_9: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  654: 									if($self-&gt;_load_driver(&#39;Config::Abstract&#39;)) {
+<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  654: 									$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_654_10: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  655: 										# Handle RT#164587
-</span><span class="">  656: 										open my $oldSTDERR, &#39;&gt;&amp;STDERR&#39;;
-</span><span class="">  657: 										close STDERR;
-</span><span class="">  658: 										eval { $data = Config::Abstract-&gt;new($path) };
-</span><span class="">  659: 										my $err = $@;
-</span><span class="">  660: 										open STDERR, &#39;&gt;&amp;&#39;, $oldSTDERR;
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  661: 										if($err) {
+<span class="">  655: 								} $ini-&gt;Sections() };
+</span><span class="">  656: 								if($data) {
+</span><span class="">  657: 									$self-&gt;{&#39;type&#39;} = &#39;INI&#39;;
+</span><span class="">  658: 								}
+</span><span class="">  659: 							}
+</span><span class="">  660: 							if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  661: 								# Maybe XML without the leading XML header
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_661_11: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  662: 											undef $data;
-</span><span class="">  663: 										} elsif($data) {
-</span><span class="">  664: 											$data = $data-&gt;get_all_settings();
-</span><span class="survived-2 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  665: 											if(scalar(keys %{$data}) == 0) {
+<span class="">  662: 								if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+</span><span class="">  663: 									eval { $data = XMLin($path, ForceArray =&gt; 0, KeyAttr =&gt; []) };
+</span><span class="">  664: 								}
+</span><span class="survived-2 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  665: 								if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1168,169 +1168,169 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 								</div>
 							</li><li><b>COND_INV_665_12: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  666: 												undef $data;
-</span><span class="">  667: 											}
-</span><span class="">  668: 										}
-</span><span class="">  669: 										$self-&gt;{&#39;type&#39;} = &#39;Perl&#39;;
-</span><span class="">  670: 									}
-</span><span class="">  671: 								}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  672: 								if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  673: 									$self-&gt;_load_driver(&#39;Config::Auto&#39;);
-</span><span class="">  674: 									my $ca = Config::Auto-&gt;new(source =&gt; $path);
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  675: 									if($data = $ca-&gt;parse()) {
+<span class="">  666: 									if($self-&gt;_load_driver(&#39;Config::Abstract&#39;)) {
+</span><span class="">  667: 										# Handle RT#164587
+</span><span class="">  668: 										open my $oldSTDERR, &#39;&gt;&amp;STDERR&#39;;
+</span><span class="">  669: 										close STDERR;
+</span><span class="">  670: 										eval { $data = Config::Abstract-&gt;new($path) };
+</span><span class="">  671: 										my $err = $@;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  672: 										open STDERR, &#39;&gt;&amp;&#39;, $oldSTDERR;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  673: 										if($err) {
+</span><span class="">  674: 											undef $data;
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  675: 										} elsif($data) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_675_10: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  676: 										$self-&gt;{&#39;type&#39;} = $ca-&gt;format();
-</span><span class="">  677: 									}
-</span><span class="">  678: 								}
-</span><span class="">  679: 							}
-</span><span class="">  680: 						}
-</span><span class="">  681: 					}
-</span><span class="">  682: 				};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  683: 				if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  684: 					if($@) {
+<span class="">  676: 											$data = $data-&gt;get_all_settings();
+</span><span class="">  677: 											if(scalar(keys %{$data}) == 0) {
+</span><span class="">  678: 												undef $data;
+</span><span class="">  679: 											}
+</span><span class="">  680: 										}
+</span><span class="">  681: 										$self-&gt;{&#39;type&#39;} = &#39;Perl&#39;;
+</span><span class="">  682: 									}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  683: 								}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  684: 								if((!$data) || (ref($data) ne &#39;HASH&#39;)) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_684_6: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  685: 						$logger-&gt;warn(ref($self), &#39; &#39;, __LINE__, &quot;: $@&quot;);
-</span><span class="">  686: 						undef $data;
-</span><span class="">  687: 					} else {
-</span><span class="">  688: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &#39;: Loaded data from&#39;, $self-&gt;{&#39;type&#39;}, &quot;file $path&quot;);
-</span><span class="">  689: 					}
-</span><span class="">  690: 				}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  691: 				if(scalar(keys %merged)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  692: 					if($data) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  693: 						%merged = %{ merge($data, \%merged) };
-</span><span class="">  694: 					}
-</span><span class="">  695: 				} elsif($data &amp;&amp; (ref($data) eq &#39;HASH&#39;)) {
-</span><span class="">  696: 					%merged = %{$data};
-</span><span class="">  697: 				} elsif((!$@) &amp;&amp; $logger) {
-</span><span class="">  698: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &#39;: No configuration file loaded&#39;);
-</span><span class="">  699: 				}
-</span><span class="">  700: 
-</span><span class="">  701: 				push @{$merged{&#39;config_path&#39;}}, $path;
-</span><span class="">  702: 			}
-</span><span class="">  703: 		}
-</span><span class="">  704: 	}
-</span><span class="">  705: 
-</span><span class="">  706: 	# Merge ENV vars
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">707 → 711 → 725</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">707 → 711 → 0</span></span>  707: 	my $prefix = $self-&gt;{env_prefix};
-</span><span class="">  708: 	$prefix =~ s/__$//;
-</span><span class="">  709: 	$prefix =~ s/_$//;
-</span><span class="">  710: 	$prefix =~ s/::$//;
-</span><span class="">  711: 	for my $key (keys %ENV) {
-</span><span class="">  712: 		next unless $key =~ /^$self-&gt;{env_prefix}(.*)$/i;
-</span><span class="">  713: 		my $path = lc($1);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  714: 		if($path =~ /__/) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  715: 			my @parts = split /__/, $path;
-</span><span class="">  716: 			my $ref = \%merged;
-</span><span class="">  717: 			$ref = ($ref-&gt;{$_} //= {}) for @parts[0..$#parts-1];
-</span><span class="">  718: 			$ref-&gt;{ $parts[-1] } = $ENV{$key};
-</span><span class="">  719: 		} else {
-</span><span class="">  720: 			$merged{$prefix}-&gt;{$path} = $ENV{$key};
-</span><span class="">  721: 		}
-</span><span class="">  722: 	}
-</span><span class="">  723: 
-</span><span class="">  724: 	# Merge command line options
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">725 → 725 → 741</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">725 → 725 → 0</span></span>  725: 	foreach my $arg(@ARGV) {
-</span><span class="">  726: 		next unless($arg =~ /=/);
-</span><span class="">  727: 		my ($key, $value) = split(/=/, $arg, 2);
-</span><span class="">  728: 		next unless $key =~ /^\-\-$self-&gt;{env_prefix}(.*)$/;
-</span><span class="">  729: 
-</span><span class="">  730: 		my $path = lc($1);
-</span><span class="">  731: 		my @parts = split(/__/, $path);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  732: 		if(scalar(@parts) &gt; 0) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  733: 			my $ref = \%merged;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  734: 			if(scalar(@parts) &gt; 1) {
-</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  735: 				$ref = ($ref-&gt;{$_} //= {}) for @parts[0..$#parts-1];
-</span><span class="">  736: 			}
-</span><span class="">  737: 			$ref-&gt;{$parts[-1]} = $value;
-</span><span class="">  738: 		}
-</span><span class="">  739: 	}
-</span><span class="">  740: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">741 → 741 → 748</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">741 → 741 → 0</span></span>  741: 	if($self-&gt;{&#39;flatten&#39;}) {
+<span class="">  685: 									$self-&gt;_load_driver(&#39;Config::Auto&#39;);
+</span><span class="">  686: 									my $ca = Config::Auto-&gt;new(source =&gt; $path);
+</span><span class="">  687: 									if($data = $ca-&gt;parse()) {
+</span><span class="">  688: 										$self-&gt;{&#39;type&#39;} = $ca-&gt;format();
+</span><span class="">  689: 									}
+</span><span class="">  690: 								}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  691: 							}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  692: 						}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  693: 					}
+</span><span class="">  694: 				};
+</span><span class="">  695: 				if($logger) {
+</span><span class="">  696: 					if($@) {
+</span><span class="">  697: 						$logger-&gt;warn(ref($self), &#39; &#39;, __LINE__, &quot;: $@&quot;);
+</span><span class="">  698: 						undef $data;
+</span><span class="">  699: 					} else {
+</span><span class="">  700: 						$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &#39;: Loaded data from&#39;, $self-&gt;{&#39;type&#39;}, &quot;file $path&quot;);
+</span><span class="">  701: 					}
+</span><span class="">  702: 				}
+</span><span class="">  703: 				if(scalar(keys %merged)) {
+</span><span class="">  704: 					if($data) {
+</span><span class="">  705: 						%merged = %{ merge($data, \%merged) };
+</span><span class="">  706: 					}
+</span><span class="">  707: 				} elsif($data &amp;&amp; (ref($data) eq &#39;HASH&#39;)) {
+</span><span class="">  708: 					%merged = %{$data};
+</span><span class="">  709: 				} elsif((!$@) &amp;&amp; $logger) {
+</span><span class="">  710: 					$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &#39;: No configuration file loaded&#39;);
+</span><span class="">  711: 				}
+</span><span class="">  712: 
+</span><span class="">  713: 				push @{$merged{&#39;config_path&#39;}}, $path;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  714: 			}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  715: 		}
+</span><span class="">  716: 	}
+</span><span class="">  717: 
+</span><span class="">  718: 	# Merge ENV vars
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">719 → 723 → 737</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">719 → 723 → 0</span></span>  719: 	my $prefix = $self-&gt;{env_prefix};
+</span><span class="">  720: 	$prefix =~ s/__$//;
+</span><span class="">  721: 	$prefix =~ s/_$//;
+</span><span class="">  722: 	$prefix =~ s/::$//;
+</span><span class="">  723: 	for my $key (keys %ENV) {
+</span><span class="">  724: 		next unless $key =~ /^$self-&gt;{env_prefix}(.*)$/i;
+</span><span class="">  725: 		my $path = lc($1);
+</span><span class="">  726: 		if($path =~ /__/) {
+</span><span class="">  727: 			my @parts = split /__/, $path;
+</span><span class="">  728: 			my $ref = \%merged;
+</span><span class="">  729: 			$ref = ($ref-&gt;{$_} //= {}) for @parts[0..$#parts-1];
+</span><span class="">  730: 			$ref-&gt;{ $parts[-1] } = $ENV{$key};
+</span><span class="">  731: 		} else {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  732: 			$merged{$prefix}-&gt;{$path} = $ENV{$key};
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  733: 		}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  734: 	}
+</span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  735: 
+</span><span class="">  736: 	# Merge command line options
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">737 → 737 → 753</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">737 → 737 → 0</span></span>  737: 	foreach my $arg(@ARGV) {
+</span><span class="">  738: 		next unless($arg =~ /=/);
+</span><span class="">  739: 		my ($key, $value) = split(/=/, $arg, 2);
+</span><span class="">  740: 		next unless $key =~ /^\-\-$self-&gt;{env_prefix}(.*)$/;
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  741: 
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_741_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  742: 		$self-&gt;_load_driver(&#39;Hash::Flatten&#39;, [&#39;flatten&#39;]);
-</span><span class="">  743: 	} else {
-</span><span class="">  744: 		$self-&gt;_load_driver(&#39;Hash::Flatten&#39;, [&#39;unflatten&#39;]);
-</span><span class="">  745: 	}
-</span><span class="">  746: 	# $self-&gt;{config} = $self-&gt;{flatten} ? flatten(\%merged) : unflatten(\%merged);
-</span><span class="">  747: 	# Don&#39;t unflatten because of RT#166761
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">748 → 748 → 0</span></span>  748: 	$self-&gt;{config} = $self-&gt;{flatten} ? flatten(\%merged) : \%merged;
-</span><span class="">  749: }
-</span><span class="">  750: 
-</span><span class="">  751: =head2 get(key)
+<span class="">  742: 		my $path = lc($1);
+</span><span class="">  743: 		my @parts = split(/__/, $path);
+</span><span class="">  744: 		if(scalar(@parts) &gt; 0) {
+</span><span class="">  745: 			my $ref = \%merged;
+</span><span class="">  746: 			if(scalar(@parts) &gt; 1) {
+</span><span class="">  747: 				$ref = ($ref-&gt;{$_} //= {}) for @parts[0..$#parts-1];
+</span><span class="">  748: 			}
+</span><span class="">  749: 			$ref-&gt;{$parts[-1]} = $value;
+</span><span class="">  750: 		}
+</span><span class="">  751: 	}
 </span><span class="">  752: 
-</span><span class="">  753: Retrieve a configuration value using dotted key notation (e.g.,
-</span><span class="">  754: C&lt;&#39;database.user&#39;&gt;). Returns C&lt;undef&gt; if the key doesn&#39;t exist.
-</span><span class="">  755: 
-</span><span class="">  756: =cut
-</span><span class="">  757: 
-</span><span class="">  758: sub get
-</span><span class="">  759: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">760 → 762 → 765</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">760 → 762 → 0</span></span>  760: 	my ($self, $key) = @_;
-</span><span class="">  761: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  762: 	if($self-&gt;{flatten}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  763: 		return $self-&gt;{config}{$key};
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  764: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">765 → 766 → 771</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">765 → 766 → 0</span></span>  765: 	my $ref = $self-&gt;{&#39;config&#39;};
-</span><span class="">  766: 	for my $part (split qr/\Q$self-&gt;{sep_char}\E/, $key) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  767: 		return undef unless ref $ref eq &#39;HASH&#39;;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  768: 		return unless exists $ref-&gt;{$part};
-</span><span class="">  769: 		$ref = $ref-&gt;{$part};
-</span><span class="">  770: 	}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">771 → 771 → 785</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">771 → 771 → 0</span></span>  771: 	if((defined($ref) &amp;&amp; (ref($ref) eq &#39;HASH&#39;) &amp;&amp; !$self-&gt;{&#39;no_fixate&#39;})) {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">753 → 753 → 760</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">753 → 753 → 0</span></span>  753: 	if($self-&gt;{&#39;flatten&#39;}) {
+</span><span class="">  754: 		$self-&gt;_load_driver(&#39;Hash::Flatten&#39;, [&#39;flatten&#39;]);
+</span><span class="">  755: 	} else {
+</span><span class="">  756: 		$self-&gt;_load_driver(&#39;Hash::Flatten&#39;, [&#39;unflatten&#39;]);
+</span><span class="">  757: 	}
+</span><span class="">  758: 	# $self-&gt;{config} = $self-&gt;{flatten} ? flatten(\%merged) : unflatten(\%merged);
+</span><span class="">  759: 	# Don&#39;t unflatten because of RT#166761
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">760 → 760 → 0</span></span>  760: 	$self-&gt;{config} = $self-&gt;{flatten} ? flatten(\%merged) : \%merged;
+</span><span class="">  761: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  762: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  763: =head2 get(key)
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  764: 
+</span><span class="">  765: Retrieve a configuration value using dotted key notation (e.g.,
+</span><span class="">  766: C&lt;&#39;database.user&#39;&gt;). Returns C&lt;undef&gt; if the key doesn&#39;t exist.
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  767: 
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  768: =cut
+</span><span class="">  769: 
+</span><span class="">  770: sub get
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  771: {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_771_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  772: 		if($self-&gt;_load_data_reuse()) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  773: 			if(ref($ref) eq &#39;HASH&#39;) {
+<span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">772 → 774 → 777</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">772 → 774 → 0</span></span>  772: 	my ($self, $key) = @_;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  773: 
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_773_4: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  774: 				if(!tied %$ref) {
+<span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  774: 	if($self-&gt;{flatten}) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_774_5: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="">  775: 					# Pass the hashref directly (not dereferenced) so fixate receives
-</span><span class="">  776: 					# a named scalar it can make read-only without flattening the hash
-</span><span class="">  777: 					Data::Reuse::fixate($ref) if scalar(keys %{$ref});
-</span><span class="">  778: 				}
-</span><span class="">  779: 			} elsif(ref($ref) eq &#39;ARRAY&#39;) {
-</span><span class="">  780: 				# RT#171980
-</span><span class="">  781: 				# Data::Reuse::fixate(@{$ref});
-</span><span class="">  782: 			}
-</span><span class="">  783: 		}
-</span><span class="">  784: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">785 → 785 → 0</span></span>  785: 	return $ref;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  786: }
-</span><span class="">  787: 
-</span><span class="">  788: sub _load_data_reuse
-</span><span class="">  789: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">790 → 800 → 804</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">790 → 800 → 0</span></span>  790: 	my $self = $_[0];
-</span><span class="">  791: 
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  792: 	return 0 if($self-&gt;{&#39;no_fixate&#39;});
+<span class="">  775: 		return $self-&gt;{config}{$key};
+</span><span class="">  776: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">777 → 778 → 783</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">777 → 778 → 0</span></span>  777: 	my $ref = $self-&gt;{&#39;config&#39;};
+</span><span class="">  778: 	for my $part (split qr/\Q$self-&gt;{sep_char}\E/, $key) {
+</span><span class="">  779: 		return undef unless ref $ref eq &#39;HASH&#39;;
+</span><span class="">  780: 		return unless exists $ref-&gt;{$part};
+</span><span class="">  781: 		$ref = $ref-&gt;{$part};
+</span><span class="">  782: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">783 → 783 → 797</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">783 → 783 → 0</span></span>  783: 	if((defined($ref) &amp;&amp; (ref($ref) eq &#39;HASH&#39;) &amp;&amp; !$self-&gt;{&#39;no_fixate&#39;})) {
+</span><span class="">  784: 		if($self-&gt;_load_data_reuse()) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  785: 			if(ref($ref) eq &#39;HASH&#39;) {
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  786: 				if(!tied %$ref) {
+</span><span class="">  787: 					# Pass the hashref directly (not dereferenced) so fixate receives
+</span><span class="">  788: 					# a named scalar it can make read-only without flattening the hash
+</span><span class="">  789: 					Data::Reuse::fixate($ref) if scalar(keys %{$ref});
+</span><span class="">  790: 				}
+</span><span class="">  791: 			} elsif(ref($ref) eq &#39;ARRAY&#39;) {
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths.">  792: 				# RT#171980
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1352,8 +1352,8 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  793: 
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  794: 	return 1 if($self-&gt;{reuse_loaded});
+<span class="">  793: 				# Data::Reuse::fixate(@{$ref});
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  794: 			}
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1375,14 +1375,14 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  795: 
-</span><span class="">  796: 	eval {
-</span><span class="">  797: 		require Data::Reuse;
-</span><span class="">  798: 		Data::Reuse-&gt;import();
-</span><span class="">  799: 	};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  800: 	unless($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  801: 		$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  802: 		return 1;
+<span class="">  795: 		}
+</span><span class="">  796: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">797 → 797 → 0</span></span>  797: 	return $ref;
+</span><span class="">  798: }
+</span><span class="">  799: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  800: sub _load_data_reuse
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  801: {
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">802 → 815 → 820</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">802 → 815 → 0</span></span>  802: 	my $self = $_[0];
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1404,205 +1404,205 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  803: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">804 → 804 → 0</span></span>  804: 	return 0;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  805: }
+<span class="">  803: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  804: 	# Skip fixation entirely if caller has opted out
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  805: 	return 0 if($self-&gt;{&#39;no_fixate&#39;});
 </span><span class="">  806: 
-</span><span class="">  807: =head2 exists(key)
-</span><span class="">  808: 
-</span><span class="">  809: Does a configuration value using dotted key notation (e.g., C&lt;&#39;database.user&#39;&gt;) exist?
-</span><span class="">  810: Returns 0 or 1.
-</span><span class="">  811: 
-</span><span class="">  812: =cut
-</span><span class="">  813: 
-</span><span class="">  814: sub exists
-</span><span class="">  815: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">816 → 818 → 821</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">816 → 818 → 0</span></span>  816: 	my ($self, $key) = @_;
-</span><span class="">  817: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  818: 	if($self-&gt;{flatten}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  819: 		return exists($self-&gt;{config}{$key}) ? 1 : 0;
-</span><span class="">  820: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">821 → 822 → 827</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">821 → 822 → 0</span></span>  821: 	my $ref = $self-&gt;{&#39;config&#39;};
-</span><span class="">  822: 	for my $part (split qr/\Q$self-&gt;{sep_char}\E/, $key) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 		return 0 unless ref $ref eq &#39;HASH&#39;;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  824: 		return 0 if(!exists($ref-&gt;{$part}));
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  825: 		$ref = $ref-&gt;{$part};
-</span><span class="">  826: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">827 → 827 → 0</span></span>  827: 	return 1;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  828: }
-</span><span class="">  829: 
-</span><span class="">  830: =head2 all()
-</span><span class="">  831: 
-</span><span class="">  832: Returns the entire configuration hash,
-</span><span class="">  833: possibly flattened depending on the C&lt;flatten&gt; option.
+</span><span class="">  807: 	# Return cached result to avoid repeated require attempts
+</span><span class="">  808: 	return 1 if($self-&gt;{reuse_loaded});
+</span><span class="">  809: 	return 0 if($self-&gt;{reuse_failed});
+</span><span class="">  810: 
+</span><span class="">  811: 	eval {
+</span><span class="">  812: 		require Data::Reuse;
+</span><span class="">  813: 		Data::Reuse-&gt;import();
+</span><span class="">  814: 	};
+</span><span class="">  815: 	if($@) {
+</span><span class="">  816: 		# Cache the failure so we do not attempt to load again
+</span><span class="">  817: 		$self-&gt;{reuse_failed} = 1;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  818: 		return 0;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  819: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 820 → 821 → 0</span></span>  820: 	$self-&gt;{reuse_loaded} = 1;
+</span><span class="">  821: 	return 1;
+</span><span class="">  822: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  824: =head2 exists(key)
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  825: 
+</span><span class="">  826: Does a configuration value using dotted key notation (e.g., C&lt;&#39;database.user&#39;&gt;) exist?
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  827: Returns 0 or 1.
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  828: 
+</span><span class="">  829: =cut
+</span><span class="">  830: 
+</span><span class="">  831: sub exists
+</span><span class="">  832: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">833 → 835 → 838</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">833 → 835 → 0</span></span>  833: 	my ($self, $key) = @_;
 </span><span class="">  834: 
-</span><span class="">  835: The entry C&lt;config_path&gt; contains a list of the files that the configuration was loaded from.
-</span><span class="">  836: 
-</span><span class="">  837: =cut
-</span><span class="">  838: 
-</span><span class="">  839: sub all
-</span><span class="">  840: {
-</span><span class="">  841: 	my $self = shift;
-</span><span class="">  842: 
-</span><span class="">  843: 	return if(!$self-&gt;{config});
-</span><span class="">  844: 
-</span><span class="">  845: 	# This is good for debugging, but not much more and it breaks inheritance, so disabled
-</span><span class="">  846: 	# if($self-&gt;_load_data_reuse()) {
-</span><span class="">  847: 		# Data::Reuse::fixate($self-&gt;{config});
-</span><span class="">  848: 	# }
-</span><span class="">  849: 
-</span><span class="">  850: 	return(scalar(keys %{$self-&gt;{&#39;config&#39;}})) ? $self-&gt;{&#39;config&#39;} : undef;
-</span><span class="">  851: }
-</span><span class="">  852: 
-</span><span class="">  853: =head2 merge_defaults
-</span><span class="">  854: 
-</span><span class="">  855: Merge the configuration hash into the given hash.
-</span><span class="">  856: 
-</span><span class="">  857:   package MyPackage;
-</span><span class="">  858:   use Params::Get;
-</span><span class="">  859:   use Config::Abstraction;
-</span><span class="">  860: 
-</span><span class="">  861:   sub new
-</span><span class="">  862:   {
-</span><span class="">  863:     my $class = shift;
-</span><span class="">  864: 
-</span><span class="">  865:     my $params = Params::Get::get_params(undef, \@_) || {};
+</span><span class="">  835: 	if($self-&gt;{flatten}) {
+</span><span class="">  836: 		return exists($self-&gt;{config}{$key}) ? 1 : 0;
+</span><span class="">  837: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">838 → 839 → 844</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">838 → 839 → 0</span></span>  838: 	my $ref = $self-&gt;{&#39;config&#39;};
+</span><span class="">  839: 	for my $part (split qr/\Q$self-&gt;{sep_char}\E/, $key) {
+</span><span class="">  840: 		return 0 unless ref $ref eq &#39;HASH&#39;;
+</span><span class="">  841: 		return 0 if(!exists($ref-&gt;{$part}));
+</span><span class="">  842: 		$ref = $ref-&gt;{$part};
+</span><span class="">  843: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">844 → 844 → 0</span></span>  844: 	return 1;
+</span><span class="">  845: }
+</span><span class="">  846: 
+</span><span class="">  847: =head2 all()
+</span><span class="">  848: 
+</span><span class="">  849: Returns the entire configuration hash,
+</span><span class="">  850: possibly flattened depending on the C&lt;flatten&gt; option.
+</span><span class="">  851: 
+</span><span class="">  852: The entry C&lt;config_path&gt; contains a list of the files that the configuration was loaded from.
+</span><span class="">  853: 
+</span><span class="">  854: =cut
+</span><span class="">  855: 
+</span><span class="">  856: sub all
+</span><span class="">  857: {
+</span><span class="">  858: 	my $self = shift;
+</span><span class="">  859: 
+</span><span class="">  860: 	return if(!$self-&gt;{config});
+</span><span class="">  861: 
+</span><span class="">  862: 	# This is good for debugging, but not much more and it breaks inheritance, so disabled
+</span><span class="">  863: 	# if($self-&gt;_load_data_reuse()) {
+</span><span class="">  864: 		# Data::Reuse::fixate($self-&gt;{config});
+</span><span class="">  865: 	# }
 </span><span class="">  866: 
-</span><span class="">  867:     if(my $config = Config::Abstraction-&gt;new(env_prefix =&gt; &quot;${class}::&quot;)) {
-</span><span class="">  868:       $params = $config-&gt;merge_defaults(defaults =&gt; $params, merge =&gt; 1, section =&gt; $class);
-</span><span class="">  869:     }
-</span><span class="">  870: 
-</span><span class="">  871:     return bless $params, $class;
-</span><span class="">  872:   }
+</span><span class="">  867: 	return(scalar(keys %{$self-&gt;{&#39;config&#39;}})) ? $self-&gt;{&#39;config&#39;} : undef;
+</span><span class="">  868: }
+</span><span class="">  869: 
+</span><span class="">  870: =head2 merge_defaults
+</span><span class="">  871: 
+</span><span class="">  872: Merge the configuration hash into the given hash.
 </span><span class="">  873: 
-</span><span class="">  874: Options:
-</span><span class="">  875: 
-</span><span class="">  876: =over 4
+</span><span class="">  874:   package MyPackage;
+</span><span class="">  875:   use Params::Get;
+</span><span class="">  876:   use Config::Abstraction;
 </span><span class="">  877: 
-</span><span class="">  878: =item * merge
-</span><span class="">  879: 
-</span><span class="">  880: Usually,
-</span><span class="">  881: what&#39;s in the object will overwrite what&#39;s in the defaults hash,
-</span><span class="">  882: if given,
-</span><span class="">  883: the result will be a combination of the hashes.
-</span><span class="">  884: 
-</span><span class="">  885: =item * section
-</span><span class="">  886: 
-</span><span class="">  887: Merge in that section from the configuration file.
-</span><span class="">  888: 
-</span><span class="">  889: =item * deep
+</span><span class="">  878:   sub new
+</span><span class="">  879:   {
+</span><span class="">  880:     my $class = shift;
+</span><span class="">  881: 
+</span><span class="">  882:     my $params = Params::Get::get_params(undef, \@_) || {};
+</span><span class="">  883: 
+</span><span class="">  884:     if(my $config = Config::Abstraction-&gt;new(env_prefix =&gt; &quot;${class}::&quot;)) {
+</span><span class="">  885:       $params = $config-&gt;merge_defaults(defaults =&gt; $params, merge =&gt; 1, section =&gt; $class);
+</span><span class="">  886:     }
+</span><span class="">  887: 
+</span><span class="">  888:     return bless $params, $class;
+</span><span class="">  889:   }
 </span><span class="">  890: 
-</span><span class="">  891: Try harder to merge all configurations from the global section of the configuration file.
+</span><span class="">  891: Options:
 </span><span class="">  892: 
-</span><span class="">  893: =back
+</span><span class="">  893: =over 4
 </span><span class="">  894: 
-</span><span class="">  895: =cut
+</span><span class="">  895: =item * merge
 </span><span class="">  896: 
-</span><span class="">  897: sub merge_defaults
-</span><span class="">  898: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">899 → 911 → 919</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">899 → 911 → 0</span></span>  899: 	my $self = shift;
-</span><span class="">  900: 	my $config = $self-&gt;all();
+</span><span class="">  897: Usually,
+</span><span class="">  898: what&#39;s in the object will overwrite what&#39;s in the defaults hash,
+</span><span class="">  899: if given,
+</span><span class="">  900: the result will be a combination of the hashes.
 </span><span class="">  901: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  902: 	return $config if(scalar(@_) == 0);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  902: =item * section
 </span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class="">  903: 
-</span><span class="">  904: 	my $params = Params::Get::get_params(&#39;defaults&#39;, @_);
-</span><span class="">  905: 	my $defaults = $params-&gt;{&#39;defaults&#39;};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  906: 	return $config if(!defined($defaults));
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  907: 	my $section = $params-&gt;{&#39;section&#39;};
-</span><span class="">  908: 
-</span><span class="">  909: 	Hash::Merge::set_clone_behavior(0);
-</span><span class="">  910: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  911: 	if(exists $config-&gt;{&#39;global&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  912: 		if($params-&gt;{&#39;deep&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  913: 			$defaults = merge($config-&gt;{&#39;global&#39;}, $defaults);
-</span><span class="">  914: 		} else {
-</span><span class="">  915: 			$defaults = { %{$defaults}, %{$config-&gt;{&#39;global&#39;}} };
-</span><span class="">  916: 		}
-</span><span class="">  917: 		delete $config-&gt;{&#39;global&#39;};
-</span><span class="">  918: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">919 → 919 → 922</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">919 → 919 → 0</span></span>  919: 	if($section &amp;&amp; exists $config-&gt;{$section}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  920: 		$config = $config-&gt;{$section};
-</span><span class="">  921: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">922 → 922 → 925</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">922 → 922 → 0</span></span>  922: 	if($params-&gt;{&#39;merge&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  923: 		return merge($config, $defaults);
-</span><span class="">  924: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">925 → 925 → 0</span></span>  925: 	return { %{$defaults}, %{$config} };
-</span><span class="">  926: }
+</span><span class="">  904: Merge in that section from the configuration file.
+</span><span class="">  905: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  906: =item * deep
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  907: 
+</span><span class="">  908: Try harder to merge all configurations from the global section of the configuration file.
+</span><span class="">  909: 
+</span><span class="">  910: =back
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  911: 
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  912: =cut
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  913: 
+</span><span class="">  914: sub merge_defaults
+</span><span class="">  915: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">916 → 928 → 936</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">916 → 928 → 0</span></span>  916: 	my $self = shift;
+</span><span class="">  917: 	my $config = $self-&gt;all();
+</span><span class="">  918: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  919: 	return $config if(scalar(@_) == 0);
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  920: 
+</span><span class="">  921: 	my $params = Params::Get::get_params(&#39;defaults&#39;, @_);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  922: 	my $defaults = $params-&gt;{&#39;defaults&#39;};
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  923: 	return $config if(!defined($defaults));
+</span><span class="">  924: 	my $section = $params-&gt;{&#39;section&#39;};
+</span><span class="">  925: 
+</span><span class="">  926: 	Hash::Merge::set_clone_behavior(0);
 </span><span class="">  927: 
-</span><span class="">  928: # Helper routine to load a driver
-</span><span class="">  929: sub _load_driver
-</span><span class="">  930: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">931 → 937 → 944</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">931 → 937 → 0</span></span>  931: 	my($self, $driver, $imports) = @_;
-</span><span class="">  932: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  933: 	return 1 if($self-&gt;{&#39;loaded&#39;}{$driver});
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  934: 	return 0 if($self-&gt;{&#39;failed&#39;}{$driver});
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  935: 
-</span><span class="">  936: 	eval &quot;require $driver&quot;;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  937: 	if($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  938: 		if(my $logger = $self-&gt;{&#39;logger&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  939: 			$logger-&gt;warn(ref($self), &quot;: $driver failed to load: $@&quot;);
-</span><span class="">  940: 		}
-</span><span class="">  941: 		$self-&gt;{&#39;failed&#39;}{$driver} = 1;
-</span><span class="">  942: 		return;
-</span><span class="">  943: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">944 → 946 → 0</span></span>  944: 	$driver-&gt;import(@{ $imports // [] });
-</span><span class="">  945: 	$self-&gt;{&#39;loaded&#39;}{$driver} = 1;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  946: 	return 1;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  947: }
-</span><span class="">  948: 
-</span><span class="">  949: =head2 AUTOLOAD
-</span><span class="">  950: 
-</span><span class="">  951: This module supports dynamic access to configuration keys via AUTOLOAD.
-</span><span class="">  952: Nested keys are accessible using the separator,
-</span><span class="">  953: so C&lt;$config-E&lt;gt&gt;database_user()&gt; resolves to C&lt;&lt; $config-&gt;{database}-&gt;{user} &gt;&gt;,
-</span><span class="">  954: when C&lt;sep_char&gt; is set to &#39;_&#39;.
-</span><span class="">  955: 
-</span><span class="">  956:     $config = Config::Abstraction-&gt;new(
-</span><span class="">  957:         data =&gt; {
-</span><span class="">  958:             database =&gt; {
-</span><span class="">  959:                 user =&gt; &#39;alice&#39;,
-</span><span class="">  960:                 pass =&gt; &#39;secret&#39;
-</span><span class="">  961:             },
-</span><span class="">  962:             log_level =&gt; &#39;debug&#39;
-</span><span class="">  963:         },
-</span><span class="">  964:         flatten =&gt; 1,
-</span><span class="">  965:         sep_char =&gt; &#39;_&#39;
-</span><span class="">  966:     );
-</span><span class="">  967: 
-</span><span class="">  968:     my $user = $config-&gt;database_user();	# returns &#39;alice&#39;
+</span><span class="">  928: 	if(exists $config-&gt;{&#39;global&#39;}) {
+</span><span class="">  929: 		if($params-&gt;{&#39;deep&#39;}) {
+</span><span class="">  930: 			$defaults = merge($config-&gt;{&#39;global&#39;}, $defaults);
+</span><span class="">  931: 		} else {
+</span><span class="">  932: 			$defaults = { %{$defaults}, %{$config-&gt;{&#39;global&#39;}} };
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  933: 		}
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  934: 		delete $config-&gt;{&#39;global&#39;};
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  935: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">936 → 936 → 939</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">936 → 936 → 0</span></span>  936: 	if($section &amp;&amp; exists $config-&gt;{$section}) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  937: 		$config = $config-&gt;{$section};
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  938: 	}
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">939 → 939 → 942</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">939 → 939 → 0</span></span>  939: 	if($params-&gt;{&#39;merge&#39;}) {
+</span><span class="">  940: 		return merge($config, $defaults);
+</span><span class="">  941: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">942 → 942 → 0</span></span>  942: 	return { %{$defaults}, %{$config} };
+</span><span class="">  943: }
+</span><span class="">  944: 
+</span><span class="">  945: # Helper routine to load a driver.
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  946: # NOTE: Log::Abstraction must NOT be loaded via this method - it is
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  947: # bootstrapped directly in new() to avoid a circular initialisation
+</span><span class="">  948: # dependency where _load_driver would attempt to log via an as-yet
+</span><span class="">  949: # uninitialised logger.
+</span><span class="">  950: sub _load_driver
+</span><span class="">  951: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">952 → 958 → 965</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">952 → 958 → 0</span></span>  952: 	my($self, $driver, $imports) = @_;
+</span><span class="">  953: 
+</span><span class="">  954: 	return 1 if($self-&gt;{&#39;loaded&#39;}{$driver});
+</span><span class="">  955: 	return 0 if($self-&gt;{&#39;failed&#39;}{$driver});
+</span><span class="">  956: 
+</span><span class="">  957: 	eval &quot;require $driver&quot;;
+</span><span class="">  958: 	if($@) {
+</span><span class="">  959: 		if(my $logger = $self-&gt;{&#39;logger&#39;}) {
+</span><span class="">  960: 			$logger-&gt;warn(ref($self), &quot;: $driver failed to load: $@&quot;);
+</span><span class="">  961: 		}
+</span><span class="">  962: 		$self-&gt;{&#39;failed&#39;}{$driver} = 1;
+</span><span class="">  963: 		return;
+</span><span class="">  964: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">965 → 967 → 0</span></span>  965: 	$driver-&gt;import(@{ $imports // [] });
+</span><span class="">  966: 	$self-&gt;{&#39;loaded&#39;}{$driver} = 1;
+</span><span class="">  967: 	return 1;
+</span><span class="">  968: }
 </span><span class="">  969: 
-</span><span class="">  970:     # or
-</span><span class="">  971:     $user = $config-&gt;database()-&gt;{&#39;user&#39;};	# returns &#39;alice&#39;
-</span><span class="">  972: 
-</span><span class="">  973:     # Attempting to call a nonexistent key
-</span><span class="">  974:     my $foo = $config-&gt;nonexistent_key();	# dies with error
-</span><span class="">  975: 
-</span><span class="">  976: =cut
-</span><span class="">  977: 
-</span><span class="">  978: sub AUTOLOAD
-</span><span class="">  979: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">980 → 994 → 998</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">980 → 994 → 0</span></span>  980: 	our $AUTOLOAD;
-</span><span class="">  981: 
-</span><span class="">  982: 	my $self = shift;
-</span><span class="">  983: 	my $key = $AUTOLOAD;
-</span><span class="">  984: 
-</span><span class="">  985: 	$key =~ s/.*:://;	# remove package name
-</span><span class="">  986: 	return if $key eq &#39;DESTROY&#39;;
-</span><span class="">  987: 
-</span><span class="">  988: 	# my $val = $self-&gt;get($key);
-</span><span class="">  989: 	# return $val if(defined($val));
+</span><span class="">  970: =head2 AUTOLOAD
+</span><span class="">  971: 
+</span><span class="">  972: This module supports dynamic access to configuration keys via AUTOLOAD.
+</span><span class="">  973: Nested keys are accessible using the separator,
+</span><span class="">  974: so C&lt;$config-E&lt;gt&gt;database_user()&gt; resolves to C&lt;&lt; $config-&gt;{database}-&gt;{user} &gt;&gt;,
+</span><span class="">  975: when C&lt;sep_char&gt; is set to &#39;_&#39;.
+</span><span class="">  976: 
+</span><span class="">  977:     $config = Config::Abstraction-&gt;new(
+</span><span class="">  978:         data =&gt; {
+</span><span class="">  979:             database =&gt; {
+</span><span class="">  980:                 user =&gt; &#39;alice&#39;,
+</span><span class="">  981:                 pass =&gt; &#39;secret&#39;
+</span><span class="">  982:             },
+</span><span class="">  983:             log_level =&gt; &#39;debug&#39;
+</span><span class="">  984:         },
+</span><span class="">  985:         flatten =&gt; 1,
+</span><span class="">  986:         sep_char =&gt; &#39;_&#39;
+</span><span class="">  987:     );
+</span><span class="">  988: 
+</span><span class="">  989:     my $user = $config-&gt;database_user();	# returns &#39;alice&#39;
 </span><span class="">  990: 
-</span><span class="">  991: 	my $data = $self-&gt;{data} || $self-&gt;{&#39;config&#39;};
-</span><span class="">  992: 
-</span><span class="">  993: 	# If flattening is ON, assume keys are pre-flattened
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  994: 	if ($self-&gt;{flatten}) {
+</span><span class="">  991:     # or
+</span><span class="">  992:     $user = $config-&gt;database()-&gt;{&#39;user&#39;};	# returns &#39;alice&#39;
+</span><span class="">  993: 
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  994:     # Attempting to call a nonexistent key
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
 				<li><b>COND_INV_994_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  995: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+<span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  995:     my $foo = $config-&gt;nonexistent_key();	# dies with error
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1624,98 +1624,119 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class="">  996: 	}
-</span><span class="">  997: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">998 → 1002 → 1009</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">998 → 1002 → 0</span></span>  998: 	my $sep = $self-&gt;{&#39;sep_char&#39;};
-</span><span class="">  999: 
-</span><span class=""> 1000: 	# Fallback: try resolving nested structure dynamically
-</span><span class=""> 1001: 	my $val = $data;
-</span><span class=""> 1002: 	foreach my $part(split /\Q$sep\E/, $key) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1003: 		if((ref($val) eq &#39;HASH&#39;) &amp;&amp; (exists $val-&gt;{$part})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1004: 			$val = $val-&gt;{$part};
-</span><span class=""> 1005: 		} else {
-</span><span class=""> 1006: 			croak &quot;No such config key &#39;$key&#39;&quot;;
-</span><span class=""> 1007: 		}
-</span><span class=""> 1008: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1009 → 1009 → 0</span></span> 1009: 	return $val;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1010: }
+<span class="">  996: 
+</span><span class="">  997: =cut
+</span><span class="">  998: 
+</span><span class="">  999: sub AUTOLOAD
+</span><span class=""> 1000: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1001 → 1015 → 1019</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1001 → 1015 → 0</span></span> 1001: 	our $AUTOLOAD;
+</span><span class=""> 1002: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1003: 	my $self = shift;
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1004: 	my $key = $AUTOLOAD;
+</span><span class=""> 1005: 
+</span><span class=""> 1006: 	$key =~ s/.*:://;	# remove package name
+</span><span class=""> 1007: 	return if $key eq &#39;DESTROY&#39;;
+</span><span class=""> 1008: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1009: 	# my $val = $self-&gt;get($key);
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1010: 	# return $val if(defined($val));
 </span><span class=""> 1011: 
-</span><span class=""> 1012: 1;
+</span><span class=""> 1012: 	my $data = $self-&gt;{data} || $self-&gt;{&#39;config&#39;};
 </span><span class=""> 1013: 
-</span><span class=""> 1014: =head1 COMMON PITFALLS
-</span><span class=""> 1015: 
-</span><span class=""> 1016: =over 4
-</span><span class=""> 1017: 
-</span><span class=""> 1018: =item * Nested hashes
-</span><span class=""> 1019: 
-</span><span class=""> 1020: Merging replaces entire nested hashes unless you enable deep merging.
-</span><span class=""> 1021: 
-</span><span class=""> 1022: =item * Undef values
-</span><span class=""> 1023: 
-</span><span class=""> 1024: Keys explicitly set to C&lt;undef&gt; in a later source override earlier values.
-</span><span class=""> 1025: 
-</span><span class=""> 1026: =item * Environment
-</span><span class=""> 1027: 
-</span><span class=""> 1028: When using environment variables,
-</span><span class=""> 1029: remember that double underscores (__) create nested structures,
-</span><span class=""> 1030: while single underscores remain as part of the key name under the prefix namespace.
-</span><span class=""> 1031: 
-</span><span class=""> 1032: =back
-</span><span class=""> 1033: 
-</span><span class=""> 1034: =head1 BUGS
-</span><span class=""> 1035: 
-</span><span class=""> 1036: It should be possible to escape the separator character either with backslashes or quotes.
-</span><span class=""> 1037: 
-</span><span class=""> 1038: Due to the case-insensitive nature of environment variables on Windows,
-</span><span class=""> 1039: it may be challenging to override values using environment variables on that platform.
+</span><span class=""> 1014: 	# If flattening is ON, assume keys are pre-flattened
+</span><span class=""> 1015: 	if ($self-&gt;{flatten}) {
+</span><span class=""> 1016: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+</span><span class=""> 1017: 	}
+</span><span class=""> 1018: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1019 → 1023 → 1030</span></span><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1019 → 1023 → 0</span></span> 1019: 	my $sep = $self-&gt;{&#39;sep_char&#39;};
+</span><span class=""> 1020: 
+</span><span class=""> 1021: 	# Fallback: try resolving nested structure dynamically
+</span><span class=""> 1022: 	my $val = $data;
+</span><span class=""> 1023: 	foreach my $part(split /\Q$sep\E/, $key) {
+</span><span class=""> 1024: 		if((ref($val) eq &#39;HASH&#39;) &amp;&amp; (exists $val-&gt;{$part})) {
+</span><span class=""> 1025: 			$val = $val-&gt;{$part};
+</span><span class=""> 1026: 		} else {
+</span><span class=""> 1027: 			croak &quot;No such config key &#39;$key&#39;&quot;;
+</span><span class=""> 1028: 		}
+</span><span class=""> 1029: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1030 → 1030 → 0</span></span> 1030: 	return $val;
+</span><span class=""> 1031: }
+</span><span class=""> 1032: 
+</span><span class=""> 1033: 1;
+</span><span class=""> 1034: 
+</span><span class=""> 1035: =head1 COMMON PITFALLS
+</span><span class=""> 1036: 
+</span><span class=""> 1037: =over 4
+</span><span class=""> 1038: 
+</span><span class=""> 1039: =item * Nested hashes
 </span><span class=""> 1040: 
-</span><span class=""> 1041: =head1 REPOSITORY
+</span><span class=""> 1041: Merging replaces entire nested hashes unless you enable deep merging.
 </span><span class=""> 1042: 
-</span><span class=""> 1043: L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
+</span><span class=""> 1043: =item * Undef values
 </span><span class=""> 1044: 
-</span><span class=""> 1045: =head1 SUPPORT
+</span><span class=""> 1045: Keys explicitly set to C&lt;undef&gt; in a later source override earlier values.
 </span><span class=""> 1046: 
-</span><span class=""> 1047: This module is provided as-is without any warranty.
+</span><span class=""> 1047: =item * Environment
 </span><span class=""> 1048: 
-</span><span class=""> 1049: Please report any bugs or feature requests to C&lt;bug-config-abstraction at rt.cpan.org&gt;,
-</span><span class=""> 1050: or through the web interface at
-</span><span class=""> 1051: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Config-Abstraction&gt;.
-</span><span class=""> 1052: I will be notified, and then you&#39;ll
-</span><span class=""> 1053: automatically be notified of progress on your bug as I make changes.
+</span><span class=""> 1049: When using environment variables,
+</span><span class=""> 1050: remember that double underscores (__) create nested structures,
+</span><span class=""> 1051: while single underscores remain as part of the key name under the prefix namespace.
+</span><span class=""> 1052: 
+</span><span class=""> 1053: =back
 </span><span class=""> 1054: 
-</span><span class=""> 1055: You can find documentation for this module with the perldoc command.
+</span><span class=""> 1055: =head1 BUGS
 </span><span class=""> 1056: 
-</span><span class=""> 1057:     perldoc Config::Abstraction
+</span><span class=""> 1057: It should be possible to escape the separator character either with backslashes or quotes.
 </span><span class=""> 1058: 
-</span><span class=""> 1059: =head1 SEE ALSO
-</span><span class=""> 1060: 
-</span><span class=""> 1061: =over 4
-</span><span class=""> 1062: 
-</span><span class=""> 1063: =item * L&lt;Config::Any&gt;
-</span><span class=""> 1064: 
-</span><span class=""> 1065: =item * L&lt;Config::Auto&gt;
-</span><span class=""> 1066: 
-</span><span class=""> 1067: =item * L&lt;Data::Reuse&gt;
-</span><span class=""> 1068: 
-</span><span class=""> 1069: Used to C&lt;fixate()&gt; elements when installed, unless C&lt;no-fixate&gt; is given
-</span><span class=""> 1070: 
-</span><span class=""> 1071: =item * L&lt;Hash::Merge&gt;
-</span><span class=""> 1072: 
-</span><span class=""> 1073: =item * L&lt;Log::Abstraction&gt;
-</span><span class=""> 1074: 
-</span><span class=""> 1075: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Config-Abstraction/coverage/&gt;
-</span><span class=""> 1076: 
-</span><span class=""> 1077: =item * Development version on GitHub L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
-</span><span class=""> 1078: 
-</span><span class=""> 1079: =back
-</span><span class=""> 1080: 
-</span><span class=""> 1081: =head1 AUTHOR
-</span><span class=""> 1082: 
-</span><span class=""> 1083: Nigel Horne, C&lt;&lt; &lt;njh at nigelhorne.com&gt; &gt;&gt;
-</span><span class=""> 1084: 
-</span><span class=""> 1085: =cut
-</span><span class=""> 1086: 
-</span><span class=""> 1087: __END__
+</span><span class=""> 1059: Due to the case-insensitive nature of environment variables on Windows,
+</span><span class=""> 1060: it may be challenging to override values using environment variables on that platform.
+</span><span class=""> 1061: 
+</span><span class=""> 1062: =head1 REPOSITORY
+</span><span class=""> 1063: 
+</span><span class=""> 1064: L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
+</span><span class=""> 1065: 
+</span><span class=""> 1066: =head1 SUPPORT
+</span><span class=""> 1067: 
+</span><span class=""> 1068: This module is provided as-is without any warranty.
+</span><span class=""> 1069: 
+</span><span class=""> 1070: Please report any bugs or feature requests to C&lt;bug-config-abstraction at rt.cpan.org&gt;,
+</span><span class=""> 1071: or through the web interface at
+</span><span class=""> 1072: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Config-Abstraction&gt;.
+</span><span class=""> 1073: I will be notified, and then you&#39;ll
+</span><span class=""> 1074: automatically be notified of progress on your bug as I make changes.
+</span><span class=""> 1075: 
+</span><span class=""> 1076: You can find documentation for this module with the perldoc command.
+</span><span class=""> 1077: 
+</span><span class=""> 1078:     perldoc Config::Abstraction
+</span><span class=""> 1079: 
+</span><span class=""> 1080: =head1 SEE ALSO
+</span><span class=""> 1081: 
+</span><span class=""> 1082: =over 4
+</span><span class=""> 1083: 
+</span><span class=""> 1084: =item * L&lt;Config::Any&gt;
+</span><span class=""> 1085: 
+</span><span class=""> 1086: =item * L&lt;Config::Auto&gt;
+</span><span class=""> 1087: 
+</span><span class=""> 1088: =item * L&lt;Data::Reuse&gt;
+</span><span class=""> 1089: 
+</span><span class=""> 1090: Used to C&lt;fixate()&gt; elements when installed, unless C&lt;no-fixate&gt; is given
+</span><span class=""> 1091: 
+</span><span class=""> 1092: =item * L&lt;Hash::Merge&gt;
+</span><span class=""> 1093: 
+</span><span class=""> 1094: =item * L&lt;Log::Abstraction&gt;
+</span><span class=""> 1095: 
+</span><span class=""> 1096: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Config-Abstraction/coverage/&gt;
+</span><span class=""> 1097: 
+</span><span class=""> 1098: =item * Development version on GitHub L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
+</span><span class=""> 1099: 
+</span><span class=""> 1100: =back
+</span><span class=""> 1101: 
+</span><span class=""> 1102: =head1 AUTHOR
+</span><span class=""> 1103: 
+</span><span class=""> 1104: Nigel Horne, C&lt;&lt; &lt;njh at nigelhorne.com&gt; &gt;&gt;
+</span><span class=""> 1105: 
+</span><span class=""> 1106: =cut
+</span><span class=""> 1107: 
+</span><span class=""> 1108: __END__
 </span></pre>
 
 <script>
