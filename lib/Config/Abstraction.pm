@@ -341,9 +341,7 @@ sub new
 
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
 
-	if((!defined($params->{'config_dirs'})) && $params->{'file'}) {
-		$params->{'config_file'} = $params->{'file'};
-	}
+	$params->{'config_file'} //= $params->{'file'} if($params->{'file'});
 
 	if(!defined($params->{'config_dirs'})) {
 		if($params->{'config_file'} && File::Spec->file_name_is_absolute($params->{'config_file'})) {
@@ -383,7 +381,7 @@ sub new
 
 	if(my $logger = $self->{'logger'}) {
 		if(!Scalar::Util::blessed($logger)) {
-			# Don't call $self->_load_driver('Log::Abstraction') as it can make a call to logger which is yet to be set up
+			# Don't call $self->_load_driver('Log::Abstraction') as it can make a call to logger, which is yet to be set up
 			eval "require Log::Abstraction";
 			if($@) {
 				carp(ref($self), ": Log::Abstraction failed to load: $@");
@@ -474,10 +472,24 @@ sub _load_config
 			if ($file =~ /\.ya?ml$/) {
 				$self->_load_driver('YAML::XS', ['LoadFile']);
 				$data = eval { LoadFile($path) };
-				croak "Failed to load YAML from $path: $@" if $@;
+				if($@) {
+					if($logger) {
+						$logger->notice("Failed to load YAML from $path: $@");
+					} else {
+						Carp::carp("Failed to load YAML from $path: $@");
+					}
+					next;
+				}
 			} elsif ($file =~ /\.json$/) {
 				$data = eval { decode_json(read_file($path)) };
-				croak "Failed to load JSON from $path: $@" if $@;
+					if($@) {
+						if($logger) {
+							$logger->notice("Failed to load JSON from $path: $@");
+						} else {
+							Carp::carp("Failed to load JSON from $path: $@");
+						}
+						next;
+					}
 			} elsif($file =~ /\.xml$/) {
 				my $rc;
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
@@ -925,7 +937,11 @@ sub merge_defaults
 	return { %{$defaults}, %{$config} };
 }
 
-# Helper routine to load a driver
+# Helper routine to load a driver.
+# NOTE: Log::Abstraction must NOT be loaded via this method - it is
+# bootstrapped directly in new() to avoid a circular initialisation
+# dependency where _load_driver would attempt to log via an as-yet
+# uninitialised logger.
 sub _load_driver
 {
 	my($self, $driver, $imports) = @_;

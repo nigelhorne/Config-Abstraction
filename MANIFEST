@@ -17,6 +17,7 @@ t/autoload.t
 t/coderefs.t
 t/comment-spelling.t
 t/cover.t
+t/edge_cases.t
 t/eof.t
 t/eol.t
 t/flatten.t
