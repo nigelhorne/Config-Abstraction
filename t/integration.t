@@ -11,6 +11,7 @@ use autodie qw(:all);
 
 use Test::Most;
 use Test::Mockingbird;
+use Test::Needs;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
 use File::Temp qw(tempdir);
@@ -478,6 +479,7 @@ subtest 'end-to-end: schema validation rejects invalid config' => sub {
 # Logger integration with Log::Abstraction
 # ===========================================================================
 subtest 'end-to-end: logger integration - arrayref logger captures messages' => sub {
+	test_needs 'Log::Abstraction';
 	my @log_output;
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),

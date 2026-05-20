@@ -384,11 +384,15 @@ sub new
 	if(my $logger = $self->{'logger'}) {
 		if(!Scalar::Util::blessed($logger)) {
 			# Don't call $self->_load_driver('Log::Abstraction') as it can make a call to logger which is yet to be set up
-			require Log::Abstraction;
-			Log::Abstraction->import();
-			$self->{'logger'} = Log::Abstraction->new($logger);
-			if($params->{'level'} && $self->{'logger'}->can('level')) {
-				$self->{'logger'}->level($params->{'level'});
+			eval "require Log::Abstraction";
+			if($@) {
+				carp(ref($self), ": Log::Abstraction failed to load: $@");
+			} else {
+				Log::Abstraction->import();
+				$self->{'logger'} = Log::Abstraction->new($logger);
+				if($params->{'level'} && $self->{'logger'}->can('level')) {
+					$self->{'logger'}->level($params->{'level'});
+				}
 			}
 		}
 	}
