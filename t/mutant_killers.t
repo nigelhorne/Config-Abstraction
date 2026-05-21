@@ -407,15 +407,15 @@ subtest '_load_config() - INI with logger routes error to logger (COND_INV_531_6
 	# Write something that Config::IniFiles will reject
 	_write_file($dir, 'base.ini', "not an ini file at all\x00\x01\x02\n");
 
-	my $cfg;
-	_silenced(sub {
-		$cfg = Config::Abstraction->new(
-			data        => { fallback => 'yes' },
-			config_dirs => [$dir],
-			logger      => \@log,
-		);
-	});
-	ok(defined($cfg), 'malformed INI with logger does not crash');
+	lives_ok {
+		_silenced(sub {
+			my $cfg = Config::Abstraction->new(
+				data        => { fallback => 'yes' },
+				config_dirs => [$dir],
+				logger      => \@log,
+			);
+		});
+	}, 'malformed INI with logger does not crash';
 };
 
 # ===========================================================================
