@@ -11,6 +11,7 @@ use autodie qw(:all);
 
 use Test::Mockingbird;
 use Test::Most;
+use Test::Needs;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
 use File::Temp qw(tempdir);
@@ -323,6 +324,7 @@ subtest '_load_config() - malformed JSON logged not croaked (COND_INV_485_6)' =>
 };
 
 subtest '_load_config() - JSON error with logger uses logger not carp (COND_INV_486_7)' => sub {
+	test_needs 'Log::Abstraction';
 	my @log;
 	my $dir = tempdir(CLEANUP => 1);
 	_write_file($dir, 'base.json', '{"key":"val"}');
