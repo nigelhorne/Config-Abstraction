@@ -20,7 +20,7 @@ https://pjcj.net
 <h1>Branch Coverage</h1>
 <table>
 <tr><td class="h" align="right">File:</td><td align="left">blib/lib/Config/Abstraction.pm</td></tr>
-<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">66.9%</td></tr>
+<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">70.5%</td></tr>
 </table>
 <div><br/></div>
 <table>
@@ -30,13 +30,13 @@ https://pjcj.net
 <tr><td class="h"><a id="L346">346</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (defined $params-&gt;{&#39;config_dirs&#39;})</td></tr>
 <tr><td class="h"><a id="L347">347</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($params-&gt;{&#39;config_file&#39;} and &#39;File::Spec&#39;-&gt;file_name_is_absolute($params-&gt;{&#39;config_file&#39;})) { }</td></tr>
 <tr><td class="h"><a id="L351">351</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($^O ne &#39;MSWin32&#39;) { }</td></tr>
-<tr><td class="h"><a id="L356">356</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($ENV{&#39;HOME&#39;}) { }</td></tr>
-<tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif ($ENV{&#39;DOCUMENT_ROOT&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L367">367</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $dir = $ENV{&#39;CONFIG_DIR&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L356">356</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($ENV{&#39;HOME&#39;}) { }</td></tr>
+<tr><td class="h"></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">elsif ($ENV{&#39;DOCUMENT_ROOT&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L367">367</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $dir = $ENV{&#39;CONFIG_DIR&#39;}) { }</td></tr>
 <tr><td class="h"><a id="L377">377</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$params-&gt;{&#39;defaults&#39;} ? :</td></tr>
 <tr><td class="h"><a id="L382">382</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $logger = $self-&gt;{&#39;logger&#39;})</td></tr>
-<tr><td class="h"><a id="L383">383</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (&amp;Scalar::Util::blessed($logger))</td></tr>
-<tr><td class="h"><a id="L386">386</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($@) { }</td></tr>
+<tr><td class="h"><a id="L383">383</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (&amp;Scalar::Util::blessed($logger))</td></tr>
+<tr><td class="h"><a id="L386">386</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($@) { }</td></tr>
 <tr><td class="h"><a id="L391">391</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($params-&gt;{&#39;level&#39;} and $self-&gt;{&#39;logger&#39;}-&gt;can(&quot;level&quot;))</td></tr>
 <tr><td class="h"><a id="L399">399</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $schema = $params-&gt;{&#39;schema&#39;})</td></tr>
 <tr><td class="h"><a id="L403">403</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (defined $self-&gt;{&#39;config&#39;} and scalar keys %{$$self{&quot;config&quot;};})</td></tr>
@@ -46,8 +46,8 @@ https://pjcj.net
 <tr><td class="h"><a id="L425">425</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless (UNIVERSAL::isa((&amp;CORE::GLOBAL::caller())[0], __PACKAGE__))</td></tr>
 <tr><td class="h"><a id="L432">432</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;data&#39;})</td></tr>
 <tr><td class="h"><a id="L438">438</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($logger)</td></tr>
-<tr><td class="h"><a id="L443">443</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;config_file&#39;} and scalar @dirs &gt; 1)</td></tr>
-<tr><td class="h"><a id="L444">444</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (&#39;File::Spec&#39;-&gt;file_name_is_absolute($self-&gt;{&#39;config_file&#39;})) { }</td></tr>
+<tr><td class="h"><a id="L443">443</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;config_file&#39;} and scalar @dirs &gt; 1)</td></tr>
+<tr><td class="h"><a id="L444">444</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (&#39;File::Spec&#39;-&gt;file_name_is_absolute($self-&gt;{&#39;config_file&#39;})) { }</td></tr>
 <tr><td class="h"><a id="L453">453</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $dir</td></tr>
 <tr><td class="h"><a id="L454">454</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (length $dir and not -d $dir)</td></tr>
 <tr><td class="h"><a id="L460">460</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($logger)</td></tr>
@@ -110,9 +110,9 @@ https://pjcj.net
 <tr><td class="h"><a id="L637">637</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($val =~ /(.+)=(.+)/) { }</td></tr>
 <tr><td class="h"><a id="L645">645</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
 <tr><td class="h"><a id="L649">649</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
-<tr><td class="h"><a id="L651">651</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $ini = &quot;Config::IniFiles&quot;-&gt;new(&quot;-file&quot;, $path))</td></tr>
-<tr><td class="h"><a id="L656">656</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
-<tr><td class="h"><a id="L660">660</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
+<tr><td class="h"><a id="L651">651</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (my $ini = &quot;Config::IniFiles&quot;-&gt;new(&quot;-file&quot;, $path))</td></tr>
+<tr><td class="h"><a id="L656">656</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($data)</td></tr>
+<tr><td class="h"><a id="L660">660</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
 <tr><td class="h"><a id="L662">662</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;XML::Simple&quot;, [&quot;XMLin&quot;]))</td></tr>
 <tr><td class="h"><a id="L665">665</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (not $data or ref $data ne &quot;HASH&quot;)</td></tr>
 <tr><td class="h"><a id="L666">666</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if ($self-&gt;_load_driver(&quot;Config::Abstract&quot;))</td></tr>
