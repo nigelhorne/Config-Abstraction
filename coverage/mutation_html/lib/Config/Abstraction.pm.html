@@ -315,11 +315,11 @@ Approximate LCSAJ segments: 279<br>
 </span><span class="">   23: 
 </span><span class="">   24: =head1 VERSION
 </span><span class="">   25: 
-</span><span class="">   26: Version 0.37
+</span><span class="">   26: Version 0.38
 </span><span class="">   27: 
 </span><span class="">   28: =cut
 </span><span class="">   29: 
-</span><span class="">   30: our $VERSION = &#39;0.37&#39;;
+</span><span class="">   30: our $VERSION = &#39;0.38&#39;;
 </span><span class="">   31: 
 </span><span class="">   32: =head1 SYNOPSIS
 </span><span class="">   33: 
@@ -1320,7 +1320,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  818: 		return 0;
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  819: 	}
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 820 → 821 → 0</span></span>  820: 	$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths.">  821: 	return 1;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  821: 	return 1;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1542,7 +1542,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 					<ul>
 				<li><b>COND_INV_1015_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1016: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+<span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1016: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
