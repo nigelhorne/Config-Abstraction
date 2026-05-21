@@ -244,6 +244,7 @@ subtest 'new() - Log::Abstraction load failure handled gracefully (COND_INV_385_
 };
 
 subtest 'new() - level applied to logger when supported (COND_INV_393_5)' => sub {
+	test_needs 'Log::Abstraction';
 	# When level IS provided and logger supports it, level() must be called.
 	# If the condition were inverted, level would never be set.
 	my @log;
