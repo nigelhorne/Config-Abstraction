@@ -1,6 +1,7 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.38
+0.38	Wed May 20 21:46:58 EDT 2026
+
 	[ Enhancements ]
 	- Document the "defaults" argument to new()
 	- Fix fatal croak on malformed or degenerate YAML/JSON files in config_dirs;
