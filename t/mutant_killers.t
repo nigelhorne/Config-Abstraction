@@ -195,6 +195,7 @@ subtest 'new() - CONFIG_DIR unset: conf/config dirs used instead (COND_INV_369_4
 # Kills: inversions in the logger setup conditional chain
 # ===========================================================================
 subtest 'new() - unblessed logger wrapped in Log::Abstraction (COND_INV_384_2)' => sub {
+	test_needs 'Log::Abstraction';
 	# When logger IS provided and IS NOT blessed, it must be wrapped.
 	# If the condition were inverted, wrapping would be skipped.
 	my @log;
