@@ -229,6 +229,7 @@ subtest 'new() - blessed logger not re-wrapped (COND_INV_384_2 false branch)' =>
 };
 
 subtest 'new() - Log::Abstraction load failure handled gracefully (COND_INV_385_3)' => sub {
+	test_needs 'Log::Abstraction';
 	# When Log::Abstraction is unavailable the eval failure branch runs.
 	# Mock the eval to simulate load failure by providing a bad logger name.
 	# We cannot easily force require to fail, but we can verify the object
