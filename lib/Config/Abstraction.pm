@@ -786,7 +786,12 @@ sub get
 				if(!tied %$ref) {
 					# Pass the hashref directly (not dereferenced) so fixate receives
 					# a named scalar it can make read-only without flattening the hash
-					Data::Reuse::fixate($ref) if scalar(keys %{$ref});
+					# FIXME:
+					# What works on MacOS doesn't work
+					# on Linux and vice versa.
+					# Something is wrong.
+					# Data::Reuse::fixate(%{$ref}) if scalar(keys %{$ref});
+					# Data::Reuse::fixate($ref) if scalar(keys %{$ref});
 				}
 			} elsif(ref($ref) eq 'ARRAY') {
 				# RT#171980

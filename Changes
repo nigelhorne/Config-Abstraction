@@ -3,7 +3,8 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 0.39
 
 	[ Bug Fixes ]
-	- Fix the usage of fixate
+	- Don't use fixate for now, what works on Linux doesn't work on MACOS
+		and vice versa.  I don't know why.
 
 0.38	Wed May 20 21:46:58 EDT 2026
 
