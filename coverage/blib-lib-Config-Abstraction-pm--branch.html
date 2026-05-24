@@ -20,7 +20,7 @@ https://pjcj.net
 <h1>Branch Coverage</h1>
 <table>
 <tr><td class="h" align="right">File:</td><td align="left">blib/lib/Config/Abstraction.pm</td></tr>
-<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">70.5%</td></tr>
+<tr><td class="h" align="right">Coverage:</td><td align="left" class="c0">71.0%</td></tr>
 </table>
 <div><br/></div>
 <table>
@@ -143,31 +143,30 @@ https://pjcj.net
 <tr><td class="h"><a id="L785">785</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (ref $ref eq &#39;HASH&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">elsif (ref $ref eq &#39;ARRAY&#39;) { }</td></tr>
 <tr><td class="h"><a id="L786">786</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless (tied %$ref)</td></tr>
-<tr><td class="h"><a id="L789">789</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if scalar keys %{$ref;}</td></tr>
-<tr><td class="h"><a id="L805">805</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;no_fixate&#39;}</td></tr>
-<tr><td class="h"><a id="L808">808</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;reuse_loaded&#39;}</td></tr>
-<tr><td class="h"><a id="L809">809</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;reuse_failed&#39;}</td></tr>
-<tr><td class="h"><a id="L815">815</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L835">835</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;flatten&#39;})</td></tr>
-<tr><td class="h"><a id="L836">836</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">exists $self-&gt;{&#39;config&#39;}{$key} ? :</td></tr>
-<tr><td class="h"><a id="L840">840</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ref $ref eq &quot;HASH&quot;</td></tr>
-<tr><td class="h"><a id="L841">841</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless exists $ref-&gt;{$part}</td></tr>
-<tr><td class="h"><a id="L860">860</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $self-&gt;{&#39;config&#39;}</td></tr>
-<tr><td class="h"><a id="L867">867</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">scalar keys %{$$self{&#39;config&#39;};} ? :</td></tr>
-<tr><td class="h"><a id="L919">919</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
-<tr><td class="h"><a id="L923">923</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $defaults</td></tr>
-<tr><td class="h"><a id="L928">928</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $config-&gt;{&#39;global&#39;})</td></tr>
-<tr><td class="h"><a id="L929">929</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($params-&gt;{&#39;deep&#39;}) { }</td></tr>
-<tr><td class="h"><a id="L936">936</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($section and exists $config-&gt;{$section})</td></tr>
-<tr><td class="h"><a id="L939">939</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($params-&gt;{&#39;merge&#39;})</td></tr>
-<tr><td class="h"><a id="L954">954</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;loaded&#39;}{$driver}</td></tr>
-<tr><td class="h"><a id="L955">955</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;failed&#39;}{$driver}</td></tr>
-<tr><td class="h"><a id="L958">958</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
-<tr><td class="h"><a id="L959">959</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $logger = $self-&gt;{&#39;logger&#39;})</td></tr>
-<tr><td class="h"><a id="L1007">1007</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $key eq &quot;DESTROY&quot;</td></tr>
-<tr><td class="h"><a id="L1015">1015</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;flatten&#39;})</td></tr>
-<tr><td class="h"><a id="L1016">1016</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if exists $data-&gt;{$key}</td></tr>
-<tr><td class="h"><a id="L1024">1024</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $val eq &#39;HASH&#39; and exists $val-&gt;{$part}) { }</td></tr>
+<tr><td class="h"><a id="L810">810</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;no_fixate&#39;}</td></tr>
+<tr><td class="h"><a id="L813">813</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;reuse_loaded&#39;}</td></tr>
+<tr><td class="h"><a id="L814">814</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;reuse_failed&#39;}</td></tr>
+<tr><td class="h"><a id="L820">820</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if ($@)</td></tr>
+<tr><td class="h"><a id="L840">840</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;flatten&#39;})</td></tr>
+<tr><td class="h"><a id="L841">841</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">exists $self-&gt;{&#39;config&#39;}{$key} ? :</td></tr>
+<tr><td class="h"><a id="L845">845</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ref $ref eq &quot;HASH&quot;</td></tr>
+<tr><td class="h"><a id="L846">846</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless exists $ref-&gt;{$part}</td></tr>
+<tr><td class="h"><a id="L865">865</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">unless $self-&gt;{&#39;config&#39;}</td></tr>
+<tr><td class="h"><a id="L872">872</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">scalar keys %{$$self{&#39;config&#39;};} ? :</td></tr>
+<tr><td class="h"><a id="L924">924</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
+<tr><td class="h"><a id="L928">928</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $defaults</td></tr>
+<tr><td class="h"><a id="L933">933</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $config-&gt;{&#39;global&#39;})</td></tr>
+<tr><td class="h"><a id="L934">934</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($params-&gt;{&#39;deep&#39;}) { }</td></tr>
+<tr><td class="h"><a id="L941">941</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($section and exists $config-&gt;{$section})</td></tr>
+<tr><td class="h"><a id="L944">944</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($params-&gt;{&#39;merge&#39;})</td></tr>
+<tr><td class="h"><a id="L959">959</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;loaded&#39;}{$driver}</td></tr>
+<tr><td class="h"><a id="L960">960</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $self-&gt;{&#39;failed&#39;}{$driver}</td></tr>
+<tr><td class="h"><a id="L963">963</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($@)</td></tr>
+<tr><td class="h"><a id="L964">964</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if (my $logger = $self-&gt;{&#39;logger&#39;})</td></tr>
+<tr><td class="h"><a id="L1012">1012</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $key eq &quot;DESTROY&quot;</td></tr>
+<tr><td class="h"><a id="L1020">1020</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if ($self-&gt;{&#39;flatten&#39;})</td></tr>
+<tr><td class="h"><a id="L1021">1021</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if exists $data-&gt;{$key}</td></tr>
+<tr><td class="h"><a id="L1029">1029</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $val eq &#39;HASH&#39; and exists $val-&gt;{$part}) { }</td></tr>
 </table>
 </body>
 </html>
