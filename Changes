@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.39
+0.39	Sun May 24 16:16:50 EDT 2026
 
 	[ Bug Fixes ]
 	- Don't use fixate for now, what works on Linux doesn't work on MACOS
