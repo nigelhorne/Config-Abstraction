@@ -1105,7 +1105,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 <span class="">  674: 											undef $data;
 </span><span class="">  675: 										} elsif($data) {
 </span><span class="">  676: 											$data = $data-&gt;get_all_settings();
-</span><span class="survived-2 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one). Mutation survived. Add targeted tests to validate this branch.">  677: 											if(scalar(keys %{$data}) == 0) {
+</span><span class="survived-2 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  677: 											if(scalar(keys %{$data}) == 0) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1297,7 +1297,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  810: 	return 0 if($self-&gt;{&#39;no_fixate&#39;});
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  811: 
 </span><span class="">  812: 	# Return cached result to avoid repeated require attempts
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  813: 	return 1 if($self-&gt;{reuse_loaded});
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths.">  813: 	return 1 if($self-&gt;{reuse_loaded});
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1337,7 +1337,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  823: 		return 0;
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  824: 	}
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 825 → 826 → 0</span></span>  825: 	$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  826: 	return 1;
+</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths.">  826: 	return 1;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1559,7 +1559,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 					<ul>
 				<li><b>COND_INV_1020_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1021: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+<span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1021: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
