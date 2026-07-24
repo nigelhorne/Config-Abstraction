@@ -4,6 +4,7 @@ package Config::Abstraction;
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
 # TODO: devise a scheme to encrypt passwords in config files
 # TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
+# TODO: Use File::Slurp::Remote to read configs on remote machines, good for remote management and common config files
 
 use strict;
 use warnings;
@@ -564,7 +565,7 @@ sub _load_config
 		my $script_name = $self->{'script_name'};
 		for my $config_file ('default', $script_name, "$script_name.cfg", "$script_name.conf", "$script_name.config", $self->{'config_file'}, @{$self->{'config_files'}}) {
 			next unless defined($config_file);
-			# Note that loading $script_name in the current directory could mean loading the script as it's own config.
+			# Note that loading $script_name in the current directory could mean loading the script as its own config.
 			# This test is not foolproof, buyer beware
 			next if(($config_file eq $script_name) && ((length($dir) == 0) || ($dir eq File::Spec->curdir())));
 			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
