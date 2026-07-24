@@ -5,6 +5,7 @@ package Config::Abstraction;
 # TODO: devise a scheme to encrypt passwords in config files
 # TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
 # TODO: Use File::Slurp::Remote to read configs on remote machines, good for remote management and common config files
+# TODO: Support Config::Checker
 
 use strict;
 use warnings;
@@ -1109,6 +1110,14 @@ Used to C<fixate()> elements when installed, unless C<no-fixate> is given
 
 Nigel Horne, C<< <njh at nigelhorne.com> >>
 
+=head1 LICENCE AND COPYRIGHT
+
+Copyright 2025-2026 Nigel Horne.
+
+Usage is subject to the GPL2 licence terms.
+If you use it,
+please let me know.
+
 =cut
 
-__END__
+1;
