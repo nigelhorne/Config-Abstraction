@@ -20,37 +20,26 @@ jobs:
         os:
           - name: freebsd
             version: '13.3'
-            pkginstall: pkg install -y p5-ExtUtils-MakeMaker p5-JSON-MaybeXS p5-Test-Most p5-Test-Needs
+            pkginstall: pkg install -y p5-ExtUtils-MakeMaker p5-List-MoreUtils p5-Log-Any p5-JSON-MaybeXS p5-libwww p5-Test-Most p5-Test-Warn p5-HTTP-BrowserDetect p5-Test-Needs p5-Class-Autouse p5-IPC-System-Simple p5-Test-Compile p5-Test-Script p5-namespace-clean p5-Test-NoWarnings p5-XML-Parser
           - name: openbsd
             version: '7.5'
-            pkginstall: pkg_add libxml libiconv p5-List-MoreUtils p5-Log-Any p5-JSON-MaybeXS
+            pkginstall: pkg_add p5-List-MoreUtils p5-Log-Any p5-JSON-MaybeXS p5-libwww p5-XML-Parser
     steps:
       - uses: actions/checkout@main
         with:
           submodules: recursive
-
-      - name: Start remote VM for ${{ matrix.os.name }}
+      - name: Test on ${{ matrix.os.name }}
         uses: cross-platform-actions/action@master
-        env:
-          AUTOMATED_TESTING: 1
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
-
-      - name: Run tests on ${{ matrix.os.name }}
-        env:
-          AUTOMATED_TESTING: 1
-        run: |
-          # Use the cpa.sh wrapper directly to send commands to the remote VM
-          cpa.sh <<'CROSSPLATFORM'
-          sudo hostname example.com
-          sudo ${{ matrix.os.pkginstall }}
-          sudo cpan -i XML::PP
-          # ensure the working copy is owned by the runner on the remote VM (scope to build & test dirs)
-          sudo chown -R runner:runner t build || true
-          curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
-          sudo chown -R runner:runner t build || true
-          perl Makefile.PL
-          make
-          prove -wlmb t
-          CROSSPLATFORM
+          shell: bash
+          run: |
+            sudo hostname example.com
+            sudo ${{ matrix.os.pkginstall }}
+            curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
+            sudo cpan -i String::Clean::XSS Tie::Filehandle::Preempt::Stdin
+            sudo chown -R runner:runner .
+            AUTOMATED_TESTING=1 perl Makefile.PL
+            AUTOMATED_TESTING=1 make
+            AUTOMATED_TESTING=1 prove -wlmb t
