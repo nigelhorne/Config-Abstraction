@@ -21,13 +21,13 @@ requires 'XML::PP', '0.06';
 requires 'YAML::XS';
 
 on 'configure' => sub {
-	requires 'ExtUtils::MakeMaker', '6.64';
+	requires 'ExtUtils::MakeMaker', '6.64';   # Minimum version for TEST_REQUIRES
 };
 
 on 'test' => sub {
 	requires 'File::Glob';
 	requires 'File::stat';
-	requires 'IPC::System::Simple';
+	requires 'IPC::System::Simple';   # for scripts/generate_index
 	requires 'POSIX';
 	requires 'Readonly';
 	requires 'Test::DescribeMe';
