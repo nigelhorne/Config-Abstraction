@@ -36,7 +36,6 @@ jobs:
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
-          shell: "cpa.sh {0}"             # OK as an action input; keep quoted
 
       - name: Run tests on ${{ matrix.os.name }}
         env:
