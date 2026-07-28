@@ -1,0 +1,492 @@
+{
+   "runs" : [
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253892.22464,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1785253879.18428,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253879.32773,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "-e",
+         "start" : 1785253879.32764,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253879.64419,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/00-load.t",
+         "start" : 1785253879.64317,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253879.94407,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/10-compile.t",
+         "start" : 1785253879.94404,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253880.27141,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/30-basics.t",
+         "start" : 1785253880.23637,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253880.71141,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/argv.t",
+         "start" : 1785253880.7066,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253881.13597,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/autoload.t",
+         "start" : 1785253881.12729,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253881.53011,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/coderefs.t",
+         "start" : 1785253881.48205,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253881.87731,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/comment-spelling.t",
+         "start" : 1785253881.87711,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253882.10707,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/cover.t",
+         "start" : 1785253882.10687,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253882.50861,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/edge_cases.t",
+         "start" : 1785253882.38892,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253882.94503,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/eof.t",
+         "start" : 1785253882.94482,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253883.17262,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/eol.t",
+         "start" : 1785253883.17243,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253883.58056,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/extended_tests.t",
+         "start" : 1785253883.45078,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253884.09173,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/flatten.t",
+         "start" : 1785253884.08551,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253884.59605,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/function.t",
+         "start" : 1785253884.48449,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253885.18212,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/integration.t",
+         "start" : 1785253885.06602,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253885.63256,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/logger.t",
+         "start" : 1785253885.63223,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253885.86767,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/manifest.t",
+         "start" : 1785253885.86746,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253886.18408,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/merge_config.t",
+         "start" : 1785253886.17191,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253886.72059,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/mutant_killers.t",
+         "start" : 1785253886.59078,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253887.20142,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/perl.t",
+         "start" : 1785253887.2011,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253887.44568,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-cm.t",
+         "start" : 1785253887.4453,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253887.68144,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-coverage.t",
+         "start" : 1785253887.68121,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253887.91338,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-snippets.t",
+         "start" : 1785253887.91311,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253888.14654,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-spelling.t",
+         "start" : 1785253888.14631,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253888.3753,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod-synopsis.t",
+         "start" : 1785253888.3751,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253888.60194,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/pod.t",
+         "start" : 1785253888.60173,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253888.8563,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/port.t",
+         "start" : 1785253888.85607,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253889.09244,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/prereq.t",
+         "start" : 1785253889.09217,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253889.4175,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/rt-59921.t",
+         "start" : 1785253889.40402,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253889.85109,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/rt-59922.t",
+         "start" : 1785253889.84481,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253890.20571,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/strict.t",
+         "start" : 1785253890.20542,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253890.63138,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/unit.t",
+         "start" : 1785253890.49516,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253891.07262,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/unused.t",
+         "start" : 1785253891.07239,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253891.30698,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/vars.t",
+         "start" : 1785253891.30666,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253891.62844,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/xml.t",
+         "start" : 1785253891.6188,
+         "version" : "0.39"
+      },
+      {
+         "OS" : "linux",
+         "abstract" : "Merge and manage configuration data from different sources",
+         "dir" : "/home/runner/work/Config-Abstraction/Config-Abstraction",
+         "finish" : 1785253892.06572,
+         "name" : "Config-Abstraction",
+         "perl" : "5.40.4",
+         "run" : "t/xml_pp.t",
+         "start" : 1785253892.05703,
+         "version" : "0.39"
+      }
+   ],
+   "summary" : {
+      "Total" : {
+         "branch" : {
+            "covered" : 196,
+            "error" : 80,
+            "percentage" : 71.0144927536232,
+            "total" : 276,
+            "uncoverable" : 0
+         },
+         "condition" : {
+            "covered" : 58,
+            "error" : 29,
+            "percentage" : 66.6666666666667,
+            "total" : 87,
+            "uncoverable" : 0
+         },
+         "statement" : {
+            "covered" : 324,
+            "error" : 62,
+            "percentage" : 83.9378238341969,
+            "total" : 386
+         },
+         "subroutine" : {
+            "covered" : 20,
+            "percentage" : 100,
+            "total" : 20
+         },
+         "total" : {
+            "covered" : 598,
+            "error" : 171,
+            "percentage" : 77.7633289986996,
+            "total" : 769,
+            "uncoverable" : 0
+         }
+      },
+      "blib/lib/Config/Abstraction.pm" : {
+         "branch" : {
+            "covered" : 196,
+            "error" : 80,
+            "percentage" : 71.0144927536232,
+            "total" : 276,
+            "uncoverable" : 0
+         },
+         "condition" : {
+            "covered" : 58,
+            "error" : 29,
+            "percentage" : 66.6666666666667,
+            "total" : 87,
+            "uncoverable" : 0
+         },
+         "statement" : {
+            "covered" : 324,
+            "error" : 62,
+            "percentage" : 83.9378238341969,
+            "total" : 386
+         },
+         "subroutine" : {
+            "covered" : 20,
+            "percentage" : 100,
+            "total" : 20
+         },
+         "total" : {
+            "covered" : 598,
+            "error" : 171,
+            "percentage" : 77.7633289986996,
+            "total" : 769,
+            "uncoverable" : 0
+         }
+      }
+   }
+}
