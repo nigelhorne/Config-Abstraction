@@ -36,12 +36,14 @@ jobs:
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
-          shell: cpa.sh {0}
+          shell: "cpa.sh {0}"             # OK as an action input; keep quoted
 
       - name: Run tests on ${{ matrix.os.name }}
         env:
           AUTOMATED_TESTING: 1
         run: |
+          # Use the cpa.sh wrapper directly to send commands to the remote VM
+          cpa.sh <<'CROSSPLATFORM'
           sudo hostname example.com
           sudo ${{ matrix.os.pkginstall }}
           sudo cpan -i XML::PP
@@ -52,4 +54,4 @@ jobs:
           perl Makefile.PL
           make
           prove -wlmb t
-        shell: cpa.sh {0}
+          CROSSPLATFORM
