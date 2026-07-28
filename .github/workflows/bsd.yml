@@ -28,21 +28,28 @@ jobs:
       - uses: actions/checkout@main
         with:
           submodules: recursive
-      - name: Test on ${{ matrix.os.name }}
+
+      - name: Start remote VM for ${{ matrix.os.name }}
         uses: cross-platform-actions/action@master
         env:
           AUTOMATED_TESTING: 1
         with:
           operating_system: ${{ matrix.os.name }}
           version: ${{ matrix.os.version }}
-          shell: bash
-          run: |
-            sudo hostname example.com
-            sudo ${{ matrix.os.pkginstall }}
-            sudo cpan -i XML::PP
-            sudo chown -R runner:runner .
-            curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
-            sudo chown -R runner:runner .
-            perl Makefile.PL
-            make
-            prove -wlmb t
+          shell: cpa.sh {0}
+
+      - name: Run tests on ${{ matrix.os.name }}
+        env:
+          AUTOMATED_TESTING: 1
+        run: |
+          sudo hostname example.com
+          sudo ${{ matrix.os.pkginstall }}
+          sudo cpan -i XML::PP
+          # ensure the working copy is owned by the runner on the remote VM (scope to build & test dirs)
+          sudo chown -R runner:runner t build || true
+          curl -L https://cpanmin.us | sudo perl - --notest --installdeps --with-configure --with-develop .
+          sudo chown -R runner:runner t build || true
+          perl Makefile.PL
+          make
+          prove -wlmb t
+        shell: cpa.sh {0}
