@@ -11,7 +11,6 @@ use autodie qw(:all);
 
 use Test::Most;
 use Test::Mockingbird;
-use Test::Needs;
 use Test::Returns;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
@@ -431,16 +430,39 @@ subtest 'new() - schema rejects invalid configuration' => sub {
 	delete $ledger{'new: schema rejects invalid config'};
 };
 
-subtest 'new() - logger option accepted (arrayref form)' => sub {
-	# POD: logger can be arrayref, coderef, filename, or logging object
-	test_needs 'Log::Abstraction';
-	my @log_output;
+subtest 'new() - logger option accepted' => sub {
+	# POD: logger can be a blessed object, arrayref, coderef, or filename.
+	# The constructor only tries to load Log::Abstraction for unblessed loggers, so
+	# we use a pre-blessed mock here: the test is unconditionally valid regardless of
+	# whether Log::Abstraction is installed on the current system.
+	my $mock_logger = bless {}, '_UnitTestLogger';
+	{
+		no strict 'refs';
+		*{'_UnitTestLogger::warn'}  = sub {};
+		*{'_UnitTestLogger::trace'} = sub {};
+		*{'_UnitTestLogger::debug'} = sub {};
+	}
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),
 		config_dirs => [],
-		logger      => \@log_output,
+		logger      => $mock_logger,
 	);
-	ok(defined($cfg), 'object created when logger is an arrayref');
+	ok(defined($cfg), 'object created with pre-blessed logger');
+
+	# Also test the arrayref form when Log::Abstraction is present, but guard with
+	# a SKIP so the ledger delete (below) is always reached.
+	SKIP: {
+		skip 'Log::Abstraction not installed', 1
+			unless eval { require Log::Abstraction; 1 };
+		my @captured;
+		my $cfg2 = Config::Abstraction->new(
+			data        => _fresh_data(),
+			config_dirs => [],
+			logger      => \@captured,
+		);
+		ok(defined($cfg2), 'object created with arrayref logger (Log::Abstraction present)');
+	}
+
 	delete $ledger{'new: logger option accepted'};
 };
 
