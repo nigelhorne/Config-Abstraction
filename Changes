@@ -1,5 +1,22 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
+0.40	Tue Jul 28 20:00:00 EDT 2026
+
+	[ Enhancements ]
+	- Remote configuration via the Newcastle Connection convention: entries in
+	  config_dirs beginning with /../hostname/path are fetched from the named
+	  host over SSH using File::Slurp::Remote, processed through the same
+	  format-detection and Hash::Merge pipeline as local files, and merged in
+	  the same position as their equivalent local directory would be
+	- Local-host short-circuit: /../localhost/, /../127.0.0.1/, /../::1/, and
+	  /../$hostname/ (FQDN and short form, case-insensitive) are unwrapped to
+	  their plain directory path and read from disk directly -- no SSH connection
+	  is made, so a shared config entry degrades gracefully on the host itself
+	- New dependency: File::Temp (used to parse INI content fetched as a string,
+	  since Config::IniFiles requires a real filesystem path)
+	- Document the Newcastle Connection convention and the rationale for choosing
+	  the /../ prefix over hostname:/path, file://, ssh://, and plain hostname/path
+
 0.39	Sun May 24 16:16:50 EDT 2026
 
 	[ Bug Fixes ]

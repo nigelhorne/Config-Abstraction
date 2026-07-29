@@ -4,7 +4,6 @@ package Config::Abstraction;
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
 # TODO: devise a scheme to encrypt passwords in config files
 # TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
-# TODO: Use File::Slurp::Remote to read configs on remote machines, good for remote management and common config files
 # TODO: Support Config::Checker
 
 use strict;
@@ -243,6 +242,9 @@ Options:
 An arrayref of directories to look for configuration files
 (default: C<$CONFIG_DIR>, C<$HOME/.conf>, C<$HOME/config>, C<$HOME/conf>, C<$DOCUMENT_ROOT/conf>, C<$DOCUMENT_ROOT/../conf>, C<conf>).
 
+Entries beginning with C</../> are treated as remote specifications using the
+Newcastle Connection convention -- see L</Remote configuration directories (Newcastle Connection)>.
+
 =item * C<config_file>
 
 Points to a configuration file of any format.
@@ -453,12 +455,28 @@ sub _load_config
 	}
 	for my $dir (@dirs) {
 		next if(!defined($dir));
-		if(length($dir) && !-d $dir) {
+
+		# Newcastle Connection: /../hostname/path means read from a remote host.
+		# /../ is unreachable on any real filesystem, so this is unambiguous.
+		# When the hostname resolves to the local machine (localhost, 127.0.0.1,
+		# ::1, or the system hostname) the /../host/ wrapper is unwrapped and the
+		# enclosed path is processed through the normal local pipeline instead.
+		my $effective_dir = $dir;
+		if(my ($host, $remote_dir) = $self->_parse_remote_dir($dir)) {
+			if($self->_is_local_host($host)) {
+				$effective_dir = $remote_dir;
+			} else {
+				$self->_load_remote_dir($host, $remote_dir, \%merged);
+				next;
+			}
+		}
+
+		if(length($effective_dir) && !-d $effective_dir) {
 			next;
 		}
 
 		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
-			my $path = File::Spec->catfile($dir, $file);
+			my $path = File::Spec->catfile($effective_dir, $file);
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
 			}
@@ -568,8 +586,8 @@ sub _load_config
 			next unless defined($config_file);
 			# Note that loading $script_name in the current directory could mean loading the script as its own config.
 			# This test is not foolproof, buyer beware
-			next if(($config_file eq $script_name) && ((length($dir) == 0) || ($dir eq File::Spec->curdir())));
-			my $path = length($dir) ? File::Spec->catfile($dir, $config_file) : $config_file;
+			next if(($config_file eq $script_name) && ((length($effective_dir) == 0) || ($effective_dir eq File::Spec->curdir())));
+			my $path = length($effective_dir) ? File::Spec->catfile($effective_dir, $config_file) : $config_file;
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
 			}
@@ -974,6 +992,108 @@ sub _load_driver
 	return 1;
 }
 
+=head2 Remote configuration directories (Newcastle Connection)
+
+Any entry in C<config_dirs> whose path begins with C</../> is treated as a
+remote specification rather than a local directory:
+
+  /../hostname/path/to/dir
+
+The hostname and directory are extracted, and the same standard files searched
+locally (C<base.yaml>, C<local.yaml>, C<base.json>, etc.) are fetched from
+the remote machine via L<File::Slurp::Remote> over SSH.
+
+When the hostname resolves to the local machine -- C<localhost>, C<127.0.0.1>,
+C<::1>, or the value returned by C<Sys::Hostname::hostname()> (checked as
+both fully-qualified and short form, case-insensitively) -- the C</../host/>
+wrapper is silently unwrapped and the enclosed path is processed through the
+normal local file pipeline instead.  No SSH connection is made.  This means a
+configuration written for a shared remote host degrades gracefully when run on
+that host itself:
+
+  # On any other machine: fetches /etc/myapp over SSH
+  # On cfg-server itself: reads /etc/myapp from disk directly
+  config_dirs => ['/../cfg-server/etc/myapp']
+
+Remote directories participate in the normal merge pipeline and can be freely
+mixed with local ones:
+
+  my $cfg = Config::Abstraction->new(
+      config_dirs => [
+          '/etc/myapp',                        # local
+          '/../deploy@cfg-server/etc/myapp',   # remote via SSH (local on cfg-server)
+      ],
+  );
+
+SSH authentication is handled by the system SSH client.
+No extra constructor options are required; use your SSH agent or
+C<~/.ssh/config> for host-specific settings.
+
+L<File::Slurp::Remote> must be installed for remote directories to work.
+If it is absent the directory is silently skipped and a warning is emitted.
+
+=head3 Why C</../> (the Newcastle Connection convention)
+
+Several syntaxes were considered for marking a C<config_dirs> entry as remote.
+Each alternative was rejected for a concrete reason:
+
+=over 4
+
+=item C<hostname/path> -- ambiguous
+
+Indistinguishable from a relative local directory named C<hostname>.
+The module cannot tell at parse time whether C<myserver/etc> is a two-level
+local path or a remote specification.
+
+=item C<hostname:/path> -- collides with Windows drive letters
+
+The C<X:\> drive-letter convention on Windows uses exactly the same
+C<letter:> prefix.  A single-letter hostname would be misidentified as a
+drive, and path-normalisation code on Windows would mangle it.
+
+=item C<file://hostname/path> -- wrong semantics
+
+RFC 8089 defines C<file://> as a reference to a B<local> file.
+C<file:///etc/passwd> (three slashes, empty host) is the canonical local form;
+C<file://hostname/path> is reserved for the host component but is explicitly
+discouraged for general use and is not understood by most tooling as meaning
+SSH.
+
+=item C<ssh://hostname/path> -- requires URI parsing
+
+Introduces a dependency on URI parsing (or a bespoke prefix check) and
+implies a specific transport.  C<File::Slurp::Remote> already abstracts
+the transport; encoding C<ssh://> in the path would be misleading if a future
+version of that module supports other transports such as C<rsync://>.
+
+=item C</../hostname/path> -- the Newcastle Connection
+
+The Newcastle Connection (Brownbridge, Dion, Elsworth, 1982) is a distributed
+Unix convention in which the token C</../> at the start of a pathname means
+"leave the local namespace and enter the named remote host".
+It works because C</../> B<cannot exist> as a real filesystem path:
+C<..> from the root directory resolves back to the root on every POSIX system,
+so C</../> always denotes the root itself, never a child of the root.
+No pathname-normalisation step, C<chdir>, or filesystem traversal will ever
+produce a path that legitimately begins with C</../>, which means the prefix
+is a permanent, collision-free sentinel that requires only a regex to detect.
+
+=back
+
+The Newcastle Connection prefix is therefore the only choice that is:
+
+=over 4
+
+=item * unambiguous on all platforms (POSIX and Windows)
+
+=item * impossible to produce accidentally from a real local path
+
+=item * detectable with a single C<m{^\Q/../\E}> regex, no URI parser needed
+
+=item * transport-neutral (the hostname is passed to whatever remote driver is installed)
+
+=back
+
 =head2 AUTOLOAD
 
 This module supports dynamic access to configuration keys via AUTOLOAD.
@@ -1002,6 +1122,191 @@ when C<sep_char> is set to '_'.
     my $foo = $config->nonexistent_key();	# dies with error
 
 =cut
+
+# ---------------------------------------------------------------------------
+# _parse_remote_dir -- detect Newcastle Connection style paths.
+#
+# Returns ($host, $dir) when $dir begins with /../, empty list otherwise.
+# The /../ prefix is syntactically impossible for a real local path so no
+# real directory entry is ever misidentified.
+# ---------------------------------------------------------------------------
+sub _parse_remote_dir
+{
+	my ($self, $dir) = @_;
+
+	return unless defined($dir);
+	return unless $dir =~ m{^\Q/../\E([^/]+)(/.+)?$};
+	return ($1, $2 // '/');
+}
+
+# ---------------------------------------------------------------------------
+# _is_local_host -- true when $host refers to the machine running this code.
+#
+# Strips any user@ prefix first, then checks the four common ways a caller
+# might spell "here": the loopback name, the two loopback addresses, and the
+# system hostname (both fully-qualified and short).  Comparison is
+# case-insensitive because hostnames are case-insensitive by RFC 1034.
+# ---------------------------------------------------------------------------
+sub _is_local_host
+{
+	my ($self, $host) = @_;
+
+	return 0 unless defined($host) && length($host);
+
+	(my $bare = $host) =~ s/^[^@]+@//;	# strip optional user@ prefix
+
+	return 1 if lc($bare) eq 'localhost';
+	return 1 if $bare eq '127.0.0.1';
+	return 1 if $bare eq '::1';
+
+	require Sys::Hostname;
+	my $fqdn  = lc(Sys::Hostname::hostname());
+	return 1 if lc($bare) eq $fqdn;
+
+	(my $short = $fqdn) =~ s/\..*$//;	# trim domain component
+	return 1 if lc($bare) eq $short;
+
+	return 0;
+}
+
+# ---------------------------------------------------------------------------
+# _load_remote_dir -- fetch and merge standard config files from one remote
+# host/directory pair.
+#
+# Silently skips files that do not exist; warns (or logs) on parse errors.
+# Merges into %$merged_ref using the same Hash::Merge LEFT_PRECEDENT strategy
+# as the local pipeline, so remote values override earlier local values.
+# ---------------------------------------------------------------------------
+sub _load_remote_dir
+{
+	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+		Carp::croak('Illegal Operation: This method can only be called by a subclass');
+	}
+
+	my ($self, $host, $remote_dir, $merged_ref) = @_;
+	my $logger = $self->{'logger'};
+
+	unless($self->_load_driver('File::Slurp::Remote')) {
+		my $msg = ref($self) . ": File::Slurp::Remote required for /../$host$remote_dir but is not installed";
+		$logger ? $logger->warn($msg) : Carp::carp($msg);
+		return;
+	}
+
+	for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
+		my $remote_path = "/../$host$remote_dir/$file";
+
+		if($logger) {
+			$logger->debug(ref($self), ' ', __LINE__, ": Looking for remote config $remote_path");
+		}
+
+		my $raw = $self->_slurp_remote($host, "$remote_dir/$file");
+		next unless defined($raw);
+
+		if($logger) {
+			$logger->debug(ref($self), ' ', __LINE__, ": Loading remote config $remote_path");
+		}
+
+		my $data = $self->_parse_config_string($raw, $file, $remote_path);
+		next unless defined($data);
+
+		if(ref($data) ne 'HASH') {
+			my $msg = ref($self) . ": remote $remote_path did not yield a hash; skipping";
+			$logger ? $logger->warn($msg) : Carp::carp($msg);
+			next;
+		}
+
+		%{$merged_ref} = %{ merge($data, $merged_ref) };
+		push @{$merged_ref->{'config_path'}}, $remote_path;
+	}
+}
+
+# ---------------------------------------------------------------------------
+# _slurp_remote -- read a single file from a remote host via SSH.
+#
+# Wraps File::Slurp::Remote::read_file; returns the raw string on success
+# or undef on any error (connection refused, file absent, permission denied).
+# Errors are logged at debug level so missing files are not noisy.
+# ---------------------------------------------------------------------------
+sub _slurp_remote
+{
+	my ($self, $host, $path) = @_;
+	my $logger = $self->{'logger'};
+
+	# NOTE: verify the calling convention of your installed File::Slurp::Remote.
+	# Common forms: read_file("$host:$path") or read_file($host, $path).
+	my $content = eval { File::Slurp::Remote::read_file($host, $path) };
+
+	if($@) {
+		if($logger) {
+			$logger->debug(ref($self), ' ', __LINE__, ": Could not read $path from $host: $@");
+		}
+		return undef;
+	}
+	return $content;
+}
+
+# ---------------------------------------------------------------------------
+# _parse_config_string -- parse a raw config string by extension.
+#
+# Mirrors the format-detection logic used for local files.  INI content is
+# written to a File::Temp scratch file because Config::IniFiles requires a
+# real filesystem path; the temp file is removed as soon as parsing returns.
+#
+# Returns a hashref on success, undef on failure.
+# ---------------------------------------------------------------------------
+sub _parse_config_string
+{
+	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+		Carp::croak('Illegal Operation: This method can only be called by a subclass');
+	}
+
+	my ($self, $raw, $filename, $label) = @_;
+	my $logger = $self->{'logger'};
+	my $data;
+
+	eval {
+		if($filename =~ /\.ya?ml$/i) {
+			$self->_load_driver('YAML::XS', ['Load']);
+			$data = YAML::XS::Load($raw);
+
+		} elsif($filename =~ /\.json$/i) {
+			$data = decode_json($raw);
+
+		} elsif($filename =~ /\.xml$/i) {
+			if($self->_load_driver('XML::Simple', ['XMLin'])) {
+				$data = XMLin(\$raw, ForceArray => 0, KeyAttr => []);
+			} elsif($self->_load_driver('XML::PP')) {
+				my $pp = XML::PP->new();
+				if(my $tree = $pp->parse(\$raw)) {
+					$data = $pp->collapse_structure($tree);
+					$data = $data->{'config'} if ($data && $data->{'config'});
+				}
+			}
+
+		} elsif($filename =~ /\.ini$/i) {
+			$self->_load_driver('Config::IniFiles');
+			require File::Temp;
+			my $tmp = File::Temp->new(SUFFIX => '.ini', UNLINK => 1);
+			print {$tmp} $raw;
+			$tmp->flush();
+			if(my $ini = Config::IniFiles->new(-file => $tmp->filename())) {
+				$data = { map {
+					my $section = $_;
+					$section => { map { $_ => $ini->val($section, $_) } $ini->Parameters($section) }
+				} $ini->Sections() };
+			}
+		}
+	};
+
+	if($@) {
+		my $err = $@;
+		my $msg = ref($self) . ": Failed to parse $label: $err";
+		$logger ? $logger->warn($msg) : Carp::carp($msg);
+		return undef;
+	}
+
+	return $data;
+}
 
 sub AUTOLOAD
 {
@@ -1087,6 +1392,11 @@ You can find documentation for this module with the perldoc command.
 =head1 SEE ALSO
 
 =over 4
+
+=item * L<File::Slurp::Remote>
+
+    Used to fetch configuration from remote hosts when C<config_dirs> contains
+    Newcastle Connection paths (C</../hostname/path>).
 
 =item * L<Config::Any>
 

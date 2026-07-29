@@ -31,6 +31,7 @@ WriteMakefile(
 		# 'Data::Reuse' => 0,	# Fails installation tests on recent Perls, RT#100461
 		'File::Basename' => 0,
 		'File::Slurp' => 0,
+		'File::Temp' => 0,	# INI parsing of remote config strings
 		'Getopt::Long' => 0,
 		'JSON::MaybeXS' => 0,
 		'Params::Get' => 0.14,

@@ -8,6 +8,7 @@ requires 'Config::IniFiles';
 requires 'File::Basename';
 requires 'File::Slurp';
 requires 'File::Spec';
+requires 'File::Temp';   # INI parsing of remote config strings
 requires 'Getopt::Long';
 requires 'Hash::Flatten';
 requires 'Hash::Merge';

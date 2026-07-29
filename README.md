@@ -197,6 +197,9 @@ Options:
     An arrayref of directories to look for configuration files
     (default: `$CONFIG_DIR`, `$HOME/.conf`, `$HOME/config`, `$HOME/conf`, `$DOCUMENT_ROOT/conf`, `$DOCUMENT_ROOT/../conf`, `conf`).
 
+    Entries beginning with `/../` are treated as remote specifications using the
+    Newcastle Connection convention -- see ["Remote configuration directories (Newcastle Connection)"](#remote-configuration-directories-newcastle-connection).
+
 - `config_file`
 
     Points to a configuration file of any format.
@@ -334,6 +337,97 @@ Options:
 
     Try harder to merge all configurations from the global section of the configuration file.
 
+## Remote configuration directories (Newcastle Connection)
+
+Any entry in `config_dirs` whose path begins with `/../` is treated as a
+remote specification rather than a local directory:
+
+    /../hostname/path/to/dir
+
+The hostname and directory are extracted, and the same standard files searched
+locally (`base.yaml`, `local.yaml`, `base.json`, etc.) are fetched from
+the remote machine via [File::Slurp::Remote](https://metacpan.org/pod/File%3A%3ASlurp%3A%3ARemote) over SSH.
+
+When the hostname resolves to the local machine -- `localhost`, `127.0.0.1`,
+`::1`, or the value returned by `Sys::Hostname::hostname()` (checked as
+both fully-qualified and short form, case-insensitively) -- the `/../host/`
+wrapper is silently unwrapped and the enclosed path is processed through the
+normal local file pipeline instead.  No SSH connection is made.  This means a
+configuration written for a shared remote host degrades gracefully when run on
+that host itself:
+
+    # On any other machine: fetches /etc/myapp over SSH
+    # On cfg-server itself: reads /etc/myapp from disk directly
+    config_dirs => ['/../cfg-server/etc/myapp']
+
+Remote directories participate in the normal merge pipeline and can be freely
+mixed with local ones:
+
+    my $cfg = Config::Abstraction->new(
+        config_dirs => [
+            '/etc/myapp',                        # local
+            '/../deploy@cfg-server/etc/myapp',   # remote via SSH (local on cfg-server)
+        ],
+    );
+
+SSH authentication is handled by the system SSH client.
+No extra constructor options are required; use your SSH agent or
+`~/.ssh/config` for host-specific settings.
+
+[File::Slurp::Remote](https://metacpan.org/pod/File%3A%3ASlurp%3A%3ARemote) must be installed for remote directories to work.
+If it is absent the directory is silently skipped and a warning is emitted.
+
+### Why `/../` (the Newcastle Connection convention)
+
+Several syntaxes were considered for marking a `config_dirs` entry as remote.
+Each alternative was rejected for a concrete reason:
+
+- `hostname/path` -- ambiguous
+
+    Indistinguishable from a relative local directory named `hostname`.
+    The module cannot tell at parse time whether `myserver/etc` is a two-level
+    local path or a remote specification.
+
+- `hostname:/path` -- collides with Windows drive letters
+
+    The `X:\` drive-letter convention on Windows uses exactly the same
+    `letter:` prefix.  A single-letter hostname would be misidentified as a
+    drive, and path-normalisation code on Windows would mangle it.
+
+- `file://hostname/path` -- wrong semantics
+
+    RFC 8089 defines `file://` as a reference to a **local** file.
+    `file:///etc/passwd` (three slashes, empty host) is the canonical local form;
+    `file://hostname/path` is reserved for the host component but is explicitly
+    discouraged for general use and is not understood by most tooling as meaning
+    SSH.
+
+- `ssh://hostname/path` -- requires URI parsing
+
+    Introduces a dependency on URI parsing (or a bespoke prefix check) and
+    implies a specific transport.  `File::Slurp::Remote` already abstracts
+    the transport; encoding `ssh://` in the path would be misleading if a future
+    version of that module supports other transports such as `rsync://`.
+
+- `/../hostname/path` -- the Newcastle Connection
+
+    The Newcastle Connection (Brownbridge, Dion, Elsworth, 1982) is a distributed
+    Unix convention in which the token `/../` at the start of a pathname means
+    "leave the local namespace and enter the named remote host".
+    It works because `/../` **cannot exist** as a real filesystem path:
+    `..` from the root directory resolves back to the root on every POSIX system,
+    so `/../` always denotes the root itself, never a child of the root.
+    No pathname-normalisation step, `chdir`, or filesystem traversal will ever
+    produce a path that legitimately begins with `/../`, which means the prefix
+    is a permanent, collision-free sentinel that requires only a regex to detect.
+
+The Newcastle Connection prefix is therefore the only choice that is:
+
+- unambiguous on all platforms (POSIX and Windows)
+- impossible to produce accidentally from a real local path
+- detectable with a single `m{^\Q/../\E}` regex, no URI parser needed
+- transport-neutral (the hostname is passed to whatever remote driver is installed)
+
 ## AUTOLOAD
 
 This module supports dynamic access to configuration keys via AUTOLOAD.
@@ -404,6 +498,11 @@ You can find documentation for this module with the perldoc command.
 
 # SEE ALSO
 
+- [File::Slurp::Remote](https://metacpan.org/pod/File%3A%3ASlurp%3A%3ARemote)
+
+        Used to fetch configuration from remote hosts when C<config_dirs> contains
+        Newcastle Connection paths (C</../hostname/path>).
+
 - [Config::Any](https://metacpan.org/pod/Config%3A%3AAny)
 - [Config::Auto](https://metacpan.org/pod/Config%3A%3AAuto)
 - [Data::Reuse](https://metacpan.org/pod/Data%3A%3AReuse)
@@ -418,3 +517,11 @@ You can find documentation for this module with the perldoc command.
 # AUTHOR
 
 Nigel Horne, `<njh at nigelhorne.com>`
+
+# LICENCE AND COPYRIGHT
+
+Copyright 2025-2026 Nigel Horne.
+
+Usage is subject to the GPL2 licence terms.
+If you use it,
+please let me know.
