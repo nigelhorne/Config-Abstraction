@@ -137,6 +137,11 @@ If any file fails to
 load (e.g., due to syntax issues), the module will throw descriptive error
 messages to help with debugging.
 
+=item * Centralized Configuration Management
+
+Supports remote configuration management files,
+so that configuration on remote machines can be centrally managed.
+
 =back
 
 =head2 SUPPORTED FILE FORMATS

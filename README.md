@@ -104,6 +104,11 @@ to configuration management.
     load (e.g., due to syntax issues), the module will throw descriptive error
     messages to help with debugging.
 
+- Centralized Configuration Management
+
+    Supports remote configuration management files,
+    so that configuration on remote machines can be centrally managed.
+
 ## SUPPORTED FILE FORMATS
 
 - YAML (`*.yaml`, `*.yml`)
