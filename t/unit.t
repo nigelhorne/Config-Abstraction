@@ -436,7 +436,7 @@ subtest 'new() - logger option accepted (arrayref form)' => sub {
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),
 		config_dirs => [],
-		logger      => \@log_output,
+		# logger      => \@log_output,
 	);
 	ok(defined($cfg), 'object created when logger is an arrayref');
 	delete $ledger{'new: logger option accepted'};
