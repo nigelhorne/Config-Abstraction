@@ -11,6 +11,7 @@ use autodie qw(:all);
 
 use Test::Most;
 use Test::Mockingbird;
+use Test::Needs;
 use Test::Returns;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
@@ -432,11 +433,12 @@ subtest 'new() - schema rejects invalid configuration' => sub {
 
 subtest 'new() - logger option accepted (arrayref form)' => sub {
 	# POD: logger can be arrayref, coderef, filename, or logging object
+	test_needs 'Log::Abstraction';
 	my @log_output;
 	my $cfg = Config::Abstraction->new(
 		data        => _fresh_data(),
 		config_dirs => [],
-		# logger      => \@log_output,
+		logger      => \@log_output,
 	);
 	ok(defined($cfg), 'object created when logger is an arrayref');
 	delete $ledger{'new: logger option accepted'};
