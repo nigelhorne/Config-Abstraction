@@ -399,7 +399,11 @@ sub new
 			# Don't call $self->_load_driver('Log::Abstraction') as it can make a call to logger, which is yet to be set up
 			eval "require Log::Abstraction";
 			if($@) {
-				carp(ref($self), ": Log::Abstraction failed to load: $@");
+				carp(ref($self), ": Log::Abstraction failed to load: $@, disabling logging");
+				if(ref($logger) eq 'ARRAY') {
+					push @{$logger}, "Log::Abstraction failed to load: $@, disabling logging";
+				}
+				$self->{'logger'} = undef;	# disable: unblessed ref would fatal on method calls
 			} else {
 				Log::Abstraction->import();
 				$self->{'logger'} = Log::Abstraction->new($logger);

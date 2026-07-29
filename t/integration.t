@@ -3,7 +3,8 @@
 # Integration tests for Config::Abstraction.
 # Black-box, end-to-end behaviour across multiple routines and interactions
 # with other modules.  Tests stateful workflows, concurrency of multiple
-# instances, and inter-module integration.
+# instances, optional-dependency graceful degradation, and inter-module
+# integration.
 
 use strict;
 use warnings;
@@ -12,6 +13,8 @@ use autodie qw(:all);
 use Test::Most;
 use Test::Mockingbird;
 use Test::Needs;
+use Test::Returns;
+use Test::Without::Module;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
 use File::Temp qw(tempdir);
@@ -19,7 +22,7 @@ use File::Spec;
 use POSIX qw();
 
 # ---------------------------------------------------------------------------
-# Configuration - can be overridden via Object::Configure if wanted
+# Configuration constants
 # ---------------------------------------------------------------------------
 my %config = (
 	module		=> 'Config::Abstraction',
@@ -54,10 +57,11 @@ Readonly::Scalar my $YAML_BASE		=> 'base.yaml';
 Readonly::Scalar my $YAML_LOCAL		=> 'local.yaml';
 Readonly::Scalar my $JSON_BASE		=> 'base.json';
 Readonly::Scalar my $INI_BASE		=> 'base.ini';
+Readonly::Scalar my $XML_BASE		=> 'base.xml';
 Readonly::Scalar my $CUSTOM_CFG	=> 'myapp.cfg';
 
 # ---------------------------------------------------------------------------
-# Helper: fresh nested data safe for merge operations
+# Helpers
 # ---------------------------------------------------------------------------
 sub _fresh_data
 {
@@ -76,7 +80,6 @@ sub _fresh_data
 	};
 }
 
-# Helper: write a file to a directory
 sub _write_file
 {
 	my ($dir, $filename, $content) = @_;
@@ -89,6 +92,140 @@ sub _write_file
 
 # ---------------------------------------------------------------------------
 use_ok($MODULE) or BAIL_OUT("$MODULE failed to load");
+
+# ===========================================================================
+# Optional dependency graceful degradation
+#
+# These MUST run before any other subtest that would cause the hidden module
+# to be loaded, because Test::Without::Module can only intercept the FIRST
+# require.  Ordering them first in the file satisfies this invariant.
+# ===========================================================================
+
+# Log::Abstraction is not in PREREQ_PM -- it is truly optional.
+# When absent and an unblessed logger is supplied, the module must carp and
+# disable the logger (set it to undef) so that subsequent method calls inside
+# _load_config do not die on an unblessed reference.
+subtest 'optional dep: Log::Abstraction absent - arrayref logger disabled, object created' => sub {
+	Test::Without::Module->import('Log::Abstraction');
+
+	my @captured;
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+	my $cfg = Config::Abstraction->new(
+		data        => _fresh_data(),
+		config_dirs => [],
+		logger      => \@captured,
+	);
+
+	Test::Without::Module->unimport('Log::Abstraction');
+
+	ok(defined($cfg), 'object created when Log::Abstraction absent with arrayref logger');
+	returns_ok($cfg->get('retries'), { type => 'integer' }, 'get(retries) returns integer');
+	is($cfg->get('retries'), $EXPECTED_RETRIES, 'data config accessible after disabled logger');
+	ok(scalar(@warnings) > 0, 'carp warning emitted about missing Log::Abstraction');
+	diag("Log::Abstraction warning: @warnings") if $ENV{TEST_VERBOSE};
+};
+
+# A pre-blessed logger never needs Log::Abstraction: the module calls methods
+# directly on whatever blessed object is passed.
+subtest 'optional dep: Log::Abstraction absent - pre-blessed logger still works' => sub {
+	Test::Without::Module->import('Log::Abstraction');
+
+	my $mock = bless {}, '_IntegPreBlessedLogger';
+	{
+		no strict 'refs';
+		for my $m (qw(trace debug info notice warn error)) {
+			*{"_IntegPreBlessedLogger::$m"} = sub {};
+		}
+	}
+
+	my $cfg = Config::Abstraction->new(
+		data        => _fresh_data(),
+		config_dirs => [],
+		logger      => $mock,
+	);
+
+	Test::Without::Module->unimport('Log::Abstraction');
+
+	ok(defined($cfg),                    'object created with pre-blessed logger when Log::Abstraction absent');
+	is($cfg->get('timeout'), $EXPECTED_TIMEOUT, 'config accessible with pre-blessed logger');
+};
+
+# Data::Reuse is commented out of PREREQ_PM (RT#100461) -- genuinely optional.
+# get() must return hashrefs correctly without fixation.
+subtest 'optional dep: Data::Reuse absent - get() returns hashrefs without fixation' => sub {
+	Test::Without::Module->import('Data::Reuse');
+
+	my $cfg = Config::Abstraction->new(
+		data        => _fresh_data(),
+		config_dirs => [],
+	);
+	ok(defined($cfg), 'object created when Data::Reuse absent');
+
+	my $scalar = $cfg->get('database.user');
+	is($scalar, $EXPECTED_USER, 'scalar get() correct without Data::Reuse');
+
+	my $db = $cfg->get('database');
+	ok(defined($db),         'hashref get() returns a value without Data::Reuse');
+	ok(ref($db) eq 'HASH',  'hashref get() returns HASH ref without Data::Reuse');
+	is($db->{user}, $EXPECTED_USER, 'hashref contents intact without Data::Reuse');
+
+	Test::Without::Module->unimport('Data::Reuse');
+};
+
+# XML::Simple is commented out of PREREQ_PM; XML::PP is preferred.
+# When XML::Simple is absent the module must transparently fall back to XML::PP.
+subtest 'optional dep: XML::Simple absent - falls back to XML::PP for XML loading' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $XML_BASE, <<'XML');
+<?xml version="1.0"?>
+<config>
+  <timeout>30</timeout>
+  <retries>3</retries>
+</config>
+XML
+
+	Test::Without::Module->import('XML::Simple');
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+
+	Test::Without::Module->unimport('XML::Simple');
+
+	ok(defined($cfg), 'object created from XML file when XML::Simple absent');
+	is($cfg->get('timeout'), $EXPECTED_TIMEOUT, 'XML timeout loaded via XML::PP fallback');
+	is($cfg->get('retries'), $EXPECTED_RETRIES, 'XML retries loaded via XML::PP fallback');
+
+	my $all = $cfg->all();
+	returns_ok($all, { type => 'hashref' }, 'all() returns hashref after XML::PP load');
+	diag("XML::PP config keys: " . join(', ', keys %{$all})) if $ENV{TEST_VERBOSE};
+};
+
+# File::Slurp::Remote is not in PREREQ_PM -- required only for Newcastle Connection.
+# When absent, a Newcastle Connection dir must be silently skipped with a carp,
+# and any following local dirs must still load normally.
+subtest 'optional dep: File::Slurp::Remote absent - Newcastle dir skipped, local dir loads' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "local_key: local_val\n");
+
+	Test::Without::Module->import('File::Slurp::Remote');
+
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+	# /../nonexistent.remote.host/... triggers _load_remote_dir, which needs
+	# File::Slurp::Remote.  The local $dir entry should still load normally.
+	my $cfg = Config::Abstraction->new(
+		config_dirs => ['/../some.nonexistent.host/etc/myapp', $dir],
+	);
+
+	Test::Without::Module->unimport('File::Slurp::Remote');
+
+	ok(defined($cfg),                       'object created when File::Slurp::Remote absent');
+	is($cfg->get('local_key'), 'local_val', 'local dir still loaded after skipped remote dir');
+	ok(scalar(@warnings) > 0,              'carp warning emitted about missing File::Slurp::Remote');
+	diag("FSR warning: @warnings") if $ENV{TEST_VERBOSE};
+};
 
 # ===========================================================================
 # Basic end-to-end: data -> get -> exists -> all
@@ -244,6 +381,8 @@ subtest 'end-to-end: merge_defaults() workflow as documented in POD' => sub {
 		defaults => $caller_params,
 		merge    => 1,
 	);
+
+	returns_ok($merged, { type => 'hashref' }, 'merge_defaults() returns hashref');
 
 	# Config overrides caller defaults on conflict
 	is($merged->{retries}, $EXPECTED_RETRIES, 'config wins over caller default');
@@ -668,6 +807,191 @@ subtest 'end-to-end: blessed object in data survives full load cycle' => sub {
 	ok(blessed($got),                  'blessed object preserved through full load cycle');
 	is(blessed($got), '_IntegTestObj', 'class unchanged');
 	is($cfg->get('timeout'), $EXPECTED_TIMEOUT, 'file value coexists with blessed object');
+};
+
+# ===========================================================================
+# XML file loading end-to-end (XML::PP path)
+# Uses the <config> root-element convention so the parser unwraps to the
+# top-level hash directly.
+# ===========================================================================
+subtest 'end-to-end: XML file loaded via XML::PP' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $XML_BASE, <<'XML');
+<?xml version="1.0"?>
+<config>
+  <api>
+    <url>https://api.example.com</url>
+    <timeout>30</timeout>
+  </api>
+  <retries>3</retries>
+</config>
+XML
+
+	my $cfg = new_ok($MODULE => [config_dirs => [$dir]]);
+
+	is($cfg->get('api.url'),     'https://api.example.com', 'XML nested url loaded');
+	is($cfg->get('api.timeout'), $EXPECTED_TIMEOUT,         'XML nested timeout loaded');
+	is($cfg->get('retries'),     $EXPECTED_RETRIES,         'XML scalar retries loaded');
+
+	my $all = $cfg->all();
+	my @paths = @{$all->{config_path}};
+	ok(grep { /\Q$XML_BASE\E/ } @paths, 'config_path records XML file path');
+	diag("XML config: " . join(', ', sort keys %{$all})) if $ENV{TEST_VERBOSE};
+};
+
+# ===========================================================================
+# Newcastle Connection: local-host short-circuit reads from local disk
+# /../localhost/path, /../127.0.0.1/path, and /../::1/path all unwrap to the
+# local filesystem path without making an SSH connection.
+# ===========================================================================
+subtest 'end-to-end: Newcastle Connection localhost short-circuit reads local dir' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "nc_key: nc_value\nnc_port: 8080\n");
+
+	# /../localhost$dir is parsed as host=localhost, remote_dir=$dir
+	# _is_local_host('localhost') returns 1 so it unwraps to $dir on disk
+	my $cfg = Config::Abstraction->new(
+		config_dirs => ["/../localhost$dir"],
+	);
+
+	ok(defined($cfg), 'object created via Newcastle localhost short-circuit');
+	is($cfg->get('nc_key'),  'nc_value', 'YAML loaded via Newcastle localhost short-circuit');
+	is($cfg->get('nc_port'), '8080',     'nc_port loaded via Newcastle localhost short-circuit');
+
+	# 127.0.0.1 is also short-circuited to local disk
+	my $cfg2 = Config::Abstraction->new(
+		config_dirs => ["/../127.0.0.1$dir"],
+	);
+	ok(defined($cfg2), 'object created via Newcastle 127.0.0.1 short-circuit');
+	is($cfg2->get('nc_key'), 'nc_value', 'YAML loaded via Newcastle 127.0.0.1 short-circuit');
+};
+
+# ===========================================================================
+# defaults constructor option: parameters nested inside 'defaults' sub-hash
+# produce the same object as passing them at the top level.
+# ===========================================================================
+subtest 'end-to-end: defaults constructor option routes params through nested hash' => sub {
+	# Passing via 'defaults' sub-hash
+	my $cfg_defaults = Config::Abstraction->new(
+		defaults => {
+			data        => { key => 'def_value', count => 7 },
+			config_dirs => [],
+		},
+	);
+
+	# Equivalent: passing at top level
+	my $cfg_direct = Config::Abstraction->new(
+		data        => { key => 'def_value', count => 7 },
+		config_dirs => [],
+	);
+
+	ok(defined($cfg_defaults), 'object created via defaults option');
+	ok(defined($cfg_direct),   'object created via direct params');
+
+	returns_ok($cfg_defaults->get('key'), { type => 'string' }, 'defaults: get() returns string');
+	is($cfg_defaults->get('key'),   'def_value', 'defaults option: data key accessible');
+	is($cfg_defaults->get('count'), 7,           'defaults option: integer data accessible');
+
+	# Both routes yield the same values
+	is($cfg_defaults->get('key'),   $cfg_direct->get('key'),   'defaults and direct yield same key');
+	is($cfg_defaults->get('count'), $cfg_direct->get('count'), 'defaults and direct yield same count');
+};
+
+# ===========================================================================
+# no_fixate option: Data::Reuse fixation must be skipped entirely when set.
+# Spy on _load_data_reuse to confirm it is never called.
+# ===========================================================================
+subtest 'end-to-end: no_fixate option prevents _load_data_reuse call' => sub {
+	my $spy = spy 'Config::Abstraction::_load_data_reuse';
+
+	my $cfg = Config::Abstraction->new(
+		data        => _fresh_data(),
+		config_dirs => [],
+		no_fixate   => 1,
+	);
+
+	my $db = $cfg->get('database');
+	ok(defined($db),        'hashref returned with no_fixate enabled');
+	ok(ref($db) eq 'HASH',  'return type is HASH');
+
+	my @calls = $spy->();
+	is(scalar(@calls), 0, '_load_data_reuse not called when no_fixate is set');
+};
+
+# ===========================================================================
+# config_path accumulates paths from multiple config_dirs
+# POD: "config_path contains a list of the files that the configuration was
+#       loaded from"
+# ===========================================================================
+subtest 'end-to-end: config_path accumulates paths from multiple config_dirs' => sub {
+	my $dir1 = tempdir(CLEANUP => 1);
+	my $dir2 = tempdir(CLEANUP => 1);
+	_write_file($dir1, $YAML_BASE,  "key1: val1\n");
+	_write_file($dir2, $YAML_LOCAL, "key2: val2\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir1, $dir2]);
+
+	ok(defined($cfg), 'object created from two config_dirs');
+	is($cfg->get('key1'), 'val1', 'key from dir1/base.yaml accessible');
+	is($cfg->get('key2'), 'val2', 'key from dir2/local.yaml accessible');
+
+	my $all = $cfg->all();
+	returns_ok($all->{config_path}, { type => 'arrayref' }, 'config_path is an arrayref');
+	my @paths = @{$all->{config_path}};
+	ok(scalar(@paths) >= 2, 'config_path has entries from both dirs');
+	ok(grep({ /\Q$dir1\E/ } @paths), 'config_path includes dir1 path');
+	ok(grep({ /\Q$dir2\E/ } @paths), 'config_path includes dir2 path');
+
+	diag("config_path: " . join(', ', @paths)) if $ENV{TEST_VERBOSE};
+};
+
+# ===========================================================================
+# merge_defaults() deep option: Hash::Merge used to deeply combine the global
+# section with the caller defaults, preserving nested keys from both.
+# ===========================================================================
+subtest 'end-to-end: merge_defaults() deep option merges nested global section' => sub {
+	my $cfg1 = Config::Abstraction->new(
+		data => {
+			global => {
+				timeout => $EXPECTED_TIMEOUT,
+				nested  => { key_a => 'global_a', key_b => 'global_b' },
+			},
+			retries => $EXPECTED_RETRIES,
+		},
+		config_dirs => [],
+	);
+
+	my $caller_defaults = {
+		timeout => 99,
+		nested  => { key_b => 'caller_b', key_c => 'caller_c' },
+		extra   => 'kept',
+	};
+
+	# shallow merge (default): global hash replaces the nested key wholesale
+	my $shallow = $cfg1->merge_defaults(defaults => { %{$caller_defaults} });
+	is($shallow->{timeout}, $EXPECTED_TIMEOUT, 'shallow: global.timeout wins');
+	is($shallow->{extra},   'kept',            'shallow: caller extra key preserved');
+
+	# Re-create: merge_defaults deletes 'global' from the internal config hash
+	my $cfg2 = Config::Abstraction->new(
+		data => {
+			global => {
+				timeout => $EXPECTED_TIMEOUT,
+				nested  => { key_a => 'global_a', key_b => 'global_b' },
+			},
+			retries => $EXPECTED_RETRIES,
+		},
+		config_dirs => [],
+	);
+
+	# deep merge: Hash::Merge combines global and caller defaults recursively
+	my $deep = $cfg2->merge_defaults(defaults => { %{$caller_defaults} }, deep => 1);
+	returns_ok($deep, { type => 'hashref' }, 'deep merge_defaults() returns hashref');
+	is($deep->{timeout}, $EXPECTED_TIMEOUT, 'deep: global.timeout wins');
+	# With deep merge, nested keys from both global and caller are combined
+	is($deep->{nested}{key_a}, 'global_a', 'deep: global nested key_a preserved');
+	is($deep->{extra},         'kept',     'deep: caller extra key preserved');
+	ok(!exists $deep->{global}, 'deep: global key removed after merge');
 };
 
 done_testing();
