@@ -47,8 +47,7 @@ WriteMakefile(
 		'Pod::Usage' => 0,
 		'Scalar::Util' => 0,
 		'YAML::XS' => 0
-	},
-	META_MERGE => {
+	}, META_MERGE => {
 		'meta-spec' => { version => 2 },
 		resources => {
 			homepage => 'https://metacpan.org/pod/Config::Abstraction',
@@ -75,6 +74,7 @@ WriteMakefile(
 		'Test::Mockingbird' => 0.12,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
+		'Test::Returns' => 0.03,
 		'Test::TempDir::Tiny' => 0,
 		'Test::Without::Module' => 0,
 	}, clean => { FILES => 'Config-Abstraction-*' },
