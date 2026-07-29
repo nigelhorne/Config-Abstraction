@@ -328,7 +328,7 @@ Approximate LCSAJ segments: 345<br>
 </span><span class="">   36: such as files, environment variables, and in-code defaults,
 </span><span class="">   37: and merge them with predictable precedence.
 </span><span class="">   38: It provides a consistent API for accessing the configuration settings, regardless of where they came from,
-</span><span class="">   39: this helps keep your application&#39;s or class&#39;s configuration flexible, centralized, and easy to override.
+</span><span class="">   39: this helps keep your application&#39;s or class&#39;s configuration flexible, centralized, separate from your code base and easy to override.
 </span><span class="">   40: 
 </span><span class="">   41:   use Config::Abstraction;
 </span><span class="">   42: 
@@ -1136,7 +1136,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 <span class="">  705: 											undef $data;
 </span><span class="">  706: 										} elsif($data) {
 </span><span class="">  707: 											$data = $data-&gt;get_all_settings();
-</span><span class="survived-2 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  708: 											if(scalar(keys %{$data}) == 0) {
+</span><span class="survived-2 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one). Mutation survived. Add targeted tests to validate this branch.">  708: 											if(scalar(keys %{$data}) == 0) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1347,7 +1347,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  854: 		return 0;
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  855: 	}
 </span><span class="">  856: 	$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths.">  857: 	return 1;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  857: 	return 1;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1868,7 +1868,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 					<ul>
 				<li><b>COND_INV_1338_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1339: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+<span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1339: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
