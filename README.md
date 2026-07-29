@@ -12,7 +12,7 @@ Version 0.39
 such as files, environment variables, and in-code defaults,
 and merge them with predictable precedence.
 It provides a consistent API for accessing the configuration settings, regardless of where they came from,
-this helps keep your application's or class's configuration flexible, centralized, and easy to override.
+this helps keep your application's or class's configuration flexible, centralized, separate from your code base and easy to override.
 
     use Config::Abstraction;
 
@@ -168,6 +168,9 @@ This will override any value set for `database.user` in the configuration files.
     If `config_file` or `config_files` is set, those files are loaded last.
 
     If no `config_dirs` is given, try hard to find the files in various places.
+
+    The value of `config_dirs` can be overridden at runtime by the environment variable CONFIG\_DIR
+    (note that is just one directory, hence it's CONFIG\_DIR not CONFIG\_DIRS).
 
 - 3. Merging and Resolving
 

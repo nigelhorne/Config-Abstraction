@@ -72,7 +72,7 @@ WriteMakefile(
 		'POSIX' => 0,
 		'Readonly' => 0,
 		'Test::DescribeMe' => 0,
-		'Test::Mockingbird' => 0,
+		'Test::Mockingbird' => 0.12,
 		'Test::Most' => 0,
 		'Test::Needs' => 0,
 		'Test::TempDir::Tiny' => 0,

@@ -32,7 +32,7 @@ on 'test' => sub {
 	requires 'POSIX';
 	requires 'Readonly';
 	requires 'Test::DescribeMe';
-	requires 'Test::Mockingbird';
+	requires 'Test::Mockingbird', '0.12';
 	requires 'Test::Most';
 	requires 'Test::Needs';
 	requires 'Test::TempDir::Tiny';
