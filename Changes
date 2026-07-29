@@ -1,7 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.40	Tue Jul 28 20:00:00 EDT 2026
-
+0.40
 	[ Enhancements ]
 	- Remote configuration via the Newcastle Connection convention: entries in
 	  config_dirs beginning with /../hostname/path are fetched from the named
@@ -16,6 +15,7 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 	  since Config::IniFiles requires a real filesystem path)
 	- Document the Newcastle Connection convention and the rationale for choosing
 	  the /../ prefix over hostname:/path, file://, ssh://, and plain hostname/path
+	- Honour $CONFIG_DIRS in the environment
 
 0.39	Sun May 24 16:16:50 EDT 2026
 

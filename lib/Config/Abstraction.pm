@@ -14,8 +14,8 @@ use JSON::MaybeXS 'decode_json';	# Doesn't behave well with require
 use File::Slurp qw(read_file);
 use File::Spec;
 use Hash::Merge qw(merge);
-use Params::Get 0.14;
-use Params::Validate::Strict 0.11;
+use Params::Get 0.15;
+use Params::Validate::Strict 0.37;
 use Scalar::Util;
 
 =head1 NAME
@@ -210,6 +210,9 @@ If C<config_file> or C<config_files> is set, those files are loaded last.
 
 If no C<config_dirs> is given, try hard to find the files in various places.
 
+The value of C<config_dirs> can be overridden at runtime by the environment variable CONFIG_DIR
+(note that is just one directory, hence it's CONFIG_DIR not CONFIG_DIRS).
+
 =item 3. Merging and Resolving
 
 The module merges the contents of these files, with more specific configurations
@@ -350,6 +353,8 @@ sub new
 	}
 
 	$params->{'config_dirs'} //= $params->{'path'};	# Compatibility with Config::Auto
+
+	$params->{config_dirs} = [ $ENV{CONFIG_DIR} ] if(defined($ENV{CONFIG_DIR}));
 
 	$params->{'config_file'} //= $params->{'file'} if($params->{'file'});
 
