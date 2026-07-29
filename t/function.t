@@ -536,4 +536,337 @@ subtest 'blessed object in data not corrupted by _load_config' => sub {
 	is(blessed($got), '_BlessedVal', 'class name unchanged after load');
 };
 
+# ===========================================================================
+# TestProxy -- minimal subclass that satisfies the UNIVERSAL::isa guard on
+# _load_remote_dir and _parse_config_string.  Calling those methods directly
+# from 'main' would croak; routing through a genuine subclass keeps the guard
+# happy without altering the behaviour under test.
+# ===========================================================================
+package Config::Abstraction::TestProxy;
+use parent -norequire, 'Config::Abstraction';
+sub test_load_remote_dir     { my $self = shift; return $self->_load_remote_dir(@_)     }
+sub test_parse_config_string { my $self = shift; return $self->_parse_config_string(@_) }
+package main;
+
+# Provide a minimal stub so remote-path tests run whether or not
+# File::Slurp::Remote is installed.  Individual subtests mock the body.
+unless(eval { require File::Slurp::Remote; 1 }) {
+	no warnings 'once';
+	*File::Slurp::Remote::read_file = sub {};
+	$INC{'File/Slurp/Remote.pm'} = 1;
+}
+
+Readonly::Scalar my $REMOTE_HOST  => 'cfg.example.com';
+Readonly::Scalar my $REMOTE_DIR   => '/etc/myapp';
+Readonly::Scalar my $REMOTE_USER  => 'deploy';
+Readonly::Scalar my $YAML_CONTENT => "---\nfoo: bar\nbaz: 42\n";
+Readonly::Scalar my $JSON_CONTENT => '{"foo":"bar","baz":42}';
+Readonly::Scalar my $INI_CONTENT  => "[section]\nkey=value\nother=123\n";
+
+# ===========================================================================
+# _parse_remote_dir()
+# ===========================================================================
+subtest '_parse_remote_dir() - returns empty list for a plain absolute path' => sub {
+	my $cfg    = _make_cfg();
+	my @result = $cfg->_parse_remote_dir('/etc/myapp');
+	is(scalar(@result), 0, 'plain absolute path returns empty list');
+};
+
+subtest '_parse_remote_dir() - returns empty list for a relative path' => sub {
+	my $cfg    = _make_cfg();
+	my @result = $cfg->_parse_remote_dir('conf/local');
+	is(scalar(@result), 0, 'relative path returns empty list');
+};
+
+subtest '_parse_remote_dir() - returns empty list for undef without error' => sub {
+	my $cfg    = _make_cfg();
+	my @result = $cfg->_parse_remote_dir(undef);
+	is(scalar(@result), 0, 'undef returns empty list without dying');
+};
+
+subtest '_parse_remote_dir() - returns empty list for empty string' => sub {
+	my $cfg    = _make_cfg();
+	my @result = $cfg->_parse_remote_dir('');
+	is(scalar(@result), 0, 'empty string returns empty list');
+};
+
+subtest '_parse_remote_dir() - parses /../host/path into (host, path)' => sub {
+	my $cfg          = _make_cfg();
+	my ($host, $dir) = $cfg->_parse_remote_dir("/../$REMOTE_HOST$REMOTE_DIR");
+	is($host, $REMOTE_HOST, 'hostname extracted correctly');
+	is($dir,  $REMOTE_DIR,  'directory path extracted correctly');
+};
+
+subtest '_parse_remote_dir() - preserves user@host format verbatim' => sub {
+	# user@ must be left intact so _is_local_host can strip and compare it
+	my $cfg          = _make_cfg();
+	my $spec         = "$REMOTE_USER\@$REMOTE_HOST";
+	my ($host, $dir) = $cfg->_parse_remote_dir("/../$spec$REMOTE_DIR");
+	is($host, $spec,       'user@host preserved verbatim in returned hostname');
+	is($dir,  $REMOTE_DIR, 'path still extracted correctly with user@host');
+};
+
+subtest '_parse_remote_dir() - defaults path to / when no path component given' => sub {
+	my $cfg          = _make_cfg();
+	my ($host, $dir) = $cfg->_parse_remote_dir("/../$REMOTE_HOST");
+	is($host, $REMOTE_HOST, 'hostname extracted when path omitted');
+	is($dir,  '/',          'path defaults to / when omitted');
+};
+
+# ===========================================================================
+# _is_local_host()
+# ===========================================================================
+subtest '_is_local_host() - returns 1 for "localhost"' => sub {
+	ok(_make_cfg()->_is_local_host('localhost'), '"localhost" is local');
+};
+
+subtest '_is_local_host() - loopback name matching is case-insensitive' => sub {
+	my $cfg = _make_cfg();
+	ok($cfg->_is_local_host('LOCALHOST'),  '"LOCALHOST" is local');
+	ok($cfg->_is_local_host('LocalHost'), '"LocalHost" is local');
+};
+
+subtest '_is_local_host() - returns 1 for IPv4 loopback address' => sub {
+	ok(_make_cfg()->_is_local_host('127.0.0.1'), '"127.0.0.1" is local');
+};
+
+subtest '_is_local_host() - returns 1 for IPv6 loopback address' => sub {
+	ok(_make_cfg()->_is_local_host('::1'), '"::1" is local');
+};
+
+subtest '_is_local_host() - returns 0 for an obviously remote hostname' => sub {
+	# Pick a name unlikely to match the FQDN or short name of any real machine
+	ok(!_make_cfg()->_is_local_host('definitely-not-local-xyzzy-42.test'),
+		'remote hostname returns 0');
+};
+
+subtest '_is_local_host() - returns 0 for undef without error' => sub {
+	ok(!_make_cfg()->_is_local_host(undef), 'undef returns 0 without dying');
+};
+
+subtest '_is_local_host() - returns 0 for empty string' => sub {
+	ok(!_make_cfg()->_is_local_host(''), 'empty string returns 0');
+};
+
+subtest '_is_local_host() - strips user@ prefix before comparing' => sub {
+	my $cfg = _make_cfg();
+	ok($cfg->_is_local_host("$REMOTE_USER\@localhost"),
+		'user@localhost treated as local after stripping prefix');
+	ok($cfg->_is_local_host("$REMOTE_USER\@127.0.0.1"),
+		'user@127.0.0.1 treated as local after stripping prefix');
+};
+
+subtest '_is_local_host() - matches FQDN and short name from Sys::Hostname' => sub {
+	# Mock Sys::Hostname so the test is deterministic on any machine and
+	# exercises both the full-FQDN and domain-stripped short-name code paths.
+	my $guard = mock_scoped 'Sys::Hostname::hostname' => sub { 'myserver.example.com' };
+	my $cfg   = _make_cfg();
+	ok($cfg->_is_local_host('myserver.example.com'),     'FQDN matches');
+	ok($cfg->_is_local_host('MYSERVER.EXAMPLE.COM'),     'FQDN matches case-insensitively');
+	ok($cfg->_is_local_host('myserver'),                 'short hostname matches');
+	ok(!$cfg->_is_local_host('otherserver.example.com'), 'different FQDN does not match');
+	ok(!$cfg->_is_local_host('myserver.other.com'),      'same short name, different domain rejected');
+};
+
+# ===========================================================================
+# _slurp_remote()
+# ===========================================================================
+subtest '_slurp_remote() - returns file content verbatim on success' => sub {
+	my $cfg   = _make_cfg();
+	my $guard = mock_scoped 'File::Slurp::Remote::read_file' => sub { $YAML_CONTENT };
+	is($cfg->_slurp_remote($REMOTE_HOST, "$REMOTE_DIR/base.yaml"),
+		$YAML_CONTENT, 'file content returned verbatim');
+};
+
+subtest '_slurp_remote() - returns undef and does not propagate exceptions' => sub {
+	my $cfg   = _make_cfg();
+	my $guard = mock_scoped 'File::Slurp::Remote::read_file' => sub {
+		die "Connection refused\n";
+	};
+	my $result;
+	lives_ok { $result = $cfg->_slurp_remote($REMOTE_HOST, "$REMOTE_DIR/base.yaml") }
+		'exception from read_file is caught, not re-thrown';
+	ok(!defined($result), 'undef returned when read fails');
+};
+
+subtest '_slurp_remote() - logs at debug level on failure when a logger is present' => sub {
+	my @logged;
+	# Must bless the logger so new() does not try to wrap it in Log::Abstraction
+	my $logger = bless {}, '_SlurpTestLogger';
+	{
+		no warnings 'once';
+		*_SlurpTestLogger::debug = sub { push @logged, join('', @_[1..$#_]) };
+		# Stub other log levels so new() and _load_config() don't croak
+		for my $m (qw(trace info warn error)) {
+			no strict 'refs';
+			*{"_SlurpTestLogger::$m"} = sub {};
+		}
+	}
+
+	my $cfg   = Config::Abstraction->new(data => \%NESTED_DATA, config_dirs => [], logger => $logger);
+	my $guard = mock_scoped 'File::Slurp::Remote::read_file' => sub { die "SSH timeout\n" };
+	$cfg->_slurp_remote($REMOTE_HOST, "$REMOTE_DIR/base.yaml");
+
+	ok(scalar(@logged) > 0,     'at least one debug message emitted on failure');
+	like($logged[0], qr/Could not read/, 'message describes the failure');
+	diag("logged: $logged[0]") if $ENV{TEST_VERBOSE};
+};
+
+# ===========================================================================
+# _load_remote_dir() - access guard + functional behaviour via TestProxy
+# ===========================================================================
+subtest '_load_remote_dir() - croaks when called from outside the package hierarchy' => sub {
+	my $cfg = _make_cfg();
+	eval { $cfg->_load_remote_dir($REMOTE_HOST, $REMOTE_DIR, {}) };
+	like($@, qr/Illegal Operation/, 'croaks with expected message for external caller');
+};
+
+subtest '_load_remote_dir() - warns and returns cleanly when driver is absent' => sub {
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	# Inject the negative cache entry so _load_driver returns 0 without touching the FS
+	$cfg->{failed}{'File::Slurp::Remote'} = 1;
+
+	my %merged;
+	my @warnings;
+	my $guard = mock_scoped 'Carp::carp' => sub { push @warnings, $_[0] };
+	lives_ok { $cfg->test_load_remote_dir($REMOTE_HOST, $REMOTE_DIR, \%merged) }
+		'no crash when driver unavailable';
+	ok(scalar(@warnings) > 0,   'warning emitted when File::Slurp::Remote is absent');
+	is(scalar(keys %merged), 0, 'merged hash unchanged when driver is absent');
+};
+
+subtest '_load_remote_dir() - merges YAML data fetched from a remote file' => sub {
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	$cfg->{loaded}{'File::Slurp::Remote'} = 1;	# skip driver require
+
+	my %merged;
+	my $guard = mock_scoped 'Config::Abstraction::_slurp_remote' => sub {
+		my ($self, $host, $path) = @_;
+		return $YAML_CONTENT if $path =~ /base\.yaml$/;
+		return undef;	# all other standard files absent on remote
+	};
+
+	$cfg->test_load_remote_dir($REMOTE_HOST, $REMOTE_DIR, \%merged);
+
+	is($merged{foo},    'bar', 'string value from remote YAML merged correctly');
+	is($merged{baz},    42,    'integer value from remote YAML merged correctly');
+	ok(scalar(@{$merged{config_path} // []}) > 0,      'config_path populated');
+	like($merged{config_path}[0], qr/\Q$REMOTE_HOST\E/, 'config_path entry names the host');
+	diag("config_path: $merged{config_path}[0]") if $ENV{TEST_VERBOSE};
+};
+
+subtest '_load_remote_dir() - leaves merged hash untouched when all fetches return undef' => sub {
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	$cfg->{loaded}{'File::Slurp::Remote'} = 1;
+
+	my %merged  = (pre_existing => 'value');
+	my $guard   = mock_scoped 'Config::Abstraction::_slurp_remote' => sub { undef };
+	$cfg->test_load_remote_dir($REMOTE_HOST, $REMOTE_DIR, \%merged);
+
+	is($merged{pre_existing}, 'value', 'pre-existing key untouched when no files fetched');
+	ok(!exists $merged{config_path},   'config_path not added when nothing loaded');
+};
+
+subtest '_load_remote_dir() - skips and warns when parsed data is not a hashref' => sub {
+	# A YAML list parses fine but is not a valid config root -- must warn and skip
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	$cfg->{loaded}{'File::Slurp::Remote'} = 1;
+
+	my %merged;
+	my @warnings;
+	my $slurp_guard = mock_scoped 'Config::Abstraction::_slurp_remote' => sub {
+		my ($self, $host, $path) = @_;
+		return "- item1\n- item2\n" if $path =~ /base\.yaml$/;
+		return undef;
+	};
+	my $carp_guard = mock_scoped 'Carp::carp' => sub { push @warnings, $_[0] };
+
+	lives_ok { $cfg->test_load_remote_dir($REMOTE_HOST, $REMOTE_DIR, \%merged) }
+		'non-hash remote result does not crash';
+	ok(!exists $merged{foo},      'non-hash result not merged into config');
+	ok(scalar(@warnings) > 0,    'warning emitted for non-hash result');
+	like($warnings[0], qr/hash/i, 'warning message mentions hash');
+};
+
+# ===========================================================================
+# _parse_config_string() - access guard + one subtest per supported format
+# ===========================================================================
+subtest '_parse_config_string() - croaks when called from outside the package hierarchy' => sub {
+	my $cfg = _make_cfg();
+	eval { $cfg->_parse_config_string($YAML_CONTENT, 'base.yaml', 'test') };
+	like($@, qr/Illegal Operation/, 'croaks with expected message for external caller');
+};
+
+subtest '_parse_config_string() - parses YAML content correctly' => sub {
+	my $cfg    = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	my $result = $cfg->test_parse_config_string($YAML_CONTENT, 'base.yaml', 'test');
+	ok(defined($result),      'YAML returns defined value');
+	is(ref($result), 'HASH',  'YAML returns a hashref');
+	is($result->{foo}, 'bar', 'YAML string value correct');
+	is($result->{baz}, 42,    'YAML integer value correct');
+};
+
+subtest '_parse_config_string() - parses JSON content correctly' => sub {
+	my $cfg    = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	my $result = $cfg->test_parse_config_string($JSON_CONTENT, 'local.json', 'test');
+	ok(defined($result),      'JSON returns defined value');
+	is(ref($result), 'HASH',  'JSON returns a hashref');
+	is($result->{foo}, 'bar', 'JSON string value correct');
+	is($result->{baz}, 42,    'JSON integer value correct');
+};
+
+subtest '_parse_config_string() - parses INI content via a temp file' => sub {
+	# Config::IniFiles requires a real path; the implementation writes to
+	# File::Temp and removes it immediately after parsing
+	my $cfg    = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	my $result = $cfg->test_parse_config_string($INI_CONTENT, 'base.ini', 'test');
+	ok(defined($result),                  'INI returns defined value');
+	is(ref($result), 'HASH',              'INI returns a hashref');
+	is($result->{section}{key},   'value', 'INI key correct');
+	is($result->{section}{other}, '123',   'INI second key correct');
+};
+
+subtest '_parse_config_string() - catches parser exceptions and returns undef' => sub {
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	# Pre-populate cache so _load_driver short-circuits; then the mock on
+	# YAML::XS::Load takes clean effect without an import side-effect.
+	$cfg->{loaded}{'YAML::XS'} = 1;
+	my $guard = mock_scoped 'YAML::XS::Load' => sub { die "synthetic parse failure\n" };
+
+	my $result;
+	lives_ok { $result = $cfg->test_parse_config_string('bad', 'base.yaml', 'test-label') }
+		'parser exception caught, not re-thrown';
+	ok(!defined($result), 'returns undef when parser dies');
+};
+
+subtest '_parse_config_string() - returns undef for an unrecognised file extension' => sub {
+	# No format handler is registered for .toml; the inner eval exits without
+	# setting $data and the method returns undef without logging anything
+	my $cfg    = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	my $result = $cfg->test_parse_config_string('key = value', 'config.toml', 'test');
+	ok(!defined($result), 'unrecognised extension returns undef');
+};
+
+# ===========================================================================
+# _load_data_reuse() - caching layer around the optional Data::Reuse module
+# ===========================================================================
+subtest '_load_data_reuse() - returns 0 immediately when no_fixate is set' => sub {
+	# no_fixate lets callers opt out of Data::Reuse entirely; the early
+	# return must fire before any require is attempted
+	my $cfg = _make_cfg(no_fixate => 1);
+	is($cfg->_load_data_reuse(), 0, 'returns 0 when no_fixate flag is set');
+};
+
+subtest '_load_data_reuse() - returns 1 from positive cache without re-loading' => sub {
+	my $cfg = _make_cfg();
+	$cfg->{reuse_loaded} = 1;
+	is($cfg->_load_data_reuse(), 1, 'returns 1 from reuse_loaded cache immediately');
+};
+
+subtest '_load_data_reuse() - returns 0 from negative cache without re-attempting' => sub {
+	my $cfg = _make_cfg();
+	$cfg->{reuse_failed} = 1;
+	is($cfg->_load_data_reuse(), 0, 'returns 0 from reuse_failed cache immediately');
+};
+
 done_testing();

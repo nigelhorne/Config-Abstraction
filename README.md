@@ -197,7 +197,8 @@ Options:
     An arrayref of directories to look for configuration files
     (default: `$CONFIG_DIR`, `$HOME/.conf`, `$HOME/config`, `$HOME/conf`, `$DOCUMENT_ROOT/conf`, `$DOCUMENT_ROOT/../conf`, `conf`).
 
-    Entries beginning with `/../` are treated as remote specifications using the
+    For centralised configuration management,
+    entries beginning with `/../` are treated as remote specifications using the
     Newcastle Connection convention -- see ["Remote configuration directories (Newcastle Connection)"](#remote-configuration-directories-newcastle-connection).
 
 - `config_file`

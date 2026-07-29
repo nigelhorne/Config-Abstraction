@@ -242,7 +242,8 @@ Options:
 An arrayref of directories to look for configuration files
 (default: C<$CONFIG_DIR>, C<$HOME/.conf>, C<$HOME/config>, C<$HOME/conf>, C<$DOCUMENT_ROOT/conf>, C<$DOCUMENT_ROOT/../conf>, C<conf>).
 
-Entries beginning with C</../> are treated as remote specifications using the
+For centralised configuration management,
+entries beginning with C</../> are treated as remote specifications using the
 Newcastle Connection convention -- see L</Remote configuration directories (Newcastle Connection)>.
 
 =item * C<config_file>
