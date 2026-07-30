@@ -845,6 +845,12 @@ XML
 # local filesystem path without making an SSH connection.
 # ===========================================================================
 subtest 'end-to-end: Newcastle Connection localhost short-circuit reads local dir' => sub {
+	# Newcastle path format /../host/path requires Unix-style absolute paths;
+	# on Windows tempdir() returns C:\... with a drive letter, making the
+	# concatenation /../localhostC:\... unparseable by _parse_remote_dir.
+	plan skip_all => 'Newcastle localhost paths require Unix-style absolute paths (incompatible with Windows drive letters)'
+		if $^O eq 'MSWin32';
+
 	my $dir = tempdir(CLEANUP => 1);
 	_write_file($dir, $YAML_BASE, "nc_key: nc_value\nnc_port: 8080\n");
 
