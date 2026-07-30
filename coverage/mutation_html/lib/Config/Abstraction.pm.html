@@ -244,8 +244,8 @@ pre details.mutant-details ul {
 <div class="nav"><a href="../../../index.html">Index</a>
 </div><div class='summary'>
 <strong>Structural Coverage (Approximate)</strong><p>
-TER1 (Statement): 85.48%<br>
-TER2 (Branch): 72.54%<br>
+TER1 (Statement): 91.49%<br>
+TER2 (Branch): 86.42%<br>
 TER3 (LCSAJ): 100.0% (31/31)<br>
 Approximate LCSAJ segments: 347<br>
 </div>
@@ -1122,7 +1122,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 <span class="">  709: 											undef $data;
 </span><span class="">  710: 										} elsif($data) {
 </span><span class="">  711: 											$data = $data-&gt;get_all_settings();
-</span><span class="survived-2 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch. Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one).">  712: 											if(scalar(keys %{$data}) == 0) {
+</span><span class="survived-2 tooltip" data-tooltip="Boundary mutation survived. Add tests around edge values (e.g. min, max, off-by-one). Mutation survived. Add targeted tests to validate this branch.">  712: 											if(scalar(keys %{$data}) == 0) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
