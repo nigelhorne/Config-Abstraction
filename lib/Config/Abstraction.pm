@@ -450,7 +450,11 @@ sub _load_config
 
 	if($self->{'data'}) {
 		# The data argument given to 'new' contains defaults that this routine will override
-		%merged = %{$self->{'data'}};
+		if(ref($self->{'data'}) eq 'HASH') {
+			%merged = %{$self->{'data'}};
+		} else {
+			Carp::carp(ref($self) . ': data argument must be a hashref; ignoring non-hashref value');
+		}
 	}
 
 	my $logger = $self->{'logger'};
@@ -756,7 +760,7 @@ sub _load_config
 	$prefix =~ s/_$//;
 	$prefix =~ s/::$//;
 	for my $key (keys %ENV) {
-		next unless $key =~ /^$self->{env_prefix}(.*)$/i;
+		next unless $key =~ /^\Q$self->{env_prefix}\E(.*)$/i;
 		my $path = lc($1);
 		if($path =~ /__/) {
 			my @parts = split /__/, $path;
@@ -772,7 +776,7 @@ sub _load_config
 	foreach my $arg(@ARGV) {
 		next unless($arg =~ /=/);
 		my ($key, $value) = split(/=/, $arg, 2);
-		next unless $key =~ /^\-\-$self->{env_prefix}(.*)$/;
+		next unless $key =~ /^\-\-\Q$self->{env_prefix}\E(.*)$/;
 
 		my $path = lc($1);
 		my @parts = split(/__/, $path);
