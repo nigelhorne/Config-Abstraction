@@ -847,6 +847,29 @@ subtest '_parse_config_string() - returns undef for an unrecognised file extensi
 	ok(!defined($result), 'unrecognised extension returns undef');
 };
 
+subtest '_parse_config_string() - parses XML content via XML::Simple or XML::PP' => sub {
+	# This exercises the elsif($filename =~ /\.xml$/i) branch which had 0 coverage hits
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	my $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><config><key>xmlval</key><count>7</count></config>";
+	my $result = $cfg->test_parse_config_string($xml, 'base.xml', 'test-xml-label');
+	ok(defined($result),        'XML content returns defined value');
+	is(ref($result), 'HASH',    'XML content returns a hashref');
+	is($result->{key}, 'xmlval', 'XML string value parsed correctly');
+	diag('XML result: ' . join(', ', map { "$_=$result->{$_}" } sort keys %{$result})) if $ENV{TEST_VERBOSE};
+};
+
+subtest '_parse_config_string() - returns undef for malformed INI (no valid sections)' => sub {
+	# Config::IniFiles->new returns undef for content it cannot parse; the
+	# method must return undef without crashing when the INI temp-file parse fails
+	my $cfg = Config::Abstraction::TestProxy->new(data => \%NESTED_DATA, config_dirs => []);
+	# An INI-extension file whose content has broken section syntax
+	my $bad_ini = "[broken section\nkey=val\n";
+	my $result;
+	lives_ok { $result = $cfg->test_parse_config_string($bad_ini, 'config.ini', 'bad-ini') }
+		'malformed INI does not crash _parse_config_string';
+	ok(!defined($result), 'malformed INI returns undef');
+};
+
 # ===========================================================================
 # _load_data_reuse() - caching layer around the optional Data::Reuse module
 # ===========================================================================
