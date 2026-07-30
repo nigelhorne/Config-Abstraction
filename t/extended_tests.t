@@ -1005,6 +1005,17 @@ subtest 'Hash::Merge - nested hash merge preserves non-conflicting keys' => sub 
 	}
 }
 
+# Stub File::Slurp::Remote when it is absent so that _load_driver('File::Slurp::Remote')
+# returns 1 and _load_remote_dir proceeds past the early-return guard at line 1204.
+# The real read_file is never called in these tests: ExtTestProxy uses _slurp_remote
+# (which calls the stub and gets undef → files are skipped), while MockProxy overrides
+# _slurp_remote entirely.  Mirrors the pattern used in t/function.t.
+unless(eval { require File::Slurp::Remote; 1 }) {
+	no warnings 'once';
+	*File::Slurp::Remote::read_file = sub {};
+	$INC{'File/Slurp/Remote.pm'} = 1;
+}
+
 # ===========================================================================
 # DOCUMENT_ROOT based config_dirs (line 376-380)
 # ===========================================================================
@@ -2615,18 +2626,27 @@ subtest '_load_config() - line 708 TRUE: Config::Abstract->new throws in inner e
 # ===========================================================================
 
 subtest 'new() - logger cannot level: line 410 condition B=FALSE covered' => sub {
-	no warnings 'redefine', 'once';
-	local *Log::Abstraction::can = sub { 0 };
+	# Line 410 is only reachable when Log::Abstraction is installed: an unblessed
+	# logger arg triggers the Log::Abstraction->new() block, after which ->can('level')
+	# is checked.  When Log::Abstraction is absent the constructor carps and returns
+	# early, never reaching line 410.
+	SKIP: {
+		skip 'Log::Abstraction not installed', 3
+			unless eval { require Log::Abstraction; 1 };
 
-	my $cfg = Config::Abstraction->new(
-		data        => { key => 'val' },
-		logger      => {},        # unblessed: triggers Log::Abstraction->new block
-		level       => 'debug',   # sets $params->{'level'} → line 410 A=TRUE
-		config_dirs => [],
-	);
-	ok(defined($cfg), 'object created when logger cannot level (410 B=FALSE)');
-	is($cfg->get('key'), 'val', 'config data intact when level-set skipped');
-	pass('line 410 condition B=FALSE covered: logger->can("level") returned 0');
+		no warnings 'redefine', 'once';
+		local *Log::Abstraction::can = sub { 0 };
+
+		my $cfg = Config::Abstraction->new(
+			data        => { key => 'val' },
+			logger      => {},        # unblessed: triggers Log::Abstraction->new block
+			level       => 'debug',   # sets $params->{'level'} → line 410 A=TRUE
+			config_dirs => [],
+		);
+		ok(defined($cfg), 'object created when logger cannot level (410 B=FALSE)');
+		is($cfg->get('key'), 'val', 'config data intact when level-set skipped');
+		pass('line 410 condition B=FALSE covered: logger->can("level") returned 0');
+	}
 };
 
 done_testing();
