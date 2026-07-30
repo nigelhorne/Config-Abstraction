@@ -131,6 +131,8 @@ subtest '_load_driver() - logger warned on failure' => sub {
 # `unless(-r $path)` body executes → `next` (skip).  This covers the `next`
 # branch of line 499 that is never taken when all files are readable.
 subtest '_load_config() - unreadable base file skipped silently' => sub {
+	plan skip_all => 'chmod(0000) does not restrict reads on Windows'
+		if $^O eq 'MSWin32';
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = _write_file($dir, 'base.yaml', "secret: value\n");
 	chmod(0000, $path);    # make unreadable
@@ -185,6 +187,8 @@ subtest '_load_config() - relative config_file searched in config_dirs' => sub {
 # Make the config_file unreadable to cover this path (distinct from the base-file
 # unreadable test which covers line 499).
 subtest '_load_config() - unreadable config_file skipped (line 609 right-false)' => sub {
+	plan skip_all => 'chmod(0000) does not restrict reads on Windows'
+		if $^O eq 'MSWin32';
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = _write_file($dir, 'secret.yaml', "secret: value\n");
 	chmod(0000, $path);    # make unreadable
