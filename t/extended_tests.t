@@ -1266,26 +1266,28 @@ subtest '_load_config() - XML parse failure logged via logger->notice' => sub {
 	# Without XML::Simple, _load_driver logs a warn (module unavailable) rather
 	# than a notice (parse failure), so the notice assertion only holds when
 	# XML::Simple is installed.
-	skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
+	SKIP: {
+		skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
 
-	my $dir = tempdir(CLEANUP => 1);
-	# Valid-looking XML header but unclosed tag so XML::Simple throws
-	_write_file($dir, 'base.xml', "<?xml version=\"1.0\"?><config><unclosed>\n");
+		my $dir = tempdir(CLEANUP => 1);
+		# Valid-looking XML header but unclosed tag so XML::Simple throws
+		_write_file($dir, 'base.xml', "<?xml version=\"1.0\"?><config><unclosed>\n");
 
-	my ($logger, $log_ref) = _make_spy_logger();
+		my ($logger, $log_ref) = _make_spy_logger();
 
-	my $cfg;
-	_silenced(sub {
-		$cfg = Config::Abstraction->new(
-			data        => { fallback => 'yes' },
-			config_dirs => [$dir],
-			logger      => $logger,
-		);
-	});
-	ok(defined($cfg), 'object still created despite XML parse failure');
-	my @notices = grep { $_->[0] eq 'notice' } @{$log_ref};
-	ok(scalar(@notices) > 0, 'logger->notice called for XML parse failure')
-		or diag('all log entries: ' . join('; ', map { "$_->[0]: $_->[1]" } @{$log_ref}));
+		my $cfg;
+		_silenced(sub {
+			$cfg = Config::Abstraction->new(
+				data        => { fallback => 'yes' },
+				config_dirs => [$dir],
+				logger      => $logger,
+			);
+		});
+		ok(defined($cfg), 'object still created despite XML parse failure');
+		my @notices = grep { $_->[0] eq 'notice' } @{$log_ref};
+		ok(scalar(@notices) > 0, 'logger->notice called for XML parse failure')
+			or diag('all log entries: ' . join('; ', map { "$_->[0]: $_->[1]" } @{$log_ref}));
+	}
 };
 
 # Line 549 FALSE: XML::PP parses base.xml but collapsed data has no 'config' key.
@@ -1612,21 +1614,23 @@ subtest '_load_config() - self-closing XML hits XMLin block (lines 700/719 FALSE
 	# Without XML::Simple, YAML returns the XML markup as a plain scalar string.
 	# If data=> is also present, line 740 tries merge(string, \%merged) which dies.
 	# This path only makes sense when XMLin is available to parse the file.
-	skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
+	SKIP: {
+		skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
 
-	my $dir = tempdir(CLEANUP => 1);
-	# Self-closing XML: no <?xml header, no </tag>, bypasses line-615 XML check
-	_write_file($dir, 'myapp.cfg', "<settings server=\"prod\" port=\"80\" />\n");
+		my $dir = tempdir(CLEANUP => 1);
+		# Self-closing XML: no <?xml header, no </tag>, bypasses line-615 XML check
+		_write_file($dir, 'myapp.cfg', "<settings server=\"prod\" port=\"80\" />\n");
 
-	my $cfg = Config::Abstraction->new(
-		config_file => 'myapp.cfg',
-		config_dirs => [$dir],
-		data        => { fallback => 'yes' },
-	);
-	ok(defined($cfg), 'object created with self-closing XML config file');
-	# XMLin returns hash with attributes as keys; fallback data also present
-	is($cfg->get('fallback'), 'yes', 'fallback data accessible');
-	diag('config keys: ' . join(', ', keys %{$cfg->all()})) if $ENV{TEST_VERBOSE};
+		my $cfg = Config::Abstraction->new(
+			config_file => 'myapp.cfg',
+			config_dirs => [$dir],
+			data        => { fallback => 'yes' },
+		);
+		ok(defined($cfg), 'object created with self-closing XML config file');
+		# XMLin returns hash with attributes as keys; fallback data also present
+		is($cfg->get('fallback'), 'yes', 'fallback data accessible');
+		diag('config keys: ' . join(', ', keys %{$cfg->all()})) if $ENV{TEST_VERBOSE};
+	}
 };
 
 # ===========================================================================
