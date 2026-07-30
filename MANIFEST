@@ -1,6 +1,5 @@
 bin/config-dump
 Changes
-chatgpt.txt
 cpanfile
 lib/Config/Abstraction.pm
 LICENSE

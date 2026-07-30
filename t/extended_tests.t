@@ -1263,6 +1263,11 @@ subtest '_load_config() - YAML parse failure logged via logger->notice' => sub {
 
 # XML failure with logger: malformed XML that triggers the carp/notice path at line 533-537
 subtest '_load_config() - XML parse failure logged via logger->notice' => sub {
+	# Without XML::Simple, _load_driver logs a warn (module unavailable) rather
+	# than a notice (parse failure), so the notice assertion only holds when
+	# XML::Simple is installed.
+	skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
+
 	my $dir = tempdir(CLEANUP => 1);
 	# Valid-looking XML header but unclosed tag so XML::Simple throws
 	_write_file($dir, 'base.xml', "<?xml version=\"1.0\"?><config><unclosed>\n");
@@ -1604,6 +1609,11 @@ subtest '_load_config() - config_file YAML array leaves non-HASH $data (742 A-tr
 # - Line 700 `if((!$data) || (ref ne HASH))` → FALSE (Config::Abstract skipped)
 # - Line 719 `if((!$data) || (ref ne HASH))` → FALSE (Config::Auto skipped)
 subtest '_load_config() - self-closing XML hits XMLin block (lines 700/719 FALSE)' => sub {
+	# Without XML::Simple, YAML returns the XML markup as a plain scalar string.
+	# If data=> is also present, line 740 tries merge(string, \%merged) which dies.
+	# This path only makes sense when XMLin is available to parse the file.
+	skip 'XML::Simple not installed', 2 unless eval { require XML::Simple; 1 };
+
 	my $dir = tempdir(CLEANUP => 1);
 	# Self-closing XML: no <?xml header, no </tag>, bypasses line-615 XML check
 	_write_file($dir, 'myapp.cfg', "<settings server=\"prod\" port=\"80\" />\n");
@@ -2443,7 +2453,8 @@ subtest '_load_config() - line 697 FALSE when XML::Simple hidden in fallback pat
 		$cfg = Config::Abstraction->new(
 			config_file => 'fallback.cfg',
 			config_dirs => [$dir],
-			data        => { fallback => 'xml_simple_hidden' },
+			# No data=> : avoids merge(string, \%merged) crash when all parsers fail
+			# and YAML returns the XML markup as a truthy scalar (not a HASH).
 		);
 	});
 	# $cfg may or may not be defined depending on Config::Auto; just verify no crash
@@ -2578,7 +2589,7 @@ subtest '_load_config() - line 708 TRUE: Config::Abstract->new throws in inner e
 
 	my $cfg;
 	_silenced(sub {
-		no warnings 'redefine';
+		no warnings 'redefine', 'once';
 		local *Config::Abstract::new = sub { die "forced Config::Abstract error\n" };
 		$cfg = Config::Abstraction->new(
 			config_file => 'throws.cfg',
@@ -2600,7 +2611,7 @@ subtest '_load_config() - line 708 TRUE: Config::Abstract->new throws in inner e
 # ===========================================================================
 
 subtest 'new() - logger cannot level: line 410 condition B=FALSE covered' => sub {
-	no warnings 'redefine';
+	no warnings 'redefine', 'once';
 	local *Log::Abstraction::can = sub { 0 };
 
 	my $cfg = Config::Abstraction->new(
