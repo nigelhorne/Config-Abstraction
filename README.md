@@ -8,21 +8,76 @@ Version 0.39
 
 # SYNOPSIS
 
-`Config::Abstraction` lets you load configuration from multiple sources,
-such as files, environment variables, and in-code defaults,
-and merge them with predictable precedence.
-It provides a consistent API for accessing the configuration settings, regardless of where they came from,
-this helps keep your application's or class's configuration flexible, centralized, separate from your code base and easy to override.
+## Pattern 1: Environment overrides file overrides in-code defaults
+
+The most common pattern for twelve-factor-style apps.
+The `data` argument supplies defaults, a YAML file supplies site configuration,
+and environment variables allow per-deployment overrides without touching any file.
+
+    # config/base.yaml
+    #   database:
+    #     host: db.example.com
+    #     port: 5432
+    #     user: app
 
     use Config::Abstraction;
 
     my $config = Config::Abstraction->new(
-      config_dirs => ['config'],
-      env_prefix => 'APP_',
-      flatten => 0,
+        data        => { database => { host => 'localhost', port => 5432 } },
+        config_dirs => ['config'],
+        env_prefix  => 'APP_',
     );
 
-    my $db_user = $config->get('database.user');
+    # In production, set APP_DATABASE__HOST=db.prod.example.com in the environment.
+    # That silently overrides the file value, which in turn overrides the default.
+    my $host = $config->get('database.host');
+    my $port = $config->get('database.port');
+
+## Pattern 2: Command-line arguments override everything
+
+Useful for CLI tools where operator flags must win over every other source.
+
+    # Run as: myscript.pl --APP_LOGLEVEL=debug --APP_DATABASE__HOST=localhost
+
+    use Config::Abstraction;
+
+    my $config = Config::Abstraction->new(
+        config_dirs => ['config'],
+        env_prefix  => 'APP_',
+    );
+
+    # @ARGV is consumed and stripped during new(); the resulting config already
+    # has cli-layer values at the highest precedence.
+    my $loglevel = $config->get('loglevel');       # 'debug'  (from --APP_LOGLEVEL)
+    my $db_host  = $config->get('database.host');  # 'localhost' (from --APP_DATABASE__HOST)
+
+## Pattern 3: Multi-file layering (base + local override)
+
+Separates shared defaults from machine-specific tweaks.
+Every developer has a `base.yaml`; only the production server has `local.yaml`.
+
+    # config/base.yaml   -- checked into version control
+    #   database:
+    #     host: localhost
+    #     user: dev
+    #
+    # config/local.yaml  -- NOT checked in; production only
+    #   database:
+    #     host: db.prod.example.com
+    #     user: produser
+    #     password: s3cr3t
+
+    use Config::Abstraction;
+
+    my $config = Config::Abstraction->new(
+        config_dirs => ['config'],   # loads base.yaml then local.yaml
+        env_prefix  => 'APP_',
+    );
+
+    # On a dev machine (no local.yaml): host='localhost', user='dev'
+    # On the prod server:               host='db.prod.example.com', user='produser'
+    my $db = $config->get('database.host');
+    my $user = $config->get('database.user');
 
 # DESCRIPTION
 
@@ -47,17 +102,34 @@ This module is designed to help developers manage layered configurations that ca
 offering a modern, robust and dynamic approach
 to configuration management.
 
-## Merge Precedence Diagram
+## Merge Precedence
 
-    +----------------+
-    |   CLI args     |  (Highest priority)
-    +----------------+
-    | Environment    |
-    +----------------+
-    | Config file(s) |
-    +----------------+
-    | Defaults       |  (Lowest priority)
-    +----------------+
+Sources are applied in the order shown below.  Each row wins over every row
+above it.  When the same key appears in multiple sources, the highest-priority
+source always determines the final value — including when that value is `undef`.
+
+    Priority   Source                         Set with
+    --------   ------                         --------
+       1 (lo)  data constructor argument      data => { key => 'default' }
+       2        base.*  config files          config/base.yaml, base.json, …
+       3        local.* config files          config/local.yaml, local.json, …
+       4        default / script-name files   config/default.yaml, myapp.yaml, …
+       5        config_file / config_files    config_file => '/etc/myapp.yaml'
+       6        Environment variables         APP_DATABASE__HOST=db.prod.example.com
+       7 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
+
+Within the file tier (rows 2–5), later files override earlier files using
+`Hash::Merge` LEFT\_PRECEDENT: every key in the later file wins over the same
+key in an earlier file, even when the later value is `undef` (YAML `~`).
+Nested hashes are merged recursively, so a `local.yaml` that only sets
+`database.host` will not erase `database.port` from `base.yaml`.
+
+    Example — what wins for the key C<database.host>:
+
+    data         =>  'localhost'       (overridden by base.yaml)
+    base.yaml    =>  'db.example.com'  (overridden by local.yaml)
+    local.yaml   =>  'db.prod.example.com'   (overridden by $APP_DATABASE__HOST)
+    $APP_DATABASE__HOST => 'db.staging.example.com'   <-- this wins
 
 ## KEY FEATURES
 
@@ -662,19 +734,201 @@ when `sep_char` is set to '\_'.
 
 # COMMON PITFALLS
 
-- Nested hashes
+## 1. new() returns undef when no configuration is found
 
-    Merging replaces entire nested hashes unless you enable deep merging.
+`new()` returns `undef`, not a blessed object, when no configuration data is
+found and no `data` argument was supplied.  Every caller must check the return value.
 
-- Undef values
+    my $cfg = Config::Abstraction->new(config_dirs => ['/etc/myapp']);
+    die "No configuration found" unless defined $cfg;
+    my $host = $cfg->get('database.host');   # safe
 
-    Keys explicitly set to `undef` in a later source override earlier values.
+Forgetting the check leads to a cryptic "Can't call method on undef" error later,
+with a stack trace that points to `get()` rather than to the missing config file.
 
-- Environment
+## 2. merge\_defaults() requires a named argument, not a bare hashref
 
-    When using environment variables,
-    remember that double underscores (\_\_) create nested structures,
-    while single underscores remain as part of the key name under the prefix namespace.
+    # WRONG -- Params::Get fast-path returns the whole config unchanged
+    my $merged = $cfg->merge_defaults(\%my_defaults);
+
+    # RIGHT
+    my $merged = $cfg->merge_defaults(defaults => \%my_defaults);
+
+With the first form, `Params::Get` treats the single hashref as the entire
+parameter bag and returns the full config without merging anything.
+
+## 3. Shallow merge in merge\_defaults() silently drops nested keys from defaults
+
+Without `merge => 1`, `merge_defaults()` uses a plain Perl hash merge
+(`{ %defaults, %config }`) at the top level.  If the config contains a nested hash
+for a key, it entirely replaces the corresponding nested hash in your defaults — any
+keys that exist only in the defaults' nested hash are silently discarded.
+
+    my $cfg = Config::Abstraction->new(
+        data        => { db => { host => 'localhost', port => 5432 } },
+        config_dirs => [],
+    );
+
+    my $merged = $cfg->merge_defaults(defaults => { db => { user => 'guest' } });
+    # $merged->{db}{user} is UNDEF -- the whole 'db' hash was replaced by the config's version
+
+    # To combine nested keys from both sides, pass merge => 1:
+    my $merged = $cfg->merge_defaults(defaults => { db => { user => 'guest' } }, merge => 1);
+    # $merged->{db}{user} is 'guest', $merged->{db}{host} is 'localhost'
+
+## 4. undef from a higher-priority source permanently wins
+
+`Hash::Merge` LEFT\_PRECEDENT means that an explicit `undef` (YAML `~`) in a
+higher-priority source overrides a real value in a lower-priority source, including
+when the lower-priority value is defined.
+
+    # base.yaml:  timeout: 30
+    # local.yaml: timeout: ~
+
+    my $t = $cfg->get('timeout');   # undef -- local.yaml's null wins over base.yaml
+
+This is intentional: it lets a local config deliberately unset a value.  If you
+want to detect whether a key was explicitly nulled versus simply absent, use
+`explain_sources()` and inspect the `sources` list.
+
+## 5. Double underscore vs. single underscore in environment variable names
+
+Single underscores are part of the key name; double underscores create a nesting level.
+
+    APP_LOG_LEVEL=debug       => key 'log_level'   (single underscore, flat key)
+    APP_DATABASE__HOST=db     => key 'database.host' (double underscore, nested)
+    APP_API__RATE_LIMIT=100   => key 'api.rate_limit' (double underscore + single)
+
+A common mistake is using single underscores expecting nested keys:
+
+    APP_DATABASE_HOST=db   # produces key 'database_host', NOT 'database.host'
+
+## 6. Using AUTOLOAD requires sep\_char set to '\_'
+
+AUTOLOAD translates method names to config keys using `sep_char`.  The default
+`sep_char` is `'.'`, but method names cannot contain dots.  Set `sep_char => '_'`
+to use AUTOLOAD, and be aware that this makes single underscores into hierarchy separators.
+
+    my $cfg = Config::Abstraction->new(
+        data    => { database => { host => 'localhost' } },
+        sep_char => '_',
+        config_dirs => [],
+    );
+    my $host = $cfg->database_host();   # works
+    my $bad  = $cfg->no_such_key();    # dies: No such config key 'no_such_key'
+
+## 7. Absolute config\_file paths require an empty or omitted config\_dirs
+
+On Unix, `File::Spec->catfile('/etc', '/absolute/path.yaml')` concatenates the
+two strings instead of letting the absolute path take over, producing a wrong path.
+When `config_file` is an absolute path, either omit `config_dirs` entirely
+(the constructor sets it to `['']` automatically) or pass `config_dirs => ['']`
+explicitly.
+
+    # WRONG on Unix -- produces '/etc/etc/myapp/app.yaml'
+    Config::Abstraction->new(
+        config_file => '/etc/myapp/app.yaml',
+        config_dirs => ['/etc'],
+    );
+
+    # RIGHT
+    Config::Abstraction->new( config_file => '/etc/myapp/app.yaml' );
+
+## 8. Tests must isolate from the developer's real config files
+
+A call to `new()` without `config_dirs` will scan `/etc`, `~/.conf`,
+`~/.config`, and other default locations and load any `base.yaml` or
+`local.yaml` it finds there.  In a test suite this injects real host
+configuration into your test object, causing non-deterministic failures.
+
+Always pass `config_dirs => []` in tests that use only in-memory `data`:
+
+    my $cfg = Config::Abstraction->new(
+        data        => { key => 'value' },
+        config_dirs => [],              # do not scan the filesystem
+    );
+
+## 9. lazy => 1 defers errors until the first accessor call
+
+With `lazy => 1`, `new()` always returns a blessed object — it cannot return
+`undef` for a missing config, and any schema validation errors surface at the first
+`get()` or `all()` call rather than at construction time.  See the `lazy`
+option documentation in ["new"](#new) for the full list of debugging implications.
+
+# VERSION HISTORY
+
+Notable changes by release.  Full details are in the `Changes` file.
+
+- **0.40** (unreleased)
+
+    Lazy loading (`lazy => 1` constructor option) defers all source discovery
+    and file I/O until the first accessor call.
+    New `explain_sources()` method returns a per-key audit trail showing every
+    source that contributed to a value, in precedence order.
+    New `prefer_env()`, `prefer_file()`, `prefer_data()`, and `prefer_argv()`
+    shortcut methods return the value from a specific source layer without re-ordering.
+    Fixed `merge_defaults()` permanently mutating the internal config hash
+    (now works on a shallow copy).
+    Fixed `Hash::Merge` clone-behaviour global state leaking between calls
+    (`get_clone_behavior()` is now saved and restored, preventing "Can't store CODE
+    items" crashes when `data` contains coderefs).
+    Newcastle Connection remote configuration: `config_dirs` entries beginning with
+    `/../hostname/path` are fetched over SSH via [File::Slurp::Remote](https://metacpan.org/pod/File%3A%3ASlurp%3A%3ARemote).
+    Local-host entries (`/../localhost/`, `/../127.0.0.1/`, etc.) are short-circuited
+    to a plain local read — no SSH connection is made.
+
+- **0.39** (2026-05-24)
+
+    Disabled `Data::Reuse::fixate()` — behaviour differed between Linux and macOS
+    in a way that could not be resolved portably.
+
+- **0.38** (2026-05-20)
+
+    Fixed corruption of coderefs and blessed objects passed via the `data` argument
+    (added `_is_plain_scalar()` guard in the YAML value-munging loop).
+    Fixed `exists()` to return explicit `0` rather than empty string in flat mode.
+    Fixed `Data::Reuse::fixate()` crash in `get()`.
+    Fixed circular initialisation crash when the `logger` option is provided.
+    Documented the `defaults` argument to `new()`.
+
+- **0.36** (2025-10-15)
+
+    Added `exists()` method.
+    Files that fail to parse now emit a warning and are skipped rather than aborting
+    construction.
+
+- **0.34** (2025-09-05)
+
+    Added `bin/config-dump` CLI tool.
+    Schema validation via `Params::Validate::Strict` (`schema` option).
+
+- **0.25** (2025-05-15)
+
+    Added `merge_defaults()` `merge` option (recursive Hash::Merge merge).
+
+- **0.20** (2025-05-06)
+
+    Added `merge_defaults()`.
+
+- **0.19** (2025-05-06)
+
+    The `data` constructor argument now sets default values that are overridden by files.
+
+- **0.13** (2025-04-22)
+
+    Added `data` option to `new()`.
+    Added AUTOLOAD support for method-style key access.
+    Added `sep_char` option.
+
+- **0.06** (2025-04-09)
+
+    `config_path` key in `all()` output lists the files actually loaded.
+    Format drivers are now lazy-loaded (only `require`d when a file of that format is
+    found).
+
+- **0.01** (2025-04-07)
+
+    First release.
 
 # BUGS
 
