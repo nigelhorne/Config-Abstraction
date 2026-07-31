@@ -877,6 +877,8 @@ sub get
 {
 	my ($self, $key) = @_;
 
+	return undef unless defined $key;
+
 	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
@@ -942,6 +944,8 @@ Returns 0 or 1.
 sub exists
 {
 	my ($self, $key) = @_;
+
+	return 0 unless defined $key;
 
 	if($self->{flatten}) {
 		return exists($self->{config}{$key}) ? 1 : 0;
@@ -1107,6 +1111,8 @@ sub explain_sources
 sub _value_from_type
 {
 	my ($self, $type, $key) = @_;
+
+	return (0, undef) unless defined $key;
 
 	my $sep = $self->{'sep_char'};
 	my $flat_key = ($sep eq '.') ? $key : join('.', split /\Q$sep\E/, $key);

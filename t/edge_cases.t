@@ -1455,4 +1455,503 @@ subtest 'AUTOLOAD dies with "No such config key" for partial path nonexistent (s
 	like($error, qr/No such config key/, 'error message mentions missing key');
 };
 
+# ===========================================================================
+# explain_sources() - structural validation
+# ===========================================================================
+
+subtest 'explain_sources() returns a hashref' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'localhost', port => 5432 },
+		config_dirs => [],
+	);
+	is(ref($cfg->explain_sources()), 'HASH', 'explain_sources() returns a hashref');
+};
+
+subtest 'explain_sources() - every entry has value and sources fields' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'localhost', port => 5432 },
+		config_dirs => [],
+	);
+	my $sources = $cfg->explain_sources();
+	for my $key (keys %$sources) {
+		my $entry = $sources->{$key};
+		ok(exists $entry->{'value'},   "key '$key' has 'value' field");
+		ok(exists $entry->{'sources'}, "key '$key' has 'sources' field");
+		is(ref($entry->{'sources'}), 'ARRAY', "key '$key' sources is an arrayref");
+	}
+};
+
+subtest 'explain_sources() - value field matches get() for every key' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { alpha => 'aval', beta => 42 },
+		config_dirs => [],
+	);
+	my $sources = $cfg->explain_sources();
+	for my $key (keys %$sources) {
+		is($sources->{$key}{'value'}, $cfg->get($key),
+			"explain_sources value for '$key' matches get()");
+	}
+};
+
+subtest 'explain_sources() - config_path key is excluded from output' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "x: 1\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+	ok(!exists $cfg->explain_sources()->{'config_path'},
+		'config_path excluded from explain_sources output');
+};
+
+subtest 'explain_sources() - data source entry has correct type, label and value' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { mykey => 'myval' },
+		config_dirs => [],
+	);
+	my $sources = $cfg->explain_sources();
+	ok(exists $sources->{'mykey'}, 'mykey present in explain_sources');
+	my @data_src = grep { $_->{'type'} eq 'data' } @{$sources->{'mykey'}{'sources'}};
+	ok(scalar(@data_src) >= 1, 'at least one data-type source record for mykey');
+	is($data_src[0]{'label'}, 'constructor data argument',
+		'data source label is "constructor data argument"');
+	is($data_src[0]{'value'}, 'myval', 'data source value is correct');
+};
+
+subtest 'explain_sources() - file source entry has type=file and path as label' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "filekey: fileval\n");
+
+	my $cfg    = Config::Abstraction->new(config_dirs => [$dir]);
+	my $sources = $cfg->explain_sources();
+	ok(exists $sources->{'filekey'}, 'filekey present in explain_sources');
+	my @file_src = grep { $_->{'type'} eq 'file' } @{$sources->{'filekey'}{'sources'}};
+	ok(scalar(@file_src) >= 1, 'file-type source present for filekey');
+	like($file_src[0]{'label'}, qr/base\.yaml$/, 'file source label ends with base.yaml');
+	is($file_src[0]{'value'}, 'fileval', 'file source value correct');
+};
+
+subtest 'explain_sources() - env source entry has type=env and var name as label' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__HOST"} = 'envhost';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { host => 'datahost' } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $sources = $cfg->explain_sources();
+	my @env_src = grep { $_->{'type'} eq 'env' }
+		@{$sources->{'database.host'}{'sources'}};
+	ok(scalar(@env_src) >= 1, 'env-type source present for database.host');
+	is($env_src[0]{'label'}, "${ENV_PREFIX}DATABASE__HOST",
+		'env source label is the environment variable name');
+	is($env_src[0]{'value'}, 'envhost', 'env source value matches the env var');
+};
+
+subtest 'explain_sources() - argv source entry has type=argv and arg string as label' => sub {
+	local @ARGV = ("--${ENV_PREFIX}ARGKEY=argval");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { argkey => 'original' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $sources = $cfg->explain_sources();
+	my @argv_src = grep { $_->{'type'} eq 'argv' }
+		@{$sources->{'argkey'}{'sources'}};
+	ok(scalar(@argv_src) >= 1, 'argv-type source present for argkey');
+	like($argv_src[0]{'label'}, qr/ARGKEY/, 'argv source label contains the key name');
+	is($argv_src[0]{'value'}, 'argval', 'argv source value correct');
+};
+
+subtest 'explain_sources() - sources ordered lowest-to-highest precedence' => sub {
+	# data < file < env - verify the ordering guarantee of the POD.
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}MULTI__KEY"} = 'env_val';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "multi:\n  key: file_val\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { multi => { key => 'data_val' } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $sources = $cfg->explain_sources();
+	ok(exists $sources->{'multi.key'}, 'multi.key present in explain_sources');
+	my @all_src = @{$sources->{'multi.key'}{'sources'}};
+	ok(scalar(@all_src) >= 2, 'at least two source records for multi.key');
+	is($all_src[0]{'type'}, 'data', 'first source is data (lowest precedence)');
+	is($all_src[-1]{'type'}, 'env',  'last source is env (highest precedence)');
+	is($sources->{'multi.key'}{'value'}, 'env_val',
+		'final value is the env value (highest precedence wins)');
+};
+
+subtest 'explain_sources() - idempotent: repeated calls return equal structure' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1, y => 2 },
+		config_dirs => [],
+	);
+	is_deeply($cfg->explain_sources(), $cfg->explain_sources(),
+		'explain_sources() returns same structure on every call');
+};
+
+subtest 'explain_sources() - undef data value appears with undef in sources.value' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { nulkey => undef },
+		config_dirs => [],
+	);
+	my $sources = $cfg->explain_sources();
+	ok(exists $sources->{'nulkey'}, 'undef-valued key appears in explain_sources output');
+	my @data_src = grep { $_->{'type'} eq 'data' }
+		@{$sources->{'nulkey'}{'sources'}};
+	ok(scalar(@data_src) >= 1, 'data source recorded for undef-valued key');
+	ok(!defined($data_src[0]{'value'}),
+		'source value is undef for a key the data arg set to undef');
+};
+
+subtest 'explain_sources() - every output key has at least one source entry' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { k1 => 'v1', k2 => 'v2' },
+		config_dirs => [],
+	);
+	my $sources = $cfg->explain_sources();
+	for my $key (keys %$sources) {
+		ok(scalar(@{$sources->{$key}{'sources'}}) >= 1,
+			"key '$key' has at least one source record");
+	}
+};
+
+subtest 'explain_sources() - circular reference in config does not crash' => sub {
+	# _flatten_keys has a refaddr-based $seen guard; this test activates it.
+	my %circ;
+	$circ{'self'} = \%circ;
+	$circ{'safe'} = 'safe_val';
+
+	my $cfg = Config::Abstraction->new(
+		data        => \%circ,
+		config_dirs => [],
+	);
+	my $sources;
+	eval { $sources = $cfg->explain_sources() };
+	ok(!$@, 'explain_sources() does not crash when data contains a circular reference');
+	ok(ref($sources) eq 'HASH', 'explain_sources() returns a hashref despite circular ref');
+};
+
+# ===========================================================================
+# prefer_env() - boundary conditions
+# ===========================================================================
+
+subtest 'prefer_env() returns env value (bypasses data) when env contributed to key' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__HOST"} = 'envhost';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { host => 'datahost' } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_env('database.host'), 'envhost',
+		'prefer_env returns env-layer value, bypassing data');
+};
+
+subtest 'prefer_env() falls back to get() when env did not contribute to key' => sub {
+	local %ENV = %ENV;
+	delete $ENV{$_} for grep { /^\Q$ENV_PREFIX\E/ } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(
+		data        => { noenv => 'data_only' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_env('noenv'), 'data_only',
+		'prefer_env falls back to get() when env never contributed to key');
+};
+
+subtest 'prefer_env() with empty-string env value returns "" not the data fallback' => sub {
+	# Critical check: $found (not $val) decides whether to return env value.
+	# An empty string is falsy in Perl; naive "if ($val)" logic would be wrong.
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}EMPTYENV__KEY"} = '';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { emptyenv => { key => 'non_empty' } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $val = $cfg->prefer_env('emptyenv.key');
+	ok(defined($val), 'prefer_env with empty-string env value returns a defined value');
+	is($val, '', 'prefer_env returns "" from env, not "non_empty" data fallback');
+};
+
+subtest 'prefer_env() for nonexistent key returns undef (get() fallback)' => sub {
+	local %ENV = %ENV;
+	delete $ENV{$_} for grep { /^\Q$ENV_PREFIX\E/ } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(
+		data        => { other => 'val' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(!defined($cfg->prefer_env('totally_absent_key')),
+		'prefer_env for nonexistent key returns undef');
+};
+
+subtest 'prefer_env() with sep_char=_ normalises key to dotted form for source lookup' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DB__HOST"} = 'envdbhost';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { host => 'datadbhost' } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		sep_char    => $SEP_US,
+	);
+	# User passes 'db_host'; _value_from_type normalises to 'db.host' before lookup.
+	is($cfg->prefer_env('db_host'), 'envdbhost',
+		'prefer_env normalises sep_char=_ key to dotted notation for source record lookup');
+};
+
+subtest 'prefer_env() in list context returns exactly one value' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}SECTION__KEY"} = 'env_list_val';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { section => { key => 'data_val' } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my @result = $cfg->prefer_env('section.key');
+	is(scalar(@result), 1, 'prefer_env in list context returns exactly one element');
+	is($result[0], 'env_list_val', 'that element is the env-sourced value');
+};
+
+# ===========================================================================
+# prefer_file() - boundary conditions
+# ===========================================================================
+
+subtest 'prefer_file() returns file value even when env overrode it in the merged config' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__HOST"} = 'env_override';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "database:\n  host: file_host\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('database.host'), 'env_override',
+		'get() returns env-overridden value (env has higher precedence)');
+	is($cfg->prefer_file('database.host'), 'file_host',
+		'prefer_file returns file-sourced value, bypassing the env override');
+};
+
+subtest 'prefer_file() falls back to get() when no file contributed to key' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { dataonly => 'original' },
+		config_dirs => [],
+	);
+	is($cfg->prefer_file('dataonly'), 'original',
+		'prefer_file falls back to get() for a data-only key');
+};
+
+subtest 'prefer_file() - last file wins when multiple files contributed to same key' => sub {
+	# base.yaml < local.yaml in precedence; prefer_file should return local.yaml value.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',  "multifile: base_val\n");
+	_write_file($dir, 'local.yaml', "multifile: local_val\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+	is($cfg->prefer_file('multifile'), 'local_val',
+		'prefer_file returns value from last-loaded file (local.yaml > base.yaml)');
+};
+
+# ===========================================================================
+# prefer_data() - boundary conditions
+# ===========================================================================
+
+subtest 'prefer_data() returns data value even when a file overrode it' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "host: from_file\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'from_data' },
+		config_dirs => [$dir],
+	);
+	is($cfg->get('host'),         'from_file', 'get() returns file-overridden value');
+	is($cfg->prefer_data('host'), 'from_data', 'prefer_data bypasses file override');
+};
+
+subtest 'prefer_data() falls back to get() when data arg did not contribute to key' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "file_only: from_file\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { other => 'val' },
+		config_dirs => [$dir],
+	);
+	is($cfg->prefer_data('file_only'), 'from_file',
+		'prefer_data falls back to get() when data arg never set the key');
+};
+
+subtest 'prefer_data() with undef data value: $found gates return, not $val' => sub {
+	# If data set key => undef, the source record exists (flat_data has the key).
+	# So $found = 1 and $val = undef.  Returning "$found ? $val" is undef (correct),
+	# NOT falling through to get() which might also return undef for other reasons.
+	my $cfg = Config::Abstraction->new(
+		data        => { nuldata => undef },
+		config_dirs => [],
+	);
+	# Sanity: the key is visible in explain_sources, proving the source record exists.
+	ok(exists $cfg->explain_sources()->{'nuldata'},
+		'nuldata appears in explain_sources despite undef value');
+	ok(!defined($cfg->prefer_data('nuldata')),
+		'prefer_data returns undef for a key the data arg set to undef');
+};
+
+# ===========================================================================
+# prefer_argv() - boundary conditions
+# ===========================================================================
+
+subtest 'prefer_argv() returns argv value when CLI arg contributed to key' => sub {
+	local @ARGV = ("--${ENV_PREFIX}ARGVKEY=argv_val");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { argvkey => 'data_val' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_argv('argvkey'), 'argv_val',
+		'prefer_argv returns the argv-provided value');
+};
+
+subtest 'prefer_argv() falls back to get() when no CLI arg contributed' => sub {
+	local @ARGV = ();
+
+	my $cfg = Config::Abstraction->new(
+		data        => { noargv => 'data_only' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_argv('noargv'), 'data_only',
+		'prefer_argv falls back to get() when no CLI arg set the key');
+};
+
+subtest 'prefer_argv() equals get() since argv is the highest-precedence source' => sub {
+	# When argv contributed, it already won the merge; get() and prefer_argv() agree.
+	local @ARGV = ("--${ENV_PREFIX}TOPKEY=top_val");
+	local %ENV  = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__TOPKEY"} = 'env_val';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { topkey => 'data_val' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('topkey'),         'top_val', 'get() returns argv value (highest precedence)');
+	is($cfg->prefer_argv('topkey'), 'top_val',
+		'prefer_argv matches get() when argv is the winning source');
+};
+
+# ===========================================================================
+# prefer_*() hostile inputs shared across all four methods
+# ===========================================================================
+
+subtest 'prefer_env() with undef key does not crash' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	eval { $cfg->prefer_env(undef) };
+	ok(!$@, 'prefer_env(undef) does not die');
+};
+
+subtest 'prefer_file() with undef key does not crash' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	eval { $cfg->prefer_file(undef) };
+	ok(!$@, 'prefer_file(undef) does not die');
+};
+
+subtest 'prefer_data() with empty string key does not crash' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	eval { $cfg->prefer_data('') };
+	ok(!$@, 'prefer_data("") does not die');
+};
+
+subtest 'prefer_argv() with very long key does not crash' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	eval { $cfg->prefer_argv('k' x $LONG_STRING_LEN) };
+	ok(!$@, 'prefer_argv with very long key does not die');
+};
+
+subtest 'all four prefer_*() methods agree when only data set the key' => sub {
+	# When only the data arg contributed, all prefer_* fall back to get(),
+	# and prefer_data returns the data value directly.  All four should agree.
+	local @ARGV  = ();
+	local %ENV   = %ENV;
+	delete $ENV{$_} for grep { /^\Q$ENV_PREFIX\E/ } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(
+		data        => { only_data => 'data_val' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_env('only_data'),  'data_val', 'prefer_env  returns data value');
+	is($cfg->prefer_file('only_data'), 'data_val', 'prefer_file returns data value');
+	is($cfg->prefer_data('only_data'), 'data_val', 'prefer_data returns data value');
+	is($cfg->prefer_argv('only_data'), 'data_val', 'prefer_argv returns data value');
+};
+
+# ===========================================================================
+# SECURITY: prefer_*() source injection via _source_records manipulation
+# ---------------------------------------------------------------------------
+# The _source_records structure is private.  Verify that mutating the hashref
+# returned by all() (which is the live config ref) does NOT inject entries into
+# the source records that then corrupt prefer_*() results.
+# ===========================================================================
+
+subtest 'SECURITY: mutating all() result does not corrupt prefer_data() output' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { safe => 'safe_val' },
+		config_dirs => [],
+	);
+	# Inject a new key directly into the live config hashref (abuse of all())
+	$cfg->all()->{'injected'} = 'evil';
+
+	# injected key has no source record - prefer_data falls back to get()
+	is($cfg->prefer_data('injected'), 'evil',
+		'injected key falls back to get() (no source record exists for it)');
+
+	# The safe key is unaffected
+	is($cfg->prefer_data('safe'), 'safe_val', 'original safe key unaffected');
+};
+
+subtest 'SECURITY: explain_sources() does not expose keys injected via all() ref' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { real => 'real_val' },
+		config_dirs => [],
+	);
+	$cfg->all()->{'injected_key'} = 'injected_val';
+
+	my $sources = $cfg->explain_sources();
+	# injected_key may appear in explain_sources (it's in the live config hash),
+	# but it must have an empty sources list - it has no provenance record.
+	if(exists $sources->{'injected_key'}) {
+		my @src = @{$sources->{'injected_key'}{'sources'}};
+		is(scalar(@src), 0,
+			'injected key has no source records in explain_sources');
+	} else {
+		pass('injected key not exposed by explain_sources (acceptable if _flatten_keys skips it)');
+	}
+};
+
 done_testing();
