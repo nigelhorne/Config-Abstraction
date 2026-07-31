@@ -334,6 +334,31 @@ such as C<'database.user'>.
 
 A L<Params::Validate::Strict> compatible schema to validate the configuration file against.
 
+=item * C<lazy>
+
+When set to a true value, all source discovery and file I/O are deferred until the first
+call to C<get()>, C<exists()>, C<all()>, C<explain_sources()>, C<prefer_*()>,
+C<merge_defaults()>, or any AUTOLOAD accessor.  This can reduce startup time in
+applications that construct a C<Config::Abstraction> object before they know whether
+they will access it.
+
+Two important differences from the default (eager) behaviour:
+
+=over 4
+
+=item 1.
+
+C<new()> always returns a blessed object - it cannot return C<undef> for
+"no configuration found", because the scan has not yet happened.  Call
+C<all()> after the first access if you need to detect an empty configuration.
+
+=item 2.
+
+Schema validation (C<schema> option) runs on the first access, not at
+construction time, so validation errors surface later.
+
+=back
+
 =back
 
 If just one argument is given, it is assumed to be the name of a file.
@@ -413,6 +438,13 @@ sub new
 			}
 		}
 	}
+	if($self->{'lazy'}) {
+		# Defer all source scanning to the first accessor call.
+		# Stash the schema for later validation (after _load_config runs).
+		$self->{'_lazy_schema'} = delete $self->{'schema'} if $self->{'schema'};
+		return $self;
+	}
+
 	$self->_load_config();
 
 	if(my $schema = $params->{'schema'}) {
@@ -423,6 +455,19 @@ sub new
 		return $self;
 	}
 	return undef;
+}
+
+# Trigger deferred loading when the object was constructed with lazy => 1.
+# Safe to call unconditionally: it is a no-op once loading has completed.
+sub _ensure_loaded
+{
+	my $self = shift;
+	return unless $self->{'lazy'};    # fast-path: not a lazy object
+	delete $self->{'lazy'};           # prevent re-entry on recursive calls
+	$self->_load_config();
+	if(my $schema = delete $self->{'_lazy_schema'}) {
+		$self->{'config'} = Params::Validate::Strict::validate_strict(schema => $schema, input => $self->{'config'});
+	}
 }
 
 # Determine if a value is a plain, unblessed, non-reference scalar
@@ -879,6 +924,8 @@ sub get
 
 	return undef unless defined $key;
 
+	$self->_ensure_loaded();
+
 	if($self->{flatten}) {
 		return $self->{config}{$key};
 	}
@@ -947,6 +994,8 @@ sub exists
 
 	return 0 unless defined $key;
 
+	$self->_ensure_loaded();
+
 	if($self->{flatten}) {
 		return exists($self->{config}{$key}) ? 1 : 0;
 	}
@@ -971,6 +1020,8 @@ The entry C<config_path> contains a list of the files that the configuration was
 sub all
 {
 	my $self = shift;
+
+	$self->_ensure_loaded();
 
 	return if(!$self->{config});
 
@@ -1077,6 +1128,8 @@ sub explain_sources
 {
 	my $self = shift;
 
+	$self->_ensure_loaded();
+
 	my %final_flat = _flatten_keys($self->{'config'});
 	my %result;
 
@@ -1113,6 +1166,8 @@ sub _value_from_type
 	my ($self, $type, $key) = @_;
 
 	return (0, undef) unless defined $key;
+
+	$self->_ensure_loaded();
 
 	my $sep = $self->{'sep_char'};
 	my $flat_key = ($sep eq '.') ? $key : join('.', split /\Q$sep\E/, $key);
@@ -1657,6 +1712,8 @@ sub AUTOLOAD
 
 	$key =~ s/.*:://;	# remove package name
 	return if $key eq 'DESTROY';
+
+	$self->_ensure_loaded();
 
 	# my $val = $self->get($key);
 	# return $val if(defined($val));

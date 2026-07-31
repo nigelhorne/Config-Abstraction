@@ -2,6 +2,12 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.40
 	[ Enhancements ]
+	- New C<lazy> constructor option: when true, all source discovery and file
+	  I/O are deferred until the first accessor call (get/exists/all/explain_sources/
+	  prefer_*/merge_defaults/AUTOLOAD), reducing startup overhead for applications
+	  that may not always consume the configuration.  With lazy loading the
+	  constructor always returns a blessed object; schema validation likewise
+	  runs on first access rather than at construction time.
 	- Remote configuration via the Newcastle Connection convention: entries in
 	  config_dirs beginning with /../hostname/path are fetched from the named
 	  host over SSH using File::Slurp::Remote, processed through the same

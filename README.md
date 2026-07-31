@@ -289,6 +289,22 @@ Options:
 
     A [Params::Validate::Strict](https://metacpan.org/pod/Params%3A%3AValidate%3A%3AStrict) compatible schema to validate the configuration file against.
 
+- `lazy`
+
+    When set to a true value, all source discovery and file I/O are deferred until the first
+    call to `get()`, `exists()`, `all()`, `explain_sources()`, `prefer_*()`,
+    `merge_defaults()`, or any AUTOLOAD accessor.  This can reduce startup time in
+    applications that construct a `Config::Abstraction` object before they know whether
+    they will access it.
+
+    Two important differences from the default (eager) behaviour:
+
+    1. `new()` always returns a blessed object - it cannot return `undef` for
+    "no configuration found", because the scan has not yet happened.  Call
+    `all()` after the first access if you need to detect an empty configuration.
+    2. Schema validation (`schema` option) runs on the first access, not at
+    construction time, so validation errors surface later.
+
 If just one argument is given, it is assumed to be the name of a file.
 
 ## get(key)
