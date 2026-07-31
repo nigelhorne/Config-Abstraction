@@ -2350,4 +2350,222 @@ subtest 'Test::Most: cmp_deeply - multiple sources ordered correctly' => sub {
 	is($entry->{'sources'}[0]{'type'}, 'data', 'first source is data (lowest precedence)');
 };
 
+# ---------------------------------------------------------------------------
+# UNDEF VALUE PROPAGATION
+# Verifies that undef values from different sources interact with
+# Hash::Merge LEFT_PRECEDENT exactly as documented: higher-precedence sources
+# always win, including when the winning value is undef.
+# ---------------------------------------------------------------------------
+
+subtest 'undef propagation: file value overrides data undef' => sub {
+	# data sets key to undef; file (higher precedence) sets key to a string.
+	# Expected: file wins — get() returns the file value, not undef.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "host: file_host\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => undef },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('host'), 'file_host',
+		'file value overrides data undef (file has higher precedence)');
+	diag('host from file over data-undef: ' . ($cfg->get('host') // '(undef)'))
+		if $ENV{TEST_VERBOSE};
+};
+
+subtest 'undef propagation: file YAML null overrides data value' => sub {
+	# YAML null (~) in a file is a legitimate undef. With LEFT_PRECEDENT the
+	# file (left, higher precedence) wins even when its value is undef.
+	# Expected: get() returns undef despite data having a real value.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "host: ~\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'data_host' },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(!defined($cfg->get('host')),
+		'YAML null in file overrides non-undef data value (file null wins)');
+};
+
+subtest 'undef propagation: data undef untouched by file remains undef with exists()=1' => sub {
+	# Only key1 appears in the file. key2 set to undef in data is never touched
+	# by any later source. Verify: get() returns undef AND exists() returns 1
+	# (the key exists, it is just explicitly undef).
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "key1: file_val\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { key1 => 'data_val', key2 => undef },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(!defined($cfg->get('key2')),
+		'key2 undef from data is untouched when file does not mention it');
+	is($cfg->exists('key2'), 1,
+		'exists() returns 1 for a key that exists but is undef');
+	is($cfg->get('key1'), 'file_val',
+		'key1 correctly overridden by file (sanity check)');
+};
+
+subtest 'undef propagation: local.yaml null overrides base.yaml value within file tier' => sub {
+	# Within the file tier, local.yaml has higher precedence than base.yaml.
+	# A YAML null in local.yaml should override a real value in base.yaml.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',  "setting: base_val\n");
+	_write_file($dir, 'local.yaml', "setting: ~\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(!defined($cfg->get('setting')),
+		'local.yaml YAML null overrides base.yaml value within file tier');
+};
+
+subtest 'undef propagation: prefer_data() retrieves data undef even after file override' => sub {
+	# File overrides the key to a real value, but prefer_data() should bypass
+	# higher-precedence sources and return the original data-layer value (undef).
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "host: file_host\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => undef },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('host'), 'file_host',
+		'get() returns file value (sanity check)');
+
+	my ($found, $val) = (0, 'SENTINEL');
+	# prefer_data returns the data layer value, bypassing file
+	my $pref = $cfg->prefer_data('host');
+	# $found is internal; we verify the return value is undef (not 'file_host')
+	ok(!defined($pref),
+		'prefer_data() returns data-layer undef even when file overrode it');
+};
+
+# ---------------------------------------------------------------------------
+# NESTED HASH MERGE CORRECTNESS
+# Verifies that Hash::Merge LEFT_PRECEDENT combines nested hashes additively
+# (both sides survive) rather than replacing whole structures, except when a
+# later source explicitly sets the parent key to null.
+# ---------------------------------------------------------------------------
+
+subtest 'nested merge: file adds key — both data and file keys survive' => sub {
+	# data provides db.user; file provides db.host.
+	# Hash::Merge should combine them: both keys coexist under db.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "db:\n  host: file_host\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('db.user'), 'alice',     'data key db.user survives file merge');
+	is($cfg->get('db.host'), 'file_host', 'file key db.host present after merge');
+	diag('db.user=' . ($cfg->get('db.user') // '(undef)') . ' db.host=' . ($cfg->get('db.host') // '(undef)'))
+		if $ENV{TEST_VERBOSE};
+};
+
+subtest 'nested merge: file overrides one key; data sibling key survives' => sub {
+	# data provides db.user=alice and db.pass=secret.
+	# file overrides only db.user=bob.
+	# db.pass must survive unchanged.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "db:\n  user: bob\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice', pass => 'secret' } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('db.user'), 'bob',    'file override of db.user wins');
+	is($cfg->get('db.pass'), 'secret', 'data db.pass survives partial file override');
+};
+
+subtest 'nested merge: file null replaces entire nested hash (all subkeys gone)' => sub {
+	# When a file sets the parent key to YAML null (~), the entire nested
+	# hash from data is replaced by undef. Subkeys are no longer accessible.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "db: ~\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice', pass => 'secret' } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(!defined($cfg->get('db')),
+		'parent key is undef when file sets it to YAML null');
+	ok(!defined($cfg->get('db.user')),
+		'nested subkey db.user is gone when parent is nulled by file');
+};
+
+subtest 'nested merge: env var adds key to file-provided nested hash — both coexist' => sub {
+	# file provides db.user; env sets db.pass via APP_DB__PASS.
+	# Both keys should coexist under db after the env merge.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "db:\n  user: file_user\n");
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DB__PASS"} = 'env_pass';
+	delete $ENV{"${ENV_PREFIX}DB__USER"};
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('db.user'), 'file_user', 'file key db.user survives env merge');
+	is($cfg->get('db.pass'), 'env_pass',  'env key db.pass coexists with file key');
+};
+
+subtest 'nested merge_defaults: without merge => 1, plain hash merge replaces nested hashes' => sub {
+	# Without merge => 1, merge_defaults uses {%defaults, %config} at the top
+	# level (a plain Perl hash merge).  Config's 'section' key wins over
+	# defaults' 'section' key, and the entire nested hash is replaced, so the
+	# 'c' key from defaults is silently dropped.
+	my $cfg = Config::Abstraction->new(
+		data        => { section => { a => 1, b => 2 } },
+		config_dirs => [],
+	);
+	my $defaults = { section => { a => 99, c => 3 }, extra => 'kept' };
+
+	my $merged = $cfg->merge_defaults(defaults => $defaults);
+
+	is($merged->{'section'}{'a'}, 1,
+		'plain hash merge: config a wins over defaults a');
+	is($merged->{'section'}{'b'}, 2,
+		'plain hash merge: config b is present');
+	ok(!exists($merged->{'section'}{'c'}),
+		'plain hash merge: defaults c is lost (whole nested section replaced)');
+	is($merged->{'extra'}, 'kept',
+		'plain hash merge: extra key from defaults survives at top level');
+};
+
+subtest 'nested merge_defaults: merge => 1 uses Hash::Merge and combines nested keys' => sub {
+	# With merge => 1, merge_defaults calls Hash::Merge::merge($config, $defaults)
+	# which recurses into nested hashes.  Config wins for conflicting keys;
+	# both sides' unique nested keys survive.
+	my $cfg = Config::Abstraction->new(
+		data        => { section => { a => 1, b => 2 } },
+		config_dirs => [],
+	);
+	my $defaults = { section => { a => 99, c => 3 }, extra => 'kept' };
+
+	my $merged = $cfg->merge_defaults(defaults => $defaults, merge => 1);
+
+	is($merged->{'section'}{'a'}, 1,
+		'Hash::Merge merge: config a wins over defaults a');
+	is($merged->{'section'}{'b'}, 2,
+		'Hash::Merge merge: config b is present');
+	is($merged->{'section'}{'c'}, 3,
+		'Hash::Merge merge: defaults c survives recursive merge');
+	is($merged->{'extra'}, 'kept',
+		'Hash::Merge merge: extra key from defaults survives at top level');
+};
+
 done_testing();
