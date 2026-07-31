@@ -471,6 +471,14 @@ sub _load_config
 	}
 
 	my $self = shift;
+
+	# Disable Hash::Merge cloning for the duration of this method.
+	# Storable::dclone (used when clone=1) cannot handle coderefs or blessed
+	# objects that may appear in the 'data' argument; sharing references is
+	# safe here because %merged is a fresh, method-local accumulator.
+	my $saved_clone = Hash::Merge::get_clone_behavior();
+	Hash::Merge::set_clone_behavior(0);
+
 	my %merged;
 
 	if($self->{'data'}) {
@@ -854,6 +862,8 @@ sub _load_config
 	# $self->{config} = $self->{flatten} ? flatten(\%merged) : unflatten(\%merged);
 	# Don't unflatten because of RT#166761
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
+
+	Hash::Merge::set_clone_behavior($saved_clone);
 }
 
 =head2 get(key)
