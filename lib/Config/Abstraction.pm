@@ -439,6 +439,31 @@ sub _is_plain_scalar
 	return 1;
 }
 
+# Recursively flatten a nested hashref to dotted keys (always uses '.' as separator).
+# Skips the meta-key 'config_path'. Used by explain_sources() and source tracking.
+# $seen guards against circular references (e.g. those possible when
+# Hash::Merge::set_clone_behavior(0) is active).
+sub _flatten_keys
+{
+	my ($hash, $prefix, $seen) = @_;
+	$prefix //= '';
+	$seen   //= {};
+	my %flat;
+	return %flat unless ref($hash) eq 'HASH';
+	my $addr = Scalar::Util::refaddr($hash);
+	return %flat if $seen->{$addr}++;
+	for my $k (keys %$hash) {
+		next if $k eq 'config_path';
+		my $full = length($prefix) ? "$prefix.$k" : $k;
+		if(ref($hash->{$k}) eq 'HASH') {
+			%flat = (%flat, _flatten_keys($hash->{$k}, $full, $seen));
+		} else {
+			$flat{$full} = $hash->{$k};
+		}
+	}
+	return %flat;
+}
+
 sub _load_config
 {
 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
@@ -452,6 +477,11 @@ sub _load_config
 		# The data argument given to 'new' contains defaults that this routine will override
 		if(ref($self->{'data'}) eq 'HASH') {
 			%merged = %{$self->{'data'}};
+			push @{$self->{'_source_records'}}, {
+				type      => 'data',
+				label     => 'constructor data argument',
+				flat_data => { _flatten_keys($self->{'data'}) },
+			};
 		} else {
 			Carp::carp(ref($self) . ': data argument must be a hashref; ignoring non-hashref value');
 		}
@@ -587,6 +617,11 @@ sub _load_config
 				if($logger) {
 					$logger->debug(ref($self), ' ', __LINE__, ": Loaded data from $path");
 				}
+				push @{$self->{'_source_records'}}, {
+					type      => 'file',
+					label     => $path,
+					flat_data => { _flatten_keys($data) },
+				};
 				%merged = %{ merge( $data, \%merged ) };
 				push @{$merged{'config_path'}}, $path;
 			}
@@ -739,6 +774,13 @@ sub _load_config
 						$logger->debug(ref($self), ' ', __LINE__, ': Loaded data from', $self->{'type'}, "file $path");
 					}
 				}
+				if($data && ref($data) eq 'HASH') {
+					push @{$self->{'_source_records'}}, {
+						type      => 'file',
+						label     => $path,
+						flat_data => { _flatten_keys($data) },
+					};
+				}
 				if(scalar(keys %merged)) {
 					if($data) {
 						%merged = %{ merge($data, \%merged) };
@@ -767,8 +809,18 @@ sub _load_config
 			my $ref = \%merged;
 			$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
 			$ref->{ $parts[-1] } = $ENV{$key};
+			push @{$self->{'_source_records'}}, {
+				type      => 'env',
+				label     => $key,
+				flat_data => { join('.', @parts) => $ENV{$key} },
+			};
 		} else {
 			$merged{$prefix}->{$path} = $ENV{$key};
+			push @{$self->{'_source_records'}}, {
+				type      => 'env',
+				label     => $key,
+				flat_data => { "$prefix.$path" => $ENV{$key} },
+			};
 		}
 	}
 
@@ -786,6 +838,11 @@ sub _load_config
 				$ref = ($ref->{$_} //= {}) for @parts[0..$#parts-1];
 			}
 			$ref->{$parts[-1]} = $value;
+			push @{$self->{'_source_records'}}, {
+				type      => 'argv',
+				label     => $arg,
+				flat_data => { join('.', @parts) => $value },
+			};
 		}
 	}
 
@@ -911,6 +968,123 @@ sub all
 	return(scalar(keys %{$self->{'config'}})) ? $self->{'config'} : undef;
 }
 
+=head2 explain_sources()
+
+Returns a hashref describing where each configuration key came from and in
+what order the sources that set it were applied.
+
+Each key of the returned hashref is a dotted key name (e.g. C<'database.user'>).
+The corresponding value is a hashref with two fields:
+
+=over 4
+
+=item * C<value>
+
+The final merged value for that key after all sources have been applied.
+
+=item * C<sources>
+
+An arrayref of hashrefs, ordered from lowest to highest precedence (i.e. the
+last element is always the winning source). Each entry has:
+
+=over 4
+
+=item * C<type> -- one of C<'data'>, C<'file'>, C<'env'>, or C<'argv'>
+
+=item * C<label> -- a human-readable identifier: a file path, an environment
+variable name (e.g. C<'APP_DATABASE__USER'>), a CLI argument string, or
+C<'constructor data argument'>
+
+=item * C<value> -- what this source set the key to (may differ from C<value>
+at the top level if a later source overrode it)
+
+=back
+
+=back
+
+Keys set by exactly one source have a single-element C<sources> list.
+Keys whose value was never overridden will show the same C<value> in both the
+top-level field and the sole C<sources> entry.
+
+=head3 USAGE EXAMPLE
+
+  use Config::Abstraction;
+
+  local $ENV{APP_HOST} = 'prod.example.com';
+
+  my $cfg = Config::Abstraction->new(
+      data        => { host => 'localhost', port => 5432 },
+      config_dirs => ['/etc/myapp'],
+  );
+
+  use Data::Dumper;
+  print Dumper( $cfg->explain_sources() );
+  # {
+  #   'host' => {
+  #     value   => 'prod.example.com',
+  #     sources => [
+  #       { type => 'data', label => 'constructor data argument', value => 'localhost' },
+  #       { type => 'env',  label => 'APP_HOST',                  value => 'prod.example.com' },
+  #     ],
+  #   },
+  #   'port' => {
+  #     value   => 5432,
+  #     sources => [
+  #       { type => 'data', label => 'constructor data argument', value => 5432 },
+  #     ],
+  #   },
+  # }
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+None (instance method; takes no arguments beyond C<$self>).
+
+=head4 Output
+
+HASHREF where each key is a dotted config key and each value is:
+
+  {
+      value   => SCALAR,
+      sources => [
+          {
+              type  => 'data'|'file'|'env'|'argv',
+              label => SCALAR,
+              value => SCALAR,
+          },
+          ...
+      ],
+  }
+
+=cut
+
+sub explain_sources
+{
+	my $self = shift;
+
+	my %final_flat = _flatten_keys($self->{'config'});
+	my %result;
+
+	for my $key (keys %final_flat) {
+		my @key_sources;
+		for my $layer (@{$self->{'_source_records'} // []}) {
+			if(exists $layer->{'flat_data'}{$key}) {
+				push @key_sources, {
+					type  => $layer->{'type'},
+					label => $layer->{'label'},
+					value => $layer->{'flat_data'}{$key},
+				};
+			}
+		}
+		$result{$key} = {
+			value   => $final_flat{$key},
+			sources => \@key_sources,
+		};
+	}
+	return \%result;
+}
+
 =head2 merge_defaults
 
 Merge the configuration hash into the given hash.
@@ -967,6 +1141,16 @@ sub merge_defaults
 	return $config if(!defined($defaults));
 	my $section = $params->{'section'};
 
+	# Work on a shallow copy so we never mutate $self->{'config'} directly.
+	# Without this, 'delete $config->{global}' below would permanently alter
+	# the live internal hash on every call.
+	my %config_copy = %{$config};
+	$config = \%config_copy;
+
+	# Save and restore Hash::Merge's clone behaviour so we don't leak the
+	# no-clone global state into unrelated merge() calls (e.g. inside
+	# _load_config when a new object is constructed after this method runs).
+	my $saved_clone = Hash::Merge::get_clone_behavior();
 	Hash::Merge::set_clone_behavior(0);
 
 	if(exists $config->{'global'}) {
@@ -980,10 +1164,14 @@ sub merge_defaults
 	if($section && exists $config->{$section}) {
 		$config = $config->{$section};
 	}
+	my $result;
 	if($params->{'merge'}) {
-		return merge($config, $defaults);
+		$result = merge($config, $defaults);
+	} else {
+		$result = { %{$defaults}, %{$config} };
 	}
-	return { %{$defaults}, %{$config} };
+	Hash::Merge::set_clone_behavior($saved_clone);
+	return $result;
 }
 
 # Helper routine to load a driver.
@@ -1234,6 +1422,11 @@ sub _load_remote_dir
 			next;
 		}
 
+		push @{$self->{'_source_records'}}, {
+			type      => 'file',
+			label     => $remote_path,
+			flat_data => { _flatten_keys($data) },
+		};
 		%{$merged_ref} = %{ merge($data, $merged_ref) };
 		push @{$merged_ref->{'config_path'}}, $remote_path;
 	}

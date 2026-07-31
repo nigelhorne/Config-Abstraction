@@ -308,6 +308,85 @@ possibly flattened depending on the `flatten` option.
 
 The entry `config_path` contains a list of the files that the configuration was loaded from.
 
+## explain\_sources()
+
+Returns a hashref describing where each configuration key came from and in
+what order the sources that set it were applied.
+
+Each key of the returned hashref is a dotted key name (e.g. `'database.user'`).
+The corresponding value is a hashref with two fields:
+
+- `value`
+
+    The final merged value for that key after all sources have been applied.
+
+- `sources`
+
+    An arrayref of hashrefs, ordered from lowest to highest precedence (i.e. the
+    last element is always the winning source). Each entry has:
+
+    - `type` -- one of `'data'`, `'file'`, `'env'`, or `'argv'`
+    - `label` -- a human-readable identifier: a file path, an environment
+    variable name (e.g. `'APP_DATABASE__USER'`), a CLI argument string, or
+    `'constructor data argument'`
+    - `value` -- what this source set the key to (may differ from `value`
+    at the top level if a later source overrode it)
+
+Keys set by exactly one source have a single-element `sources` list.
+Keys whose value was never overridden will show the same `value` in both the
+top-level field and the sole `sources` entry.
+
+### USAGE EXAMPLE
+
+    use Config::Abstraction;
+
+    local $ENV{APP_HOST} = 'prod.example.com';
+
+    my $cfg = Config::Abstraction->new(
+        data        => { host => 'localhost', port => 5432 },
+        config_dirs => ['/etc/myapp'],
+    );
+
+    use Data::Dumper;
+    print Dumper( $cfg->explain_sources() );
+    # {
+    #   'host' => {
+    #     value   => 'prod.example.com',
+    #     sources => [
+    #       { type => 'data', label => 'constructor data argument', value => 'localhost' },
+    #       { type => 'env',  label => 'APP_HOST',                  value => 'prod.example.com' },
+    #     ],
+    #   },
+    #   'port' => {
+    #     value   => 5432,
+    #     sources => [
+    #       { type => 'data', label => 'constructor data argument', value => 5432 },
+    #     ],
+    #   },
+    # }
+
+### API SPECIFICATION
+
+#### Input
+
+None (instance method; takes no arguments beyond `$self`).
+
+#### Output
+
+HASHREF where each key is a dotted config key and each value is:
+
+    {
+        value   => SCALAR,
+        sources => [
+            {
+                type  => 'data'|'file'|'env'|'argv',
+                label => SCALAR,
+                value => SCALAR,
+            },
+            ...
+        ],
+    }
+
 ## merge\_defaults
 
 Merge the configuration hash into the given hash.
