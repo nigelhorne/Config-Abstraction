@@ -387,6 +387,55 @@ HASHREF where each key is a dotted config key and each value is:
         ],
     }
 
+## prefer\_env(key)
+
+Return the value that an environment variable provided for `key`, bypassing
+any later sources (e.g. CLI arguments) that may have overridden it.
+Falls back to the normal merged value from `get(key)` when no environment
+variable contributed to `key`.
+
+    local $ENV{APP_DATABASE__HOST} = 'env-host';
+    my $host = $cfg->prefer_env('database.host');
+    # Returns 'env-host' even if --APP_DATABASE__HOST=cli-host was also passed.
+
+## prefer\_file(key)
+
+Return the value that a configuration file provided for `key`, bypassing
+environment variables and CLI arguments that may have overridden it.
+Falls back to the normal merged value from `get(key)` when no file
+contributed to `key`.
+
+    my $host = $cfg->prefer_file('database.host');
+    # Returns the file-sourced value even if APP_DATABASE__HOST is set.
+
+## prefer\_data(key)
+
+Return the value that the `data` constructor argument provided for `key`,
+bypassing files, environment variables, and CLI arguments that may have
+overridden it.
+Falls back to the normal merged value from `get(key)` when `data` did not
+contribute to `key`.
+
+    my $cfg = Config::Abstraction->new(
+        data        => { timeout => 30 },
+        config_dirs => ['/etc/myapp'],
+    );
+    my $t = $cfg->prefer_data('timeout');   # always 30, regardless of files/env
+
+## prefer\_argv(key)
+
+Return the value that a CLI argument provided for `key`.
+Falls back to the normal merged value from `get(key)` when no CLI argument
+contributed to `key`.
+
+Because CLI arguments are the highest-precedence source, this method is
+primarily useful for writing self-documenting code or for detecting whether
+a key was explicitly supplied on the command line.
+
+    my $level = $cfg->prefer_argv('log.level');
+    # Equivalent to $cfg->get('log.level') unless you specifically need to
+    # confirm the value came from @ARGV.
+
 ## merge\_defaults
 
 Merge the configuration hash into the given hash.

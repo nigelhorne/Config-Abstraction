@@ -16,6 +16,25 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 	- Document the Newcastle Connection convention and the rationale for choosing
 	  the /../ prefix over hostname:/path, file://, ssh://, and plain hostname/path
 	- Honour $CONFIG_DIRS in the environment
+	- New public method explain_sources(): returns a hashref keyed by dotted
+	  config key; each value carries the final merged value and an ordered list of
+	  {type, label, value} source records showing every source that contributed to
+	  that key, from lowest to highest precedence
+	- New public methods prefer_env(), prefer_file(), prefer_data(), prefer_argv():
+	  return the value that a specific source layer contributed to a key, bypassing
+	  higher-precedence sources; fall back to get() when that layer did not set the key
+	- _load_config() and merge_defaults() now save and restore
+	  Hash::Merge::get_clone_behavior() around their set_clone_behavior(0) calls,
+	  preventing the no-clone global state from leaking into unrelated merge() calls
+	  and fixing a "Can't store CODE items" crash when data contains coderefs
+
+	[ Bug Fixes ]
+	- merge_defaults() was permanently mutating $self->{'config'} via
+	  'delete $config->{global}'; fixed by working on a shallow copy
+	- Windows: skip Newcastle Connection localhost subtest when tempdir() returns
+	  a drive-letter path (C:\...) that cannot be embedded in /../localhost$dir
+	- Windows: skip unreadable-file subtests in extended_tests.t where
+	  chmod(0000, $file) is a no-op and files remain readable
 
 0.39	Sun May 24 16:16:50 EDT 2026
 

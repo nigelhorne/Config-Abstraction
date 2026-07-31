@@ -1095,6 +1095,118 @@ sub explain_sources
 	return \%result;
 }
 
+# ---------------------------------------------------------------------------
+# _value_from_type -- scan _source_records for the last record of the given
+# type that provided a value for $key.  Source records always use '.' as the
+# key separator regardless of sep_char, so we normalise $key before the lookup.
+#
+# Returns ($found, $value): $found is true when the source type contributed to
+# the key, letting callers distinguish "source set key to undef" from "source
+# never set it".
+# ---------------------------------------------------------------------------
+sub _value_from_type
+{
+	my ($self, $type, $key) = @_;
+
+	my $sep = $self->{'sep_char'};
+	my $flat_key = ($sep eq '.') ? $key : join('.', split /\Q$sep\E/, $key);
+
+	my ($found, $val);
+	for my $layer (@{$self->{'_source_records'} // []}) {
+		next unless $layer->{'type'} eq $type;
+		if(exists $layer->{'flat_data'}{$flat_key}) {
+			$found = 1;
+			$val   = $layer->{'flat_data'}{$flat_key};
+		}
+	}
+	return ($found, $val);
+}
+
+=head2 prefer_env(key)
+
+Return the value that an environment variable provided for C<key>, bypassing
+any later sources (e.g. CLI arguments) that may have overridden it.
+Falls back to the normal merged value from C<get(key)> when no environment
+variable contributed to C<key>.
+
+  local $ENV{APP_DATABASE__HOST} = 'env-host';
+  my $host = $cfg->prefer_env('database.host');
+  # Returns 'env-host' even if --APP_DATABASE__HOST=cli-host was also passed.
+
+=cut
+
+sub prefer_env
+{
+	my ($self, $key) = @_;
+	my ($found, $val) = $self->_value_from_type('env', $key);
+	return $found ? $val : $self->get($key);
+}
+
+=head2 prefer_file(key)
+
+Return the value that a configuration file provided for C<key>, bypassing
+environment variables and CLI arguments that may have overridden it.
+Falls back to the normal merged value from C<get(key)> when no file
+contributed to C<key>.
+
+  my $host = $cfg->prefer_file('database.host');
+  # Returns the file-sourced value even if APP_DATABASE__HOST is set.
+
+=cut
+
+sub prefer_file
+{
+	my ($self, $key) = @_;
+	my ($found, $val) = $self->_value_from_type('file', $key);
+	return $found ? $val : $self->get($key);
+}
+
+=head2 prefer_data(key)
+
+Return the value that the C<data> constructor argument provided for C<key>,
+bypassing files, environment variables, and CLI arguments that may have
+overridden it.
+Falls back to the normal merged value from C<get(key)> when C<data> did not
+contribute to C<key>.
+
+  my $cfg = Config::Abstraction->new(
+      data        => { timeout => 30 },
+      config_dirs => ['/etc/myapp'],
+  );
+  my $t = $cfg->prefer_data('timeout');   # always 30, regardless of files/env
+
+=cut
+
+sub prefer_data
+{
+	my ($self, $key) = @_;
+	my ($found, $val) = $self->_value_from_type('data', $key);
+	return $found ? $val : $self->get($key);
+}
+
+=head2 prefer_argv(key)
+
+Return the value that a CLI argument provided for C<key>.
+Falls back to the normal merged value from C<get(key)> when no CLI argument
+contributed to C<key>.
+
+Because CLI arguments are the highest-precedence source, this method is
+primarily useful for writing self-documenting code or for detecting whether
+a key was explicitly supplied on the command line.
+
+  my $level = $cfg->prefer_argv('log.level');
+  # Equivalent to $cfg->get('log.level') unless you specifically need to
+  # confirm the value came from @ARGV.
+
+=cut
+
+sub prefer_argv
+{
+	my ($self, $key) = @_;
+	my ($found, $val) = $self->_value_from_type('argv', $key);
+	return $found ? $val : $self->get($key);
+}
+
 =head2 merge_defaults
 
 Merge the configuration hash into the given hash.
