@@ -297,13 +297,65 @@ Options:
     applications that construct a `Config::Abstraction` object before they know whether
     they will access it.
 
-    Two important differences from the default (eager) behaviour:
+    **Differences from the default (eager) behaviour, and the debugging problems they cause:**
 
-    1. `new()` always returns a blessed object - it cannot return `undef` for
-    "no configuration found", because the scan has not yet happened.  Call
-    `all()` after the first access if you need to detect an empty configuration.
-    2. Schema validation (`schema` option) runs on the first access, not at
-    construction time, so validation errors surface later.
+    - 1. `new()` always succeeds, even when no configuration exists.
+
+        In eager mode, `new()` returns `undef` immediately when no files are found and no
+        `data` was supplied, so a missing config is caught at the point of construction.
+        In lazy mode, `new()` always returns a blessed object.  If the configuration
+        directories do not exist, the files are missing, or the prefix is wrong, you will
+        not find out until the first accessor call - which may be deep inside your business
+        logic, far from where the object was created.
+
+            # Problem: the typo in config_dirs goes unnoticed until runtime
+            my $cfg = Config::Abstraction->new(
+                config_dirs => ['/etc/myapp/conifg'],   # typo - directory does not exist
+                lazy => 1,
+            );
+            # ... many lines later ...
+            my $host = $cfg->get('database.host');      # silently returns undef here
+
+    - 2. Schema validation errors appear at the wrong place in the call stack.
+
+        When a `schema` is supplied, eager mode validates the merged configuration inside
+        `new()` and throws immediately if the config does not match.  In lazy mode,
+        validation is deferred to the first accessor call.  A schema violation therefore
+        surfaces as an exception thrown by `get()` or `all()`, not by `new()`, and the
+        stack trace points to the accessor call rather than the construction site.  If the
+        object is created in one module and accessed in another, the error message can be
+        very misleading.
+
+    - 3. Environment variables and `@ARGV` are captured at access time, not construction time.
+
+        The module reads `%ENV` and `@ARGV` during `_load_config()`.  In eager mode that
+        happens in `new()`, so the configuration reflects the environment at the moment the
+        object is built.  In lazy mode, any change to `%ENV` or `@ARGV` between `new()`
+        and the first accessor call is silently picked up.  This makes test isolation harder:
+        setting an environment variable _after_ constructing a lazy object will affect the
+        values it returns, which is not the case with an eager object.
+
+    - 4. File system state may change between construction and first use.
+
+        Because lazy mode defers all I/O, the files that are read are those that exist at the
+        moment of first access, not at the moment `new()` is called.  If a config file is
+        written, deleted, or replaced between those two points (for example, by another
+        process or test fixture), the object will silently use the new state.  An eager object
+        is immune to this race.
+
+    - 5. Errors from format parsers appear at accessor call sites.
+
+        Malformed YAML, JSON, XML, or INI files emit a `carp` warning and are skipped during
+        loading.  In eager mode those warnings appear near the program's startup.  In lazy mode
+        they appear during the first accessor call, which can make it look as though a routine
+        in your business logic is generating configuration warnings.
+
+    **When to use lazy loading:** It is most useful when a `Config::Abstraction` object is
+    created speculatively at module-load time and may never be accessed (for example, in a
+    web framework where the config object is built for every request but some request paths
+    never read it).  Avoid it when startup correctness is important, when you rely on
+    `new()` returning `undef` to detect missing configuration, or when you use schema
+    validation and need errors to point at the construction site.
 
 If just one argument is given, it is assumed to be the name of a file.
 
