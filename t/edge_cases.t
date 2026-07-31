@@ -1954,4 +1954,400 @@ subtest 'SECURITY: explain_sources() does not expose keys injected via all() ref
 	}
 };
 
+# ===========================================================================
+# NO SOURCES PROVIDED
+# ---------------------------------------------------------------------------
+# The POD states: "Constructor returns undef (not a blessed object) when no
+# configuration data is found."  Verify the contract when every source layer
+# is empty or absent.
+# ===========================================================================
+
+subtest 'no sources: new() with no data and empty config_dirs returns undef' => sub {
+	local @ARGV = ();
+	local %ENV  = %ENV;
+	delete $ENV{$_} for grep { /^\QAPP_\E/i } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(config_dirs => []);
+	ok(!defined($cfg), 'new() with no data and config_dirs=[] returns undef');
+};
+
+subtest 'no sources: new() with data=>undef and empty config_dirs returns undef' => sub {
+	local @ARGV = ();
+	local %ENV  = %ENV;
+	delete $ENV{$_} for grep { /^\QAPP_\E/i } keys %ENV;
+
+	# data => undef is explicitly ignored (carp warning emitted); no keys loaded.
+	my $cfg;
+	_silenced(sub {
+		$cfg = Config::Abstraction->new(data => undef, config_dirs => []);
+	});
+	ok(!defined($cfg), 'data=>undef with no files and no env/argv returns undef');
+};
+
+subtest 'no sources: new() returns undef even when config_dirs has nonexistent paths' => sub {
+	local @ARGV = ();
+	local %ENV  = %ENV;
+	delete $ENV{$_} for grep { /^\QAPP_\E/i } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => ['/no/such/dir/a', '/no/such/dir/b'],
+	);
+	ok(!defined($cfg), 'all-nonexistent config_dirs with no data returns undef');
+};
+
+subtest 'no sources: explain_sources() is never called on a undef object (contract check)' => sub {
+	# The POD says "Always check the return value before using the object."
+	# This test documents that calling methods on a undef constructor result
+	# would die with "Can't call method on undef".  We verify the return value
+	# is indeed undef and do not call any method on it.
+	local @ARGV = ();
+	local %ENV  = %ENV;
+	delete $ENV{$_} for grep { /^\QAPP_\E/i } keys %ENV;
+
+	my $cfg = Config::Abstraction->new(config_dirs => []);
+	ok(!defined($cfg), 'constructor returned undef as documented');
+	dies_ok { $cfg->get('any') } 'calling get() on undef object dies (correct API contract)';
+};
+
+# ===========================================================================
+# CONFLICTING SOURCES: EXPLICIT PRECEDENCE VERIFICATION
+# ---------------------------------------------------------------------------
+# The merge order is: data < file < env < argv.
+# Each tier must override the tier below it for the same key.
+# The tests use a common key 'database.host' and layer it progressively.
+# ===========================================================================
+
+Readonly::Scalar my $CONFLICT_PREFIX  => 'CONFLICT_';
+Readonly::Scalar my $CONFLICT_DATA    => 'data_host';
+Readonly::Scalar my $CONFLICT_FILE    => 'file_host';
+Readonly::Scalar my $CONFLICT_ENV     => 'env_host';
+Readonly::Scalar my $CONFLICT_ARGV    => 'argv_host';
+
+subtest 'conflict: file overrides data for the same key (data < file)' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "database:\n  host: $CONFLICT_FILE\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { host => $CONFLICT_DATA } },
+		config_dirs => [$dir],
+	);
+	is($cfg->get('database.host'), $CONFLICT_FILE,
+		"file value '$CONFLICT_FILE' overrides data value '$CONFLICT_DATA'");
+	# Verify source provenance matches the winner
+	my @file_src = grep { $_->{'type'} eq 'file' }
+		@{$cfg->explain_sources()->{'database.host'}{'sources'}};
+	ok(scalar(@file_src) >= 1, 'explain_sources records a file-type source for the winning value');
+};
+
+subtest 'conflict: env overrides file for the same key (file < env)' => sub {
+	local %ENV = %ENV;
+	$ENV{"${CONFLICT_PREFIX}DATABASE__HOST"} = $CONFLICT_ENV;
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "database:\n  host: $CONFLICT_FILE\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $CONFLICT_PREFIX,
+	);
+	is($cfg->get('database.host'), $CONFLICT_ENV,
+		"env value '$CONFLICT_ENV' overrides file value '$CONFLICT_FILE'");
+};
+
+subtest 'conflict: argv overrides env for the same key (env < argv)' => sub {
+	local %ENV  = %ENV;
+	local @ARGV = ("--${CONFLICT_PREFIX}DATABASE__HOST=$CONFLICT_ARGV");
+	$ENV{"${CONFLICT_PREFIX}DATABASE__HOST"} = $CONFLICT_ENV;
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { host => $CONFLICT_DATA } },
+		config_dirs => [],
+		env_prefix  => $CONFLICT_PREFIX,
+	);
+	is($cfg->get('database.host'), $CONFLICT_ARGV,
+		"argv value '$CONFLICT_ARGV' overrides env value '$CONFLICT_ENV'");
+};
+
+subtest 'conflict: full four-way stack - argv wins over data/file/env' => sub {
+	local %ENV  = %ENV;
+	local @ARGV = ("--${CONFLICT_PREFIX}DATABASE__HOST=$CONFLICT_ARGV");
+	$ENV{"${CONFLICT_PREFIX}DATABASE__HOST"} = $CONFLICT_ENV;
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "database:\n  host: $CONFLICT_FILE\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { host => $CONFLICT_DATA } },
+		config_dirs => [$dir],
+		env_prefix  => $CONFLICT_PREFIX,
+	);
+	is($cfg->get('database.host'), $CONFLICT_ARGV,
+		"argv is the definitive winner in a four-way data/file/env/argv conflict");
+
+	# Confirm explain_sources records all four tiers and value matches argv
+	my $explain = $cfg->explain_sources()->{'database.host'};
+	is($explain->{'value'}, $CONFLICT_ARGV, 'explain_sources final value is argv value');
+	my %by_type = map { $_->{'type'} => 1 } @{$explain->{'sources'}};
+	ok($by_type{'data'}, 'data source recorded');
+	ok($by_type{'file'}, 'file source recorded');
+	ok($by_type{'env'},  'env source recorded');
+	ok($by_type{'argv'}, 'argv source recorded');
+};
+
+subtest 'conflict: local.yaml overrides base.yaml for the same key (within file tier)' => sub {
+	# Within the file tier, local.* files have higher precedence than base.*.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',  "tier: base_val\n");
+	_write_file($dir, 'local.yaml', "tier: local_val\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+	is($cfg->get('tier'), 'local_val',
+		'local.yaml overrides base.yaml for the same key');
+};
+
+subtest 'conflict: same key from two formats in file tier - YAML wins over INI' => sub {
+	# The load order is base.yaml, base.yml, base.json, base.xml, base.ini, …
+	# base.ini is loaded after base.yaml so it has higher file-tier precedence.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "[database]\nhost = yaml_host\n");
+	_write_file($dir, 'base.ini',  "[database]\nhost = ini_host\n");
+
+	my $cfg;
+	_silenced(sub {
+		$cfg = Config::Abstraction->new(config_dirs => [$dir]);
+	});
+	ok(defined($cfg), 'both base.yaml and base.ini loaded without crash');
+	# base.ini is loaded after base.yaml, so INI value wins within the file tier
+	is($cfg->get('database.host'), 'ini_host',
+		'base.ini (loaded later) overrides base.yaml within the file tier');
+};
+
+# ===========================================================================
+# REGRESSION TESTS
+# ---------------------------------------------------------------------------
+# Named regression tests for bugs found in the wild.  Each test is labelled
+# with the ticket or commit that introduced the fix so that git-blame can
+# trace lineage and the test suite immediately identifies a reintroduced bug.
+# ===========================================================================
+
+subtest 'REGRESSION merge_defaults mutation: global section preserved across calls (fix: 0.40)' => sub {
+	# Bug: merge_defaults did `delete $config->{'global'}` on the LIVE internal
+	# hash returned by all().  After the first call, 'global' was gone, so
+	# subsequent calls saw no 'global' section and returned different results.
+	# Fix: work on a shallow copy of the config hash.
+	my $cfg = Config::Abstraction->new(
+		data        => { global => { timeout => 30 }, app => { name => 'myapp' } },
+		config_dirs => [],
+	);
+
+	my $r1 = $cfg->merge_defaults(defaults => { x => 1 });
+	my $r2 = $cfg->merge_defaults(defaults => { x => 1 });
+	my $r3 = $cfg->merge_defaults(defaults => { x => 1 });
+
+	is($r1->{'timeout'}, 30, 'call 1: global.timeout merged from global section');
+	is($r2->{'timeout'}, 30, 'call 2: global.timeout still present (no mutation)');
+	is($r3->{'timeout'}, 30, 'call 3: global.timeout still present on third call');
+	ok(exists $cfg->all()->{'global'}, 'live internal config still has global key after calls');
+};
+
+subtest 'REGRESSION coderef in data survives Hash::Merge (fix: Hash::Merge clone=0 in _load_config 0.40)' => sub {
+	# Bug: Hash::Merge::set_clone_behavior(0) was not set in _load_config; the
+	# default clone=1 caused Storable::dclone to die with "Can't store CODE items"
+	# when merging file data into a %merged that contained coderefs.
+	# Fix: save/restore clone_behavior around the entire _load_config body.
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "extra: loaded\n");
+
+	my $cb  = sub { 42 };
+	my $cfg = Config::Abstraction->new(
+		data        => { fn => $cb },
+		config_dirs => [$dir],
+	);
+
+	lives_ok { $cfg->get('fn') } 'get() on coderef key does not die after YAML file loaded';
+	is(ref($cfg->get('fn')), 'CODE', 'coderef value still has CODE ref type');
+	is($cfg->get('fn')->(), 42, 'coderef is still callable and returns expected value');
+};
+
+subtest 'REGRESSION exists() returns 1/0 not empty string in flat mode (fix: 0.38)' => sub {
+	# Bug: the flat-mode branch did `return exists(...) ? 1 : 0` but the non-flat
+	# branch just returned the result of the exists() call directly (empty string
+	# for false).  Fix: explicit 1/0 return in both branches.
+	my $cfg = Config::Abstraction->new(
+		data        => { present => 'yes' },
+		config_dirs => [],
+		flatten     => 1,
+	);
+	my $yes = $cfg->exists('present');
+	my $no  = $cfg->exists('absent');
+
+	ok($yes == 1,  'exists() returns numeric 1 (not just truthy) in flat mode');
+	ok($no  == 0,  'exists() returns numeric 0 (not empty string) in flat mode');
+	is("$yes", '1', 'exists() true result stringifies to "1" in flat mode');
+	is("$no",  '0', 'exists() false result stringifies to "0" in flat mode');
+};
+
+subtest 'REGRESSION get(undef) returns undef without warnings (fix: this session 0.40)' => sub {
+	# Bug: get() called split() on an undef key, generating "Use of uninitialized
+	# value in split" warnings.  Fix: early `return undef unless defined $key`.
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, $_[0] };
+
+	my $val = $cfg->get(undef);
+	ok(!defined($val), 'get(undef) returns undef');
+	is(scalar(@warnings), 0, 'get(undef) emits no "uninitialized value" warnings');
+};
+
+subtest 'REGRESSION exists(undef) returns 0 without warnings (fix: this session 0.40)' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, $_[0] };
+
+	my $result = $cfg->exists(undef);
+	is($result, 0, 'exists(undef) returns 0');
+	is(scalar(@warnings), 0, 'exists(undef) emits no warnings');
+};
+
+subtest 'REGRESSION coderef alongside comma string not corrupted (fix: 0.38 _is_plain_scalar)' => sub {
+	# Bug: the YAML comma-split loop iterated all values with `foreach my($k,$v)
+	# (%{$data})` and blindly called $v =~ /,/ on coderefs, which stringified them
+	# and caused "Not a HASH reference" or silent corruption.
+	# Fix: _is_plain_scalar() guard skips non-string values.
+	my $cb = sub { 'ok' };
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "tags: alpha,beta,gamma\nmode: live\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { callback => $cb },
+		config_dirs => [$dir],
+	);
+	lives_ok { $cfg->get('callback') } 'get() on coderef key alongside comma value does not die';
+	is(ref($cfg->get('callback')), 'CODE', 'coderef type preserved');
+	is($cfg->get('callback')->(), 'ok', 'coderef still callable');
+	is($cfg->get('mode'), 'live', 'adjacent YAML scalar value intact');
+};
+
+subtest 'REGRESSION merge_defaults with bare hashref returns full config unchanged' => sub {
+	# Documented Params::Get fast-path behaviour: a single bare hashref bypasses
+	# $default key naming.  merge_defaults(\%hash) returns the full config, NOT
+	# the merged result.  Callers must use merge_defaults(defaults => \%hash).
+	my $cfg = Config::Abstraction->new(
+		data        => { key => 'val' },
+		config_dirs => [],
+	);
+	my %defaults = (extra => 'from_defaults');
+	my $result   = $cfg->merge_defaults(\%defaults);
+
+	# Fast-path: result is the full config (a hashref with 'key'), not the merged hash
+	is(ref($result), 'HASH', 'bare hashref returns a hashref');
+	is($result->{'key'}, 'val', 'full config returned unchanged (fast-path behaviour)');
+};
+
+# ===========================================================================
+# TEST::MOST INTEGRATION: throws_ok / dies_ok / cmp_deeply
+# ---------------------------------------------------------------------------
+# The suite was using plain eval+ok patterns.  These subtests demonstrate the
+# richer Test::Most vocabulary (from Test::Exception and Test::Deep) which
+# gives clearer failure diagnostics.
+# ===========================================================================
+
+subtest 'Test::Most: throws_ok - AUTOLOAD dies with expected message' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { existing => 'val' },
+		config_dirs => [],
+		sep_char    => $SEP_US,
+	);
+	throws_ok { $cfg->definitely_no_such_key() }
+		qr/No such config key 'definitely_no_such_key'/,
+		'AUTOLOAD throws with the exact missing-key message (throws_ok)';
+};
+
+subtest 'Test::Most: throws_ok - AUTOLOAD nested key dies with expected message' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [],
+		sep_char    => $SEP_US,
+	);
+	throws_ok { $cfg->db_missing_field() }
+		qr/No such config key/,
+		'AUTOLOAD on absent nested key throws "No such config key" (throws_ok)';
+};
+
+subtest 'Test::Most: dies_ok - get() on undef object ref dies cleanly' => sub {
+	my $cfg = Config::Abstraction->new(config_dirs => []);
+	ok(!defined($cfg), 'precondition: no-source constructor returns undef');
+	dies_ok { $cfg->get('anything') } 'get() on undef object ref dies (dies_ok)';
+};
+
+subtest 'Test::Most: lives_ok - get() on valid key in well-formed object' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'localhost' },
+		config_dirs => [],
+	);
+	lives_ok { $cfg->get('host') } 'get() on valid key lives (lives_ok)';
+	lives_ok { $cfg->get('absent') } 'get() on absent key returns undef, does not die (lives_ok)';
+};
+
+subtest 'Test::Most: cmp_deeply - explain_sources structure matches expected shape' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}HOST"} = 'env_host';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { other => 'val' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $sources = $cfg->explain_sources();
+
+	# 'other' was set only by data; verify its shape with cmp_deeply
+	cmp_deeply(
+		$sources->{'other'},
+		{
+			value   => 'val',
+			sources => supersetof(
+				superhashof({ type => 'data', label => 'constructor data argument', value => 'val' })
+			),
+		},
+		'explain_sources entry for data-only key matches expected deep structure',
+	);
+};
+
+subtest 'Test::Most: cmp_deeply - multiple sources ordered correctly' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "multi:\n  k: file_val\n");
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}MULTI__K"} = 'env_val';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { multi => { k => 'data_val' } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $entry = $cfg->explain_sources()->{'multi.k'};
+
+	# Final value must be env (highest precedence)
+	is($entry->{'value'}, 'env_val', 'final value is env (highest precedence)');
+
+	# sources list must contain at least data, file, and env entries
+	cmp_deeply(
+		$entry->{'sources'},
+		supersetof(
+			superhashof({ type => 'data' }),
+			superhashof({ type => 'file' }),
+			superhashof({ type => 'env'  }),
+		),
+		'sources list contains data, file, and env entries (cmp_deeply/supersetof)',
+	);
+
+	# First element must be data (lowest precedence)
+	is($entry->{'sources'}[0]{'type'}, 'data', 'first source is data (lowest precedence)');
+};
+
 done_testing();
