@@ -244,10 +244,10 @@ pre details.mutant-details ul {
 <div class="nav"><a href="../../../index.html">Index</a>
 </div><div class='summary'>
 <strong>Structural Coverage (Approximate)</strong><p>
-TER1 (Statement): 90.26%<br>
-TER2 (Branch): 85.91%<br>
-TER3 (LCSAJ): 97.0% (32/33)<br>
-Approximate LCSAJ segments: 363<br>
+TER1 (Statement): 86.54%<br>
+TER2 (Branch): 82.71%<br>
+TER3 (LCSAJ): 94.1% (32/34)<br>
+Approximate LCSAJ segments: 377<br>
 </div>
 
     <div class="legend">
@@ -1633,7 +1633,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 1092: 			sources =&gt; \@key_sources,
 </span><span class=""> 1093: 		};
 </span><span class=""> 1094: 	}
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1095: 	return \%result;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1095: 	return \%result;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -1657,470 +1657,62 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 							</li></ul></details>
 <span class=""> 1096: }
 </span><span class=""> 1097: 
-</span><span class=""> 1098: =head2 merge_defaults
-</span><span class=""> 1099: 
-</span><span class=""> 1100: Merge the configuration hash into the given hash.
-</span><span class=""> 1101: 
-</span><span class=""> 1102:   package MyPackage;
-</span><span class=""> 1103:   use Params::Get;
-</span><span class=""> 1104:   use Config::Abstraction;
-</span><span class=""> 1105: 
-</span><span class=""> 1106:   sub new
-</span><span class=""> 1107:   {
-</span><span class=""> 1108:     my $class = shift;
-</span><span class=""> 1109: 
-</span><span class=""> 1110:     my $params = Params::Get::get_params(undef, \@_) || {};
-</span><span class=""> 1111: 
-</span><span class=""> 1112:     if(my $config = Config::Abstraction-&gt;new(env_prefix =&gt; &quot;${class}::&quot;)) {
-</span><span class=""> 1113:       $params = $config-&gt;merge_defaults(defaults =&gt; $params, merge =&gt; 1, section =&gt; $class);
-</span><span class=""> 1114:     }
-</span><span class=""> 1115: 
-</span><span class=""> 1116:     return bless $params, $class;
-</span><span class=""> 1117:   }
-</span><span class=""> 1118: 
-</span><span class=""> 1119: Options:
-</span><span class=""> 1120: 
-</span><span class=""> 1121: =over 4
-</span><span class=""> 1122: 
-</span><span class=""> 1123: =item * merge
-</span><span class=""> 1124: 
-</span><span class=""> 1125: Usually,
-</span><span class=""> 1126: what&#39;s in the object will overwrite what&#39;s in the defaults hash,
-</span><span class=""> 1127: if given,
-</span><span class=""> 1128: the result will be a combination of the hashes.
-</span><span class=""> 1129: 
-</span><span class=""> 1130: =item * section
-</span><span class=""> 1131: 
-</span><span class=""> 1132: Merge in that section from the configuration file.
-</span><span class=""> 1133: 
-</span><span class=""> 1134: =item * deep
-</span><span class=""> 1135: 
-</span><span class=""> 1136: Try harder to merge all configurations from the global section of the configuration file.
-</span><span class=""> 1137: 
-</span><span class=""> 1138: =back
-</span><span class=""> 1139: 
-</span><span class=""> 1140: =cut
-</span><span class=""> 1141: 
-</span><span class=""> 1142: sub merge_defaults
-</span><span class=""> 1143: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1144 → 1166 → 1174</span></span> 1144: 	my $self = shift;
-</span><span class=""> 1145: 	my $config = $self-&gt;all();
-</span><span class=""> 1146: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1147: 	return $config if(scalar(@_) == 0);
-</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class=""> 1148: 
-</span><span class=""> 1149: 	my $params = Params::Get::get_params(&#39;defaults&#39;, @_);
-</span><span class=""> 1150: 	my $defaults = $params-&gt;{&#39;defaults&#39;};
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1151: 	return $config if(!defined($defaults));
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1152: 	my $section = $params-&gt;{&#39;section&#39;};
-</span><span class=""> 1153: 
-</span><span class=""> 1154: 	# Work on a shallow copy so we never mutate $self-&gt;{&#39;config&#39;} directly.
-</span><span class=""> 1155: 	# Without this, &#39;delete $config-&gt;{global}&#39; below would permanently alter
-</span><span class=""> 1156: 	# the live internal hash on every call.
-</span><span class=""> 1157: 	my %config_copy = %{$config};
-</span><span class=""> 1158: 	$config = \%config_copy;
-</span><span class=""> 1159: 
-</span><span class=""> 1160: 	# Save and restore Hash::Merge&#39;s clone behaviour so we don&#39;t leak the
-</span><span class=""> 1161: 	# no-clone global state into unrelated merge() calls (e.g. inside
-</span><span class=""> 1162: 	# _load_config when a new object is constructed after this method runs).
-</span><span class=""> 1163: 	my $saved_clone = Hash::Merge::get_clone_behavior();
-</span><span class=""> 1164: 	Hash::Merge::set_clone_behavior(0);
-</span><span class=""> 1165: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1166: 	if(exists $config-&gt;{&#39;global&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1167: 		if($params-&gt;{&#39;deep&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1168: 			$defaults = merge($config-&gt;{&#39;global&#39;}, $defaults);
-</span><span class=""> 1169: 		} else {
-</span><span class=""> 1170: 			$defaults = { %{$defaults}, %{$config-&gt;{&#39;global&#39;}} };
-</span><span class=""> 1171: 		}
-</span><span class=""> 1172: 		delete $config-&gt;{&#39;global&#39;};
-</span><span class=""> 1173: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1174 → 1174 → 1177</span></span> 1174: 	if($section &amp;&amp; exists $config-&gt;{$section}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1175: 		$config = $config-&gt;{$section};
-</span><span class=""> 1176: 	}
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1177 → 1178 → 1183</span></span> 1177: 	my $result;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1178: 	if($params-&gt;{&#39;merge&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1179: 		$result = merge($config, $defaults);
-</span><span class=""> 1180: 	} else {
-</span><span class=""> 1181: 		$result = { %{$defaults}, %{$config} };
-</span><span class=""> 1182: 	}
-</span><span class=""> 1183: 	Hash::Merge::set_clone_behavior($saved_clone);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1184: 	return $result;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1185: }
-</span><span class=""> 1186: 
-</span><span class=""> 1187: # Helper routine to load a driver.
-</span><span class=""> 1188: # NOTE: Log::Abstraction must NOT be loaded via this method - it is
-</span><span class=""> 1189: # bootstrapped directly in new() to avoid a circular initialisation
-</span><span class=""> 1190: # dependency where _load_driver would attempt to log via an as-yet
-</span><span class=""> 1191: # uninitialised logger.
-</span><span class=""> 1192: sub _load_driver
-</span><span class=""> 1193: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1194 → 1200 → 1207</span></span> 1194: 	my($self, $driver, $imports) = @_;
-</span><span class=""> 1195: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1196: 	return 1 if($self-&gt;{&#39;loaded&#39;}{$driver});
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1197: 	return 0 if($self-&gt;{&#39;failed&#39;}{$driver});
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1198: 
-</span><span class=""> 1199: 	eval &quot;require $driver&quot;;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1200: 	if($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1201: 		if(my $logger = $self-&gt;{&#39;logger&#39;}) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1202: 			$logger-&gt;warn(ref($self), &quot;: $driver failed to load: $@&quot;);
-</span><span class=""> 1203: 		}
-</span><span class=""> 1204: 		$self-&gt;{&#39;failed&#39;}{$driver} = 1;
-</span><span class=""> 1205: 		return;
-</span><span class=""> 1206: 	}
-</span><span class=""> 1207: 	$driver-&gt;import(@{ $imports // [] });
-</span><span class=""> 1208: 	$self-&gt;{&#39;loaded&#39;}{$driver} = 1;
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1209: 	return 1;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1210: }
-</span><span class=""> 1211: 
-</span><span class=""> 1212: =head2 Remote configuration directories (Newcastle Connection)
-</span><span class=""> 1213: 
-</span><span class=""> 1214: Any entry in C&lt;config_dirs&gt; whose path begins with C&lt;/../&gt; is treated as a
-</span><span class=""> 1215: remote specification rather than a local directory:
-</span><span class=""> 1216: 
-</span><span class=""> 1217:   /../hostname/path/to/dir
-</span><span class=""> 1218: 
-</span><span class=""> 1219: The hostname and directory are extracted, and the same standard files searched
-</span><span class=""> 1220: locally (C&lt;base.yaml&gt;, C&lt;local.yaml&gt;, C&lt;base.json&gt;, etc.) are fetched from
-</span><span class=""> 1221: the remote machine via L&lt;File::Slurp::Remote&gt; over SSH.
-</span><span class=""> 1222: 
-</span><span class=""> 1223: When the hostname resolves to the local machine -- C&lt;localhost&gt;, C&lt;127.0.0.1&gt;,
-</span><span class=""> 1224: C&lt;::1&gt;, or the value returned by C&lt;Sys::Hostname::hostname()&gt; (checked as
-</span><span class=""> 1225: both fully-qualified and short form, case-insensitively) -- the C&lt;/../host/&gt;
-</span><span class=""> 1226: wrapper is silently unwrapped and the enclosed path is processed through the
-</span><span class=""> 1227: normal local file pipeline instead.  No SSH connection is made.  This means a
-</span><span class=""> 1228: configuration written for a shared remote host degrades gracefully when run on
-</span><span class=""> 1229: that host itself:
-</span><span class=""> 1230: 
-</span><span class=""> 1231:   # On any other machine: fetches /etc/myapp over SSH
-</span><span class=""> 1232:   # On cfg-server itself: reads /etc/myapp from disk directly
-</span><span class=""> 1233:   config_dirs =&gt; [&#39;/../cfg-server/etc/myapp&#39;]
-</span><span class=""> 1234: 
-</span><span class=""> 1235: Remote directories participate in the normal merge pipeline and can be freely
-</span><span class=""> 1236: mixed with local ones:
-</span><span class=""> 1237: 
-</span><span class=""> 1238:   my $cfg = Config::Abstraction-&gt;new(
-</span><span class=""> 1239:       config_dirs =&gt; [
-</span><span class=""> 1240:           &#39;/etc/myapp&#39;,                        # local
-</span><span class=""> 1241:           &#39;/../deploy@cfg-server/etc/myapp&#39;,   # remote via SSH (local on cfg-server)
-</span><span class=""> 1242:       ],
-</span><span class=""> 1243:   );
-</span><span class=""> 1244: 
-</span><span class=""> 1245: SSH authentication is handled by the system SSH client.
-</span><span class=""> 1246: No extra constructor options are required; use your SSH agent or
-</span><span class=""> 1247: C&lt;~/.ssh/config&gt; for host-specific settings.
-</span><span class=""> 1248: 
-</span><span class=""> 1249: L&lt;File::Slurp::Remote&gt; must be installed for remote directories to work.
-</span><span class=""> 1250: If it is absent the directory is silently skipped and a warning is emitted.
-</span><span class=""> 1251: 
-</span><span class=""> 1252: =head3 Why C&lt;/../&gt; (the Newcastle Connection convention)
-</span><span class=""> 1253: 
-</span><span class=""> 1254: Several syntaxes were considered for marking a C&lt;config_dirs&gt; entry as remote.
-</span><span class=""> 1255: Each alternative was rejected for a concrete reason:
-</span><span class=""> 1256: 
-</span><span class=""> 1257: =over 4
-</span><span class=""> 1258: 
-</span><span class=""> 1259: =item C&lt;hostname/path&gt; -- ambiguous
-</span><span class=""> 1260: 
-</span><span class=""> 1261: Indistinguishable from a relative local directory named C&lt;hostname&gt;.
-</span><span class=""> 1262: The module cannot tell at parse time whether C&lt;myserver/etc&gt; is a two-level
-</span><span class=""> 1263: local path or a remote specification.
-</span><span class=""> 1264: 
-</span><span class=""> 1265: =item C&lt;hostname:/path&gt; -- collides with Windows drive letters
-</span><span class=""> 1266: 
-</span><span class=""> 1267: The C&lt;X:\&gt; drive-letter convention on Windows uses exactly the same
-</span><span class=""> 1268: C&lt;letter:&gt; prefix.  A single-letter hostname would be misidentified as a
-</span><span class=""> 1269: drive, and path-normalisation code on Windows would mangle it.
-</span><span class=""> 1270: 
-</span><span class=""> 1271: =item C&lt;file://hostname/path&gt; -- wrong semantics
-</span><span class=""> 1272: 
-</span><span class=""> 1273: RFC 8089 defines C&lt;file://&gt; as a reference to a B&lt;local&gt; file.
-</span><span class=""> 1274: C&lt;file:///etc/passwd&gt; (three slashes, empty host) is the canonical local form;
-</span><span class=""> 1275: C&lt;file://hostname/path&gt; is reserved for the host component but is explicitly
-</span><span class=""> 1276: discouraged for general use and is not understood by most tooling as meaning
-</span><span class=""> 1277: SSH.
-</span><span class=""> 1278: 
-</span><span class=""> 1279: =item C&lt;ssh://hostname/path&gt; -- requires URI parsing
-</span><span class=""> 1280: 
-</span><span class=""> 1281: Introduces a dependency on URI parsing (or a bespoke prefix check) and
-</span><span class=""> 1282: implies a specific transport.  C&lt;File::Slurp::Remote&gt; already abstracts
-</span><span class=""> 1283: the transport; encoding C&lt;ssh://&gt; in the path would be misleading if a future
-</span><span class=""> 1284: version of that module supports other transports such as C&lt;rsync://&gt;.
-</span><span class=""> 1285: 
-</span><span class=""> 1286: =item C&lt;/../hostname/path&gt; -- the Newcastle Connection
-</span><span class=""> 1287: 
-</span><span class=""> 1288: The Newcastle Connection (Brownbridge, Dion, Elsworth, 1982) is a distributed
-</span><span class=""> 1289: Unix convention in which the token C&lt;/../&gt; at the start of a pathname means
-</span><span class=""> 1290: &quot;leave the local namespace and enter the named remote host&quot;.
-</span><span class=""> 1291: It works because C&lt;/../&gt; B&lt;cannot exist&gt; as a real filesystem path:
-</span><span class=""> 1292: C&lt;..&gt; from the root directory resolves back to the root on every POSIX system,
-</span><span class=""> 1293: so C&lt;/../&gt; always denotes the root itself, never a child of the root.
-</span><span class=""> 1294: No pathname-normalisation step, C&lt;chdir&gt;, or filesystem traversal will ever
-</span><span class=""> 1295: produce a path that legitimately begins with C&lt;/../&gt;, which means the prefix
-</span><span class=""> 1296: is a permanent, collision-free sentinel that requires only a regex to detect.
-</span><span class=""> 1297: 
-</span><span class=""> 1298: =back
-</span><span class=""> 1299: 
-</span><span class=""> 1300: The Newcastle Connection prefix is therefore the only choice that is:
-</span><span class=""> 1301: 
-</span><span class=""> 1302: =over 4
-</span><span class=""> 1303: 
-</span><span class=""> 1304: =item * unambiguous on all platforms (POSIX and Windows)
-</span><span class=""> 1305: 
-</span><span class=""> 1306: =item * impossible to produce accidentally from a real local path
-</span><span class=""> 1307: 
-</span><span class=""> 1308: =item * detectable with a single C&lt;m{^\Q/../\E}&gt; regex, no URI parser needed
-</span><span class=""> 1309: 
-</span><span class=""> 1310: =item * transport-neutral (the hostname is passed to whatever remote driver is installed)
-</span><span class=""> 1311: 
-</span><span class=""> 1312: =back
-</span><span class=""> 1313: 
-</span><span class=""> 1314: =head2 AUTOLOAD
-</span><span class=""> 1315: 
-</span><span class=""> 1316: This module supports dynamic access to configuration keys via AUTOLOAD.
-</span><span class=""> 1317: Nested keys are accessible using the separator,
-</span><span class=""> 1318: so C&lt;$config-E&lt;gt&gt;database_user()&gt; resolves to C&lt;&lt; $config-&gt;{database}-&gt;{user} &gt;&gt;,
-</span><span class=""> 1319: when C&lt;sep_char&gt; is set to &#39;_&#39;.
-</span><span class=""> 1320: 
-</span><span class=""> 1321:     $config = Config::Abstraction-&gt;new(
-</span><span class=""> 1322:         data =&gt; {
-</span><span class=""> 1323:             database =&gt; {
-</span><span class=""> 1324:                 user =&gt; &#39;alice&#39;,
-</span><span class=""> 1325:                 pass =&gt; &#39;secret&#39;
-</span><span class=""> 1326:             },
-</span><span class=""> 1327:             log_level =&gt; &#39;debug&#39;
-</span><span class=""> 1328:         },
-</span><span class=""> 1329:         flatten =&gt; 1,
-</span><span class=""> 1330:         sep_char =&gt; &#39;_&#39;
-</span><span class=""> 1331:     );
-</span><span class=""> 1332: 
-</span><span class=""> 1333:     my $user = $config-&gt;database_user();	# returns &#39;alice&#39;
-</span><span class=""> 1334: 
-</span><span class=""> 1335:     # or
-</span><span class=""> 1336:     $user = $config-&gt;database()-&gt;{&#39;user&#39;};	# returns &#39;alice&#39;
-</span><span class=""> 1337: 
-</span><span class=""> 1338:     # Attempting to call a nonexistent key
-</span><span class=""> 1339:     my $foo = $config-&gt;nonexistent_key();	# dies with error
-</span><span class=""> 1340: 
-</span><span class=""> 1341: =cut
-</span><span class=""> 1342: 
-</span><span class=""> 1343: # ---------------------------------------------------------------------------
-</span><span class=""> 1344: # _parse_remote_dir -- detect Newcastle Connection style paths.
-</span><span class=""> 1345: #
-</span><span class=""> 1346: # Returns ($host, $dir) when $dir begins with /../, empty list otherwise.
-</span><span class=""> 1347: # The /../ prefix is syntactically impossible for a real local path so no
-</span><span class=""> 1348: # real directory entry is ever misidentified.
-</span><span class=""> 1349: # ---------------------------------------------------------------------------
-</span><span class=""> 1350: sub _parse_remote_dir
-</span><span class=""> 1351: {
-</span><span class=""> 1352: 	my ($self, $dir) = @_;
-</span><span class=""> 1353: 
-</span><span class=""> 1354: 	return unless defined($dir);
-</span><span class=""> 1355: 	return unless $dir =~ m{^\Q/../\E([^/]+)(/.+)?$};
-</span><span class=""> 1356: 	return ($1, $2 // &#39;/&#39;);
-</span><span class=""> 1357: }
-</span><span class=""> 1358: 
-</span><span class=""> 1359: # ---------------------------------------------------------------------------
-</span><span class=""> 1360: # _is_local_host -- true when $host refers to the machine running this code.
-</span><span class=""> 1361: #
-</span><span class=""> 1362: # Strips any user@ prefix first, then checks the four common ways a caller
-</span><span class=""> 1363: # might spell &quot;here&quot;: the loopback name, the two loopback addresses, and the
-</span><span class=""> 1364: # system hostname (both fully-qualified and short).  Comparison is
-</span><span class=""> 1365: # case-insensitive because hostnames are case-insensitive by RFC 1034.
-</span><span class=""> 1366: # ---------------------------------------------------------------------------
-</span><span class=""> 1367: sub _is_local_host
-</span><span class=""> 1368: {
-</span><span class=""> 1369: 	my ($self, $host) = @_;
-</span><span class=""> 1370: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1371: 	return 0 unless defined($host) &amp;&amp; length($host);
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1372: 
-</span><span class=""> 1373: 	(my $bare = $host) =~ s/^[^@]+@//;	# strip optional user@ prefix
-</span><span class=""> 1374: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1375: 	return 1 if lc($bare) eq &#39;localhost&#39;;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1376: 	return 1 if $bare eq &#39;127.0.0.1&#39;;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1377: 	return 1 if $bare eq &#39;::1&#39;;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1378: 
-</span><span class=""> 1379: 	require Sys::Hostname;
-</span><span class=""> 1380: 	my $fqdn  = lc(Sys::Hostname::hostname());
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1381: 	return 1 if lc($bare) eq $fqdn;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1382: 
-</span><span class=""> 1383: 	(my $short = $fqdn) =~ s/\..*$//;	# trim domain component
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1384: 	return 1 if lc($bare) eq $short;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1385: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1386: 	return 0;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1387: }
-</span><span class=""> 1388: 
-</span><span class=""> 1389: # ---------------------------------------------------------------------------
-</span><span class=""> 1390: # _load_remote_dir -- fetch and merge standard config files from one remote
-</span><span class=""> 1391: # host/directory pair.
-</span><span class=""> 1392: #
-</span><span class=""> 1393: # Silently skips files that do not exist; warns (or logs) on parse errors.
-</span><span class=""> 1394: # Merges into %$merged_ref using the same Hash::Merge LEFT_PRECEDENT strategy
-</span><span class=""> 1395: # as the local pipeline, so remote values override earlier local values.
-</span><span class=""> 1396: # ---------------------------------------------------------------------------
-</span><span class=""> 1397: sub _load_remote_dir
-</span><span class=""> 1398: {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1399 → 1399 → 1403</span></span> 1399: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1400: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
-</span><span class=""> 1401: 	}
-</span><span class=""> 1402: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1403 → 1406 → 1412</span></span> 1403: 	my ($self, $host, $remote_dir, $merged_ref) = @_;
-</span><span class=""> 1404: 	my $logger = $self-&gt;{&#39;logger&#39;};
-</span><span class=""> 1405: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1406: 	unless($self-&gt;_load_driver(&#39;File::Slurp::Remote&#39;)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1407: 		my $msg = ref($self) . &quot;: File::Slurp::Remote required for /../$host$remote_dir but is not installed&quot;;
-</span><span class=""> 1408: 		$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
-</span><span class=""> 1409: 		return;
-</span><span class=""> 1410: 	}
-</span><span class=""> 1411: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1412 → 1412 → 0</span></span> 1412: 	for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
-</span><span class=""> 1413: 		my $remote_path = &quot;/../$host$remote_dir/$file&quot;;
-</span><span class=""> 1414: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1415: 		if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1416: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for remote config $remote_path&quot;);
-</span><span class=""> 1417: 		}
-</span><span class=""> 1418: 
-</span><span class=""> 1419: 		my $raw = $self-&gt;_slurp_remote($host, &quot;$remote_dir/$file&quot;);
-</span><span class=""> 1420: 		next unless defined($raw);
-</span><span class=""> 1421: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1422: 		if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1423: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading remote config $remote_path&quot;);
-</span><span class=""> 1424: 		}
-</span><span class=""> 1425: 
-</span><span class=""> 1426: 		my $data = $self-&gt;_parse_config_string($raw, $file, $remote_path);
-</span><span class=""> 1427: 		next unless defined($data);
-</span><span class=""> 1428: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1429: 		if(ref($data) ne &#39;HASH&#39;) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1430: 			my $msg = ref($self) . &quot;: remote $remote_path did not yield a hash; skipping&quot;;
-</span><span class=""> 1431: 			$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
-</span><span class=""> 1432: 			next;
-</span><span class=""> 1433: 		}
-</span><span class=""> 1434: 
-</span><span class=""> 1435: 		push @{$self-&gt;{&#39;_source_records&#39;}}, {
-</span><span class=""> 1436: 			type      =&gt; &#39;file&#39;,
-</span><span class=""> 1437: 			label     =&gt; $remote_path,
-</span><span class=""> 1438: 			flat_data =&gt; { _flatten_keys($data) },
-</span><span class=""> 1439: 		};
-</span><span class=""> 1440: 		%{$merged_ref} = %{ merge($data, $merged_ref) };
-</span><span class=""> 1441: 		push @{$merged_ref-&gt;{&#39;config_path&#39;}}, $remote_path;
-</span><span class=""> 1442: 	}
-</span><span class=""> 1443: }
-</span><span class=""> 1444: 
-</span><span class=""> 1445: # ---------------------------------------------------------------------------
-</span><span class=""> 1446: # _slurp_remote -- read a single file from a remote host via SSH.
-</span><span class=""> 1447: #
-</span><span class=""> 1448: # Wraps File::Slurp::Remote::read_file; returns the raw string on success
-</span><span class=""> 1449: # or undef on any error (connection refused, file absent, permission denied).
-</span><span class=""> 1450: # Errors are logged at debug level so missing files are not noisy.
-</span><span class=""> 1451: # ---------------------------------------------------------------------------
-</span><span class=""> 1452: sub _slurp_remote
-</span><span class=""> 1453: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1454 → 1461 → 1467</span></span> 1454: 	my ($self, $host, $path) = @_;
-</span><span class=""> 1455: 	my $logger = $self-&gt;{&#39;logger&#39;};
-</span><span class=""> 1456: 
-</span><span class=""> 1457: 	# NOTE: verify the calling convention of your installed File::Slurp::Remote.
-</span><span class=""> 1458: 	# Common forms: read_file(&quot;$host:$path&quot;) or read_file($host, $path).
-</span><span class=""> 1459: 	my $content = eval { File::Slurp::Remote::read_file($host, $path) };
-</span><span class=""> 1460: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1461: 	if($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1462: 		if($logger) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1463: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Could not read $path from $host: $@&quot;);
-</span><span class=""> 1464: 		}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1465: 		return undef;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1466: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1467: 	return $content;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1468: }
-</span><span class=""> 1469: 
-</span><span class=""> 1470: # ---------------------------------------------------------------------------
-</span><span class=""> 1471: # _parse_config_string -- parse a raw config string by extension.
-</span><span class=""> 1472: #
-</span><span class=""> 1473: # Mirrors the format-detection logic used for local files.  INI content is
-</span><span class=""> 1474: # written to a File::Temp scratch file because Config::IniFiles requires a
-</span><span class=""> 1475: # real filesystem path; the temp file is removed as soon as parsing returns.
-</span><span class=""> 1476: #
-</span><span class=""> 1477: # Returns a hashref on success, undef on failure.
-</span><span class=""> 1478: # ---------------------------------------------------------------------------
-</span><span class=""> 1479: sub _parse_config_string
-</span><span class=""> 1480: {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1481 → 1481 → 1485</span></span> 1481: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1482: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
-</span><span class=""> 1483: 	}
-</span><span class=""> 1484: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1485 → 1523 → 1530</span></span> 1485: 	my ($self, $raw, $filename, $label) = @_;
-</span><span class=""> 1486: 	my $logger = $self-&gt;{&#39;logger&#39;};
-</span><span class=""> 1487: 	my $data;
-</span><span class=""> 1488: 
-</span><span class=""> 1489: 	eval {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1490: 		if($filename =~ /\.ya?ml$/i) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1491: 			$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;Load&#39;]);
-</span><span class=""> 1492: 			$data = YAML::XS::Load($raw);
-</span><span class=""> 1493: 
-</span><span class=""> 1494: 		} elsif($filename =~ /\.json$/i) {
-</span><span class=""> 1495: 			$data = decode_json($raw);
-</span><span class=""> 1496: 
-</span><span class=""> 1497: 		} elsif($filename =~ /\.xml$/i) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1498: 			if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1499: 				$data = XMLin(\$raw, ForceArray =&gt; 0, KeyAttr =&gt; []);
-</span><span class=""> 1500: 			} elsif($self-&gt;_load_driver(&#39;XML::PP&#39;)) {
-</span><span class=""> 1501: 				my $pp = XML::PP-&gt;new();
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1502: 				if(my $tree = $pp-&gt;parse(\$raw)) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1503: 					$data = $pp-&gt;collapse_structure($tree);
-</span><span class=""> 1504: 					$data = $data-&gt;{&#39;config&#39;} if ($data &amp;&amp; $data-&gt;{&#39;config&#39;});
-</span><span class=""> 1505: 				}
-</span><span class=""> 1506: 			}
-</span><span class=""> 1507: 
-</span><span class=""> 1508: 		} elsif($filename =~ /\.ini$/i) {
-</span><span class=""> 1509: 			$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
-</span><span class=""> 1510: 			require File::Temp;
-</span><span class=""> 1511: 			my $tmp = File::Temp-&gt;new(SUFFIX =&gt; &#39;.ini&#39;, UNLINK =&gt; 1);
-</span><span class=""> 1512: 			print {$tmp} $raw;
-</span><span class=""> 1513: 			$tmp-&gt;flush();
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1514: 			if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $tmp-&gt;filename())) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1515: 				$data = { map {
-</span><span class=""> 1516: 					my $section = $_;
-</span><span class=""> 1517: 					$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
-</span><span class=""> 1518: 				} $ini-&gt;Sections() };
-</span><span class=""> 1519: 			}
-</span><span class=""> 1520: 		}
-</span><span class=""> 1521: 	};
-</span><span class=""> 1522: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1523: 	if($@) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1524: 		my $err = $@;
-</span><span class=""> 1525: 		my $msg = ref($self) . &quot;: Failed to parse $label: $err&quot;;
-</span><span class=""> 1526: 		$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1527: 		return undef;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1528: 	}
-</span><span class=""> 1529: 
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1530: 	return $data;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1531: }
-</span><span class=""> 1532: 
-</span><span class=""> 1533: sub AUTOLOAD
-</span><span class=""> 1534: {
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1535 → 1549 → 1553</span></span> 1535: 	our $AUTOLOAD;
-</span><span class=""> 1536: 
-</span><span class=""> 1537: 	my $self = shift;
-</span><span class=""> 1538: 	my $key = $AUTOLOAD;
-</span><span class=""> 1539: 
-</span><span class=""> 1540: 	$key =~ s/.*:://;	# remove package name
-</span><span class=""> 1541: 	return if $key eq &#39;DESTROY&#39;;
-</span><span class=""> 1542: 
-</span><span class=""> 1543: 	# my $val = $self-&gt;get($key);
-</span><span class=""> 1544: 	# return $val if(defined($val));
-</span><span class=""> 1545: 
-</span><span class=""> 1546: 	my $data = $self-&gt;{data} || $self-&gt;{&#39;config&#39;};
-</span><span class=""> 1547: 
-</span><span class=""> 1548: 	# If flattening is ON, assume keys are pre-flattened
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."> 1549: 	if ($self-&gt;{flatten}) {
+</span><span class=""> 1098: # ---------------------------------------------------------------------------
+</span><span class=""> 1099: # _value_from_type -- scan _source_records for the last record of the given
+</span><span class=""> 1100: # type that provided a value for $key.  Source records always use &#39;.&#39; as the
+</span><span class=""> 1101: # key separator regardless of sep_char, so we normalise $key before the lookup.
+</span><span class=""> 1102: #
+</span><span class=""> 1103: # Returns ($found, $value): $found is true when the source type contributed to
+</span><span class=""> 1104: # the key, letting callers distinguish &quot;source set key to undef&quot; from &quot;source
+</span><span class=""> 1105: # never set it&quot;.
+</span><span class=""> 1106: # ---------------------------------------------------------------------------
+</span><span class=""> 1107: sub _value_from_type
+</span><span class=""> 1108: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 1109 → 1115 → 1122</span></span> 1109: 	my ($self, $type, $key) = @_;
+</span><span class=""> 1110: 
+</span><span class=""> 1111: 	my $sep = $self-&gt;{&#39;sep_char&#39;};
+</span><span class=""> 1112: 	my $flat_key = ($sep eq &#39;.&#39;) ? $key : join(&#39;.&#39;, split /\Q$sep\E/, $key);
+</span><span class=""> 1113: 
+</span><span class=""> 1114: 	my ($found, $val);
+</span><span class=""> 1115: 	for my $layer (@{$self-&gt;{&#39;_source_records&#39;} // []}) {
+</span><span class=""> 1116: 		next unless $layer-&gt;{&#39;type&#39;} eq $type;
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."> 1117: 		if(exists $layer-&gt;{&#39;flat_data&#39;}{$flat_key}) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
 					<ul>
-				<li><b>COND_INV_1549_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
+				<li><b>COND_INV_1117_3: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
 </li></ul></details>
-<span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1550: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+<span class=""> 1118: 			$found = 1;
+</span><span class=""> 1119: 			$val   = $layer-&gt;{&#39;flat_data&#39;}{$flat_key};
+</span><span class=""> 1120: 		}
+</span><span class=""> 1121: 	}
+</span><span class=""> 1122: 	return ($found, $val);
+</span><span class=""> 1123: }
+</span><span class=""> 1124: 
+</span><span class=""> 1125: =head2 prefer_env(key)
+</span><span class=""> 1126: 
+</span><span class=""> 1127: Return the value that an environment variable provided for C&lt;key&gt;, bypassing
+</span><span class=""> 1128: any later sources (e.g. CLI arguments) that may have overridden it.
+</span><span class=""> 1129: Falls back to the normal merged value from C&lt;get(key)&gt; when no environment
+</span><span class=""> 1130: variable contributed to C&lt;key&gt;.
+</span><span class=""> 1131: 
+</span><span class=""> 1132:   local $ENV{APP_DATABASE__HOST} = &#39;env-host&#39;;
+</span><span class=""> 1133:   my $host = $cfg-&gt;prefer_env(&#39;database.host&#39;);
+</span><span class=""> 1134:   # Returns &#39;env-host&#39; even if --APP_DATABASE__HOST=cli-host was also passed.
+</span><span class=""> 1135: 
+</span><span class=""> 1136: =cut
+</span><span class=""> 1137: 
+</span><span class=""> 1138: sub prefer_env
+</span><span class=""> 1139: {
+</span><span class=""> 1140: 	my ($self, $key) = @_;
+</span><span class=""> 1141: 	my ($found, $val) = $self-&gt;_value_from_type(&#39;env&#39;, $key);
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1142: 	return $found ? $val : $self-&gt;get($key);
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
 					<ul>
-				<li><b>BOOL_NEGATE_1550_3: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
+				<li><b>BOOL_NEGATE_1142_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
 
 								<div class="suggested-test">
 								<div class="suggest-label">🧪 Suggested Test</div>
@@ -2128,7 +1720,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
 </pre>
 								</div>
-							</li><li><b>RETURN_UNDEF_1550_3: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
+							</li><li><b>RETURN_UNDEF_1142_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
 
 								<div class="suggested-test">
 								<div class="suggest-label">🧪 Suggested Test</div>
@@ -2137,111 +1729,721 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </pre>
 								</div>
 							</li></ul></details>
-<span class=""> 1551: 	}
-</span><span class=""> 1552: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1553 → 1557 → 1564</span></span> 1553: 	my $sep = $self-&gt;{&#39;sep_char&#39;};
-</span><span class=""> 1554: 
-</span><span class=""> 1555: 	# Fallback: try resolving nested structure dynamically
-</span><span class=""> 1556: 	my $val = $data;
-</span><span class=""> 1557: 	foreach my $part(split /\Q$sep\E/, $key) {
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1558: 		if((ref($val) eq &#39;HASH&#39;) &amp;&amp; (exists $val-&gt;{$part})) {
-</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1559: 			$val = $val-&gt;{$part};
-</span><span class=""> 1560: 		} else {
-</span><span class=""> 1561: 			croak &quot;No such config key &#39;$key&#39;&quot;;
-</span><span class=""> 1562: 		}
-</span><span class=""> 1563: 	}
-</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1564: 	return $val;
-</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1565: }
-</span><span class=""> 1566: 
-</span><span class=""> 1567: 1;
+<span class=""> 1143: }
+</span><span class=""> 1144: 
+</span><span class=""> 1145: =head2 prefer_file(key)
+</span><span class=""> 1146: 
+</span><span class=""> 1147: Return the value that a configuration file provided for C&lt;key&gt;, bypassing
+</span><span class=""> 1148: environment variables and CLI arguments that may have overridden it.
+</span><span class=""> 1149: Falls back to the normal merged value from C&lt;get(key)&gt; when no file
+</span><span class=""> 1150: contributed to C&lt;key&gt;.
+</span><span class=""> 1151: 
+</span><span class=""> 1152:   my $host = $cfg-&gt;prefer_file(&#39;database.host&#39;);
+</span><span class=""> 1153:   # Returns the file-sourced value even if APP_DATABASE__HOST is set.
+</span><span class=""> 1154: 
+</span><span class=""> 1155: =cut
+</span><span class=""> 1156: 
+</span><span class=""> 1157: sub prefer_file
+</span><span class=""> 1158: {
+</span><span class=""> 1159: 	my ($self, $key) = @_;
+</span><span class=""> 1160: 	my ($found, $val) = $self-&gt;_value_from_type(&#39;file&#39;, $key);
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1161: 	return $found ? $val : $self-&gt;get($key);
+</span>
+					<details class="mutant-details">
+					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
+					<ul>
+				<li><b>BOOL_NEGATE_1161_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Boolean branch test suggestion
+ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
+</pre>
+								</div>
+							</li><li><b>RETURN_UNDEF_1161_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Return value assertion
+is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
+</pre>
+								</div>
+							</li></ul></details>
+<span class=""> 1162: }
+</span><span class=""> 1163: 
+</span><span class=""> 1164: =head2 prefer_data(key)
+</span><span class=""> 1165: 
+</span><span class=""> 1166: Return the value that the C&lt;data&gt; constructor argument provided for C&lt;key&gt;,
+</span><span class=""> 1167: bypassing files, environment variables, and CLI arguments that may have
+</span><span class=""> 1168: overridden it.
+</span><span class=""> 1169: Falls back to the normal merged value from C&lt;get(key)&gt; when C&lt;data&gt; did not
+</span><span class=""> 1170: contribute to C&lt;key&gt;.
+</span><span class=""> 1171: 
+</span><span class=""> 1172:   my $cfg = Config::Abstraction-&gt;new(
+</span><span class=""> 1173:       data        =&gt; { timeout =&gt; 30 },
+</span><span class=""> 1174:       config_dirs =&gt; [&#39;/etc/myapp&#39;],
+</span><span class=""> 1175:   );
+</span><span class=""> 1176:   my $t = $cfg-&gt;prefer_data(&#39;timeout&#39;);   # always 30, regardless of files/env
+</span><span class=""> 1177: 
+</span><span class=""> 1178: =cut
+</span><span class=""> 1179: 
+</span><span class=""> 1180: sub prefer_data
+</span><span class=""> 1181: {
+</span><span class=""> 1182: 	my ($self, $key) = @_;
+</span><span class=""> 1183: 	my ($found, $val) = $self-&gt;_value_from_type(&#39;data&#39;, $key);
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1184: 	return $found ? $val : $self-&gt;get($key);
+</span>
+					<details class="mutant-details">
+					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
+					<ul>
+				<li><b>BOOL_NEGATE_1184_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Boolean branch test suggestion
+ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
+</pre>
+								</div>
+							</li><li><b>RETURN_UNDEF_1184_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Return value assertion
+is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
+</pre>
+								</div>
+							</li></ul></details>
+<span class=""> 1185: }
+</span><span class=""> 1186: 
+</span><span class=""> 1187: =head2 prefer_argv(key)
+</span><span class=""> 1188: 
+</span><span class=""> 1189: Return the value that a CLI argument provided for C&lt;key&gt;.
+</span><span class=""> 1190: Falls back to the normal merged value from C&lt;get(key)&gt; when no CLI argument
+</span><span class=""> 1191: contributed to C&lt;key&gt;.
+</span><span class=""> 1192: 
+</span><span class=""> 1193: Because CLI arguments are the highest-precedence source, this method is
+</span><span class=""> 1194: primarily useful for writing self-documenting code or for detecting whether
+</span><span class=""> 1195: a key was explicitly supplied on the command line.
+</span><span class=""> 1196: 
+</span><span class=""> 1197:   my $level = $cfg-&gt;prefer_argv(&#39;log.level&#39;);
+</span><span class=""> 1198:   # Equivalent to $cfg-&gt;get(&#39;log.level&#39;) unless you specifically need to
+</span><span class=""> 1199:   # confirm the value came from @ARGV.
+</span><span class=""> 1200: 
+</span><span class=""> 1201: =cut
+</span><span class=""> 1202: 
+</span><span class=""> 1203: sub prefer_argv
+</span><span class=""> 1204: {
+</span><span class=""> 1205: 	my ($self, $key) = @_;
+</span><span class=""> 1206: 	my ($found, $val) = $self-&gt;_value_from_type(&#39;argv&#39;, $key);
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1207: 	return $found ? $val : $self-&gt;get($key);
+</span>
+					<details class="mutant-details">
+					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
+					<ul>
+				<li><b>BOOL_NEGATE_1207_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Boolean branch test suggestion
+ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
+</pre>
+								</div>
+							</li><li><b>RETURN_UNDEF_1207_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Return value assertion
+is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
+</pre>
+								</div>
+							</li></ul></details>
+<span class=""> 1208: }
+</span><span class=""> 1209: 
+</span><span class=""> 1210: =head2 merge_defaults
+</span><span class=""> 1211: 
+</span><span class=""> 1212: Merge the configuration hash into the given hash.
+</span><span class=""> 1213: 
+</span><span class=""> 1214:   package MyPackage;
+</span><span class=""> 1215:   use Params::Get;
+</span><span class=""> 1216:   use Config::Abstraction;
+</span><span class=""> 1217: 
+</span><span class=""> 1218:   sub new
+</span><span class=""> 1219:   {
+</span><span class=""> 1220:     my $class = shift;
+</span><span class=""> 1221: 
+</span><span class=""> 1222:     my $params = Params::Get::get_params(undef, \@_) || {};
+</span><span class=""> 1223: 
+</span><span class=""> 1224:     if(my $config = Config::Abstraction-&gt;new(env_prefix =&gt; &quot;${class}::&quot;)) {
+</span><span class=""> 1225:       $params = $config-&gt;merge_defaults(defaults =&gt; $params, merge =&gt; 1, section =&gt; $class);
+</span><span class=""> 1226:     }
+</span><span class=""> 1227: 
+</span><span class=""> 1228:     return bless $params, $class;
+</span><span class=""> 1229:   }
+</span><span class=""> 1230: 
+</span><span class=""> 1231: Options:
+</span><span class=""> 1232: 
+</span><span class=""> 1233: =over 4
+</span><span class=""> 1234: 
+</span><span class=""> 1235: =item * merge
+</span><span class=""> 1236: 
+</span><span class=""> 1237: Usually,
+</span><span class=""> 1238: what&#39;s in the object will overwrite what&#39;s in the defaults hash,
+</span><span class=""> 1239: if given,
+</span><span class=""> 1240: the result will be a combination of the hashes.
+</span><span class=""> 1241: 
+</span><span class=""> 1242: =item * section
+</span><span class=""> 1243: 
+</span><span class=""> 1244: Merge in that section from the configuration file.
+</span><span class=""> 1245: 
+</span><span class=""> 1246: =item * deep
+</span><span class=""> 1247: 
+</span><span class=""> 1248: Try harder to merge all configurations from the global section of the configuration file.
+</span><span class=""> 1249: 
+</span><span class=""> 1250: =back
+</span><span class=""> 1251: 
+</span><span class=""> 1252: =cut
+</span><span class=""> 1253: 
+</span><span class=""> 1254: sub merge_defaults
+</span><span class=""> 1255: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1256 → 1278 → 1286</span></span> 1256: 	my $self = shift;
+</span><span class=""> 1257: 	my $config = $self-&gt;all();
+</span><span class=""> 1258: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1259: 	return $config if(scalar(@_) == 0);
+</span><p> <b> Mutants (Total: 3, Killed: 3, Survived: 0)</b><p><span class=""> 1260: 
+</span><span class=""> 1261: 	my $params = Params::Get::get_params(&#39;defaults&#39;, @_);
+</span><span class=""> 1262: 	my $defaults = $params-&gt;{&#39;defaults&#39;};
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1263: 	return $config if(!defined($defaults));
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1264: 	my $section = $params-&gt;{&#39;section&#39;};
+</span><span class=""> 1265: 
+</span><span class=""> 1266: 	# Work on a shallow copy so we never mutate $self-&gt;{&#39;config&#39;} directly.
+</span><span class=""> 1267: 	# Without this, &#39;delete $config-&gt;{global}&#39; below would permanently alter
+</span><span class=""> 1268: 	# the live internal hash on every call.
+</span><span class=""> 1269: 	my %config_copy = %{$config};
+</span><span class=""> 1270: 	$config = \%config_copy;
+</span><span class=""> 1271: 
+</span><span class=""> 1272: 	# Save and restore Hash::Merge&#39;s clone behaviour so we don&#39;t leak the
+</span><span class=""> 1273: 	# no-clone global state into unrelated merge() calls (e.g. inside
+</span><span class=""> 1274: 	# _load_config when a new object is constructed after this method runs).
+</span><span class=""> 1275: 	my $saved_clone = Hash::Merge::get_clone_behavior();
+</span><span class=""> 1276: 	Hash::Merge::set_clone_behavior(0);
+</span><span class=""> 1277: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1278: 	if(exists $config-&gt;{&#39;global&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1279: 		if($params-&gt;{&#39;deep&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1280: 			$defaults = merge($config-&gt;{&#39;global&#39;}, $defaults);
+</span><span class=""> 1281: 		} else {
+</span><span class=""> 1282: 			$defaults = { %{$defaults}, %{$config-&gt;{&#39;global&#39;}} };
+</span><span class=""> 1283: 		}
+</span><span class=""> 1284: 		delete $config-&gt;{&#39;global&#39;};
+</span><span class=""> 1285: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1286 → 1286 → 1289</span></span> 1286: 	if($section &amp;&amp; exists $config-&gt;{$section}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1287: 		$config = $config-&gt;{$section};
+</span><span class=""> 1288: 	}
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1289 → 1290 → 1295</span></span> 1289: 	my $result;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1290: 	if($params-&gt;{&#39;merge&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1291: 		$result = merge($config, $defaults);
+</span><span class=""> 1292: 	} else {
+</span><span class=""> 1293: 		$result = { %{$defaults}, %{$config} };
+</span><span class=""> 1294: 	}
+</span><span class=""> 1295: 	Hash::Merge::set_clone_behavior($saved_clone);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1296: 	return $result;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1297: }
+</span><span class=""> 1298: 
+</span><span class=""> 1299: # Helper routine to load a driver.
+</span><span class=""> 1300: # NOTE: Log::Abstraction must NOT be loaded via this method - it is
+</span><span class=""> 1301: # bootstrapped directly in new() to avoid a circular initialisation
+</span><span class=""> 1302: # dependency where _load_driver would attempt to log via an as-yet
+</span><span class=""> 1303: # uninitialised logger.
+</span><span class=""> 1304: sub _load_driver
+</span><span class=""> 1305: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1306 → 1312 → 1319</span></span> 1306: 	my($self, $driver, $imports) = @_;
+</span><span class=""> 1307: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1308: 	return 1 if($self-&gt;{&#39;loaded&#39;}{$driver});
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1309: 	return 0 if($self-&gt;{&#39;failed&#39;}{$driver});
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1310: 
+</span><span class=""> 1311: 	eval &quot;require $driver&quot;;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1312: 	if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1313: 		if(my $logger = $self-&gt;{&#39;logger&#39;}) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1314: 			$logger-&gt;warn(ref($self), &quot;: $driver failed to load: $@&quot;);
+</span><span class=""> 1315: 		}
+</span><span class=""> 1316: 		$self-&gt;{&#39;failed&#39;}{$driver} = 1;
+</span><span class=""> 1317: 		return;
+</span><span class=""> 1318: 	}
+</span><span class=""> 1319: 	$driver-&gt;import(@{ $imports // [] });
+</span><span class=""> 1320: 	$self-&gt;{&#39;loaded&#39;}{$driver} = 1;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1321: 	return 1;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1322: }
+</span><span class=""> 1323: 
+</span><span class=""> 1324: =head2 Remote configuration directories (Newcastle Connection)
+</span><span class=""> 1325: 
+</span><span class=""> 1326: Any entry in C&lt;config_dirs&gt; whose path begins with C&lt;/../&gt; is treated as a
+</span><span class=""> 1327: remote specification rather than a local directory:
+</span><span class=""> 1328: 
+</span><span class=""> 1329:   /../hostname/path/to/dir
+</span><span class=""> 1330: 
+</span><span class=""> 1331: The hostname and directory are extracted, and the same standard files searched
+</span><span class=""> 1332: locally (C&lt;base.yaml&gt;, C&lt;local.yaml&gt;, C&lt;base.json&gt;, etc.) are fetched from
+</span><span class=""> 1333: the remote machine via L&lt;File::Slurp::Remote&gt; over SSH.
+</span><span class=""> 1334: 
+</span><span class=""> 1335: When the hostname resolves to the local machine -- C&lt;localhost&gt;, C&lt;127.0.0.1&gt;,
+</span><span class=""> 1336: C&lt;::1&gt;, or the value returned by C&lt;Sys::Hostname::hostname()&gt; (checked as
+</span><span class=""> 1337: both fully-qualified and short form, case-insensitively) -- the C&lt;/../host/&gt;
+</span><span class=""> 1338: wrapper is silently unwrapped and the enclosed path is processed through the
+</span><span class=""> 1339: normal local file pipeline instead.  No SSH connection is made.  This means a
+</span><span class=""> 1340: configuration written for a shared remote host degrades gracefully when run on
+</span><span class=""> 1341: that host itself:
+</span><span class=""> 1342: 
+</span><span class=""> 1343:   # On any other machine: fetches /etc/myapp over SSH
+</span><span class=""> 1344:   # On cfg-server itself: reads /etc/myapp from disk directly
+</span><span class=""> 1345:   config_dirs =&gt; [&#39;/../cfg-server/etc/myapp&#39;]
+</span><span class=""> 1346: 
+</span><span class=""> 1347: Remote directories participate in the normal merge pipeline and can be freely
+</span><span class=""> 1348: mixed with local ones:
+</span><span class=""> 1349: 
+</span><span class=""> 1350:   my $cfg = Config::Abstraction-&gt;new(
+</span><span class=""> 1351:       config_dirs =&gt; [
+</span><span class=""> 1352:           &#39;/etc/myapp&#39;,                        # local
+</span><span class=""> 1353:           &#39;/../deploy@cfg-server/etc/myapp&#39;,   # remote via SSH (local on cfg-server)
+</span><span class=""> 1354:       ],
+</span><span class=""> 1355:   );
+</span><span class=""> 1356: 
+</span><span class=""> 1357: SSH authentication is handled by the system SSH client.
+</span><span class=""> 1358: No extra constructor options are required; use your SSH agent or
+</span><span class=""> 1359: C&lt;~/.ssh/config&gt; for host-specific settings.
+</span><span class=""> 1360: 
+</span><span class=""> 1361: L&lt;File::Slurp::Remote&gt; must be installed for remote directories to work.
+</span><span class=""> 1362: If it is absent the directory is silently skipped and a warning is emitted.
+</span><span class=""> 1363: 
+</span><span class=""> 1364: =head3 Why C&lt;/../&gt; (the Newcastle Connection convention)
+</span><span class=""> 1365: 
+</span><span class=""> 1366: Several syntaxes were considered for marking a C&lt;config_dirs&gt; entry as remote.
+</span><span class=""> 1367: Each alternative was rejected for a concrete reason:
+</span><span class=""> 1368: 
+</span><span class=""> 1369: =over 4
+</span><span class=""> 1370: 
+</span><span class=""> 1371: =item C&lt;hostname/path&gt; -- ambiguous
+</span><span class=""> 1372: 
+</span><span class=""> 1373: Indistinguishable from a relative local directory named C&lt;hostname&gt;.
+</span><span class=""> 1374: The module cannot tell at parse time whether C&lt;myserver/etc&gt; is a two-level
+</span><span class=""> 1375: local path or a remote specification.
+</span><span class=""> 1376: 
+</span><span class=""> 1377: =item C&lt;hostname:/path&gt; -- collides with Windows drive letters
+</span><span class=""> 1378: 
+</span><span class=""> 1379: The C&lt;X:\&gt; drive-letter convention on Windows uses exactly the same
+</span><span class=""> 1380: C&lt;letter:&gt; prefix.  A single-letter hostname would be misidentified as a
+</span><span class=""> 1381: drive, and path-normalisation code on Windows would mangle it.
+</span><span class=""> 1382: 
+</span><span class=""> 1383: =item C&lt;file://hostname/path&gt; -- wrong semantics
+</span><span class=""> 1384: 
+</span><span class=""> 1385: RFC 8089 defines C&lt;file://&gt; as a reference to a B&lt;local&gt; file.
+</span><span class=""> 1386: C&lt;file:///etc/passwd&gt; (three slashes, empty host) is the canonical local form;
+</span><span class=""> 1387: C&lt;file://hostname/path&gt; is reserved for the host component but is explicitly
+</span><span class=""> 1388: discouraged for general use and is not understood by most tooling as meaning
+</span><span class=""> 1389: SSH.
+</span><span class=""> 1390: 
+</span><span class=""> 1391: =item C&lt;ssh://hostname/path&gt; -- requires URI parsing
+</span><span class=""> 1392: 
+</span><span class=""> 1393: Introduces a dependency on URI parsing (or a bespoke prefix check) and
+</span><span class=""> 1394: implies a specific transport.  C&lt;File::Slurp::Remote&gt; already abstracts
+</span><span class=""> 1395: the transport; encoding C&lt;ssh://&gt; in the path would be misleading if a future
+</span><span class=""> 1396: version of that module supports other transports such as C&lt;rsync://&gt;.
+</span><span class=""> 1397: 
+</span><span class=""> 1398: =item C&lt;/../hostname/path&gt; -- the Newcastle Connection
+</span><span class=""> 1399: 
+</span><span class=""> 1400: The Newcastle Connection (Brownbridge, Dion, Elsworth, 1982) is a distributed
+</span><span class=""> 1401: Unix convention in which the token C&lt;/../&gt; at the start of a pathname means
+</span><span class=""> 1402: &quot;leave the local namespace and enter the named remote host&quot;.
+</span><span class=""> 1403: It works because C&lt;/../&gt; B&lt;cannot exist&gt; as a real filesystem path:
+</span><span class=""> 1404: C&lt;..&gt; from the root directory resolves back to the root on every POSIX system,
+</span><span class=""> 1405: so C&lt;/../&gt; always denotes the root itself, never a child of the root.
+</span><span class=""> 1406: No pathname-normalisation step, C&lt;chdir&gt;, or filesystem traversal will ever
+</span><span class=""> 1407: produce a path that legitimately begins with C&lt;/../&gt;, which means the prefix
+</span><span class=""> 1408: is a permanent, collision-free sentinel that requires only a regex to detect.
+</span><span class=""> 1409: 
+</span><span class=""> 1410: =back
+</span><span class=""> 1411: 
+</span><span class=""> 1412: The Newcastle Connection prefix is therefore the only choice that is:
+</span><span class=""> 1413: 
+</span><span class=""> 1414: =over 4
+</span><span class=""> 1415: 
+</span><span class=""> 1416: =item * unambiguous on all platforms (POSIX and Windows)
+</span><span class=""> 1417: 
+</span><span class=""> 1418: =item * impossible to produce accidentally from a real local path
+</span><span class=""> 1419: 
+</span><span class=""> 1420: =item * detectable with a single C&lt;m{^\Q/../\E}&gt; regex, no URI parser needed
+</span><span class=""> 1421: 
+</span><span class=""> 1422: =item * transport-neutral (the hostname is passed to whatever remote driver is installed)
+</span><span class=""> 1423: 
+</span><span class=""> 1424: =back
+</span><span class=""> 1425: 
+</span><span class=""> 1426: =head2 AUTOLOAD
+</span><span class=""> 1427: 
+</span><span class=""> 1428: This module supports dynamic access to configuration keys via AUTOLOAD.
+</span><span class=""> 1429: Nested keys are accessible using the separator,
+</span><span class=""> 1430: so C&lt;$config-E&lt;gt&gt;database_user()&gt; resolves to C&lt;&lt; $config-&gt;{database}-&gt;{user} &gt;&gt;,
+</span><span class=""> 1431: when C&lt;sep_char&gt; is set to &#39;_&#39;.
+</span><span class=""> 1432: 
+</span><span class=""> 1433:     $config = Config::Abstraction-&gt;new(
+</span><span class=""> 1434:         data =&gt; {
+</span><span class=""> 1435:             database =&gt; {
+</span><span class=""> 1436:                 user =&gt; &#39;alice&#39;,
+</span><span class=""> 1437:                 pass =&gt; &#39;secret&#39;
+</span><span class=""> 1438:             },
+</span><span class=""> 1439:             log_level =&gt; &#39;debug&#39;
+</span><span class=""> 1440:         },
+</span><span class=""> 1441:         flatten =&gt; 1,
+</span><span class=""> 1442:         sep_char =&gt; &#39;_&#39;
+</span><span class=""> 1443:     );
+</span><span class=""> 1444: 
+</span><span class=""> 1445:     my $user = $config-&gt;database_user();	# returns &#39;alice&#39;
+</span><span class=""> 1446: 
+</span><span class=""> 1447:     # or
+</span><span class=""> 1448:     $user = $config-&gt;database()-&gt;{&#39;user&#39;};	# returns &#39;alice&#39;
+</span><span class=""> 1449: 
+</span><span class=""> 1450:     # Attempting to call a nonexistent key
+</span><span class=""> 1451:     my $foo = $config-&gt;nonexistent_key();	# dies with error
+</span><span class=""> 1452: 
+</span><span class=""> 1453: =cut
+</span><span class=""> 1454: 
+</span><span class=""> 1455: # ---------------------------------------------------------------------------
+</span><span class=""> 1456: # _parse_remote_dir -- detect Newcastle Connection style paths.
+</span><span class=""> 1457: #
+</span><span class=""> 1458: # Returns ($host, $dir) when $dir begins with /../, empty list otherwise.
+</span><span class=""> 1459: # The /../ prefix is syntactically impossible for a real local path so no
+</span><span class=""> 1460: # real directory entry is ever misidentified.
+</span><span class=""> 1461: # ---------------------------------------------------------------------------
+</span><span class=""> 1462: sub _parse_remote_dir
+</span><span class=""> 1463: {
+</span><span class=""> 1464: 	my ($self, $dir) = @_;
+</span><span class=""> 1465: 
+</span><span class=""> 1466: 	return unless defined($dir);
+</span><span class=""> 1467: 	return unless $dir =~ m{^\Q/../\E([^/]+)(/.+)?$};
+</span><span class=""> 1468: 	return ($1, $2 // &#39;/&#39;);
+</span><span class=""> 1469: }
+</span><span class=""> 1470: 
+</span><span class=""> 1471: # ---------------------------------------------------------------------------
+</span><span class=""> 1472: # _is_local_host -- true when $host refers to the machine running this code.
+</span><span class=""> 1473: #
+</span><span class=""> 1474: # Strips any user@ prefix first, then checks the four common ways a caller
+</span><span class=""> 1475: # might spell &quot;here&quot;: the loopback name, the two loopback addresses, and the
+</span><span class=""> 1476: # system hostname (both fully-qualified and short).  Comparison is
+</span><span class=""> 1477: # case-insensitive because hostnames are case-insensitive by RFC 1034.
+</span><span class=""> 1478: # ---------------------------------------------------------------------------
+</span><span class=""> 1479: sub _is_local_host
+</span><span class=""> 1480: {
+</span><span class=""> 1481: 	my ($self, $host) = @_;
+</span><span class=""> 1482: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1483: 	return 0 unless defined($host) &amp;&amp; length($host);
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1484: 
+</span><span class=""> 1485: 	(my $bare = $host) =~ s/^[^@]+@//;	# strip optional user@ prefix
+</span><span class=""> 1486: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1487: 	return 1 if lc($bare) eq &#39;localhost&#39;;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1488: 	return 1 if $bare eq &#39;127.0.0.1&#39;;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1489: 	return 1 if $bare eq &#39;::1&#39;;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1490: 
+</span><span class=""> 1491: 	require Sys::Hostname;
+</span><span class=""> 1492: 	my $fqdn  = lc(Sys::Hostname::hostname());
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1493: 	return 1 if lc($bare) eq $fqdn;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1494: 
+</span><span class=""> 1495: 	(my $short = $fqdn) =~ s/\..*$//;	# trim domain component
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1496: 	return 1 if lc($bare) eq $short;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1497: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1498: 	return 0;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1499: }
+</span><span class=""> 1500: 
+</span><span class=""> 1501: # ---------------------------------------------------------------------------
+</span><span class=""> 1502: # _load_remote_dir -- fetch and merge standard config files from one remote
+</span><span class=""> 1503: # host/directory pair.
+</span><span class=""> 1504: #
+</span><span class=""> 1505: # Silently skips files that do not exist; warns (or logs) on parse errors.
+</span><span class=""> 1506: # Merges into %$merged_ref using the same Hash::Merge LEFT_PRECEDENT strategy
+</span><span class=""> 1507: # as the local pipeline, so remote values override earlier local values.
+</span><span class=""> 1508: # ---------------------------------------------------------------------------
+</span><span class=""> 1509: sub _load_remote_dir
+</span><span class=""> 1510: {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1511 → 1511 → 1515</span></span> 1511: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1512: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
+</span><span class=""> 1513: 	}
+</span><span class=""> 1514: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1515 → 1518 → 1524</span></span> 1515: 	my ($self, $host, $remote_dir, $merged_ref) = @_;
+</span><span class=""> 1516: 	my $logger = $self-&gt;{&#39;logger&#39;};
+</span><span class=""> 1517: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1518: 	unless($self-&gt;_load_driver(&#39;File::Slurp::Remote&#39;)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1519: 		my $msg = ref($self) . &quot;: File::Slurp::Remote required for /../$host$remote_dir but is not installed&quot;;
+</span><span class=""> 1520: 		$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
+</span><span class=""> 1521: 		return;
+</span><span class=""> 1522: 	}
+</span><span class=""> 1523: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1524 → 1524 → 0</span></span> 1524: 	for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
+</span><span class=""> 1525: 		my $remote_path = &quot;/../$host$remote_dir/$file&quot;;
+</span><span class=""> 1526: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1527: 		if($logger) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1528: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Looking for remote config $remote_path&quot;);
+</span><span class=""> 1529: 		}
+</span><span class=""> 1530: 
+</span><span class=""> 1531: 		my $raw = $self-&gt;_slurp_remote($host, &quot;$remote_dir/$file&quot;);
+</span><span class=""> 1532: 		next unless defined($raw);
+</span><span class=""> 1533: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1534: 		if($logger) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1535: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Loading remote config $remote_path&quot;);
+</span><span class=""> 1536: 		}
+</span><span class=""> 1537: 
+</span><span class=""> 1538: 		my $data = $self-&gt;_parse_config_string($raw, $file, $remote_path);
+</span><span class=""> 1539: 		next unless defined($data);
+</span><span class=""> 1540: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1541: 		if(ref($data) ne &#39;HASH&#39;) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1542: 			my $msg = ref($self) . &quot;: remote $remote_path did not yield a hash; skipping&quot;;
+</span><span class=""> 1543: 			$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
+</span><span class=""> 1544: 			next;
+</span><span class=""> 1545: 		}
+</span><span class=""> 1546: 
+</span><span class=""> 1547: 		push @{$self-&gt;{&#39;_source_records&#39;}}, {
+</span><span class=""> 1548: 			type      =&gt; &#39;file&#39;,
+</span><span class=""> 1549: 			label     =&gt; $remote_path,
+</span><span class=""> 1550: 			flat_data =&gt; { _flatten_keys($data) },
+</span><span class=""> 1551: 		};
+</span><span class=""> 1552: 		%{$merged_ref} = %{ merge($data, $merged_ref) };
+</span><span class=""> 1553: 		push @{$merged_ref-&gt;{&#39;config_path&#39;}}, $remote_path;
+</span><span class=""> 1554: 	}
+</span><span class=""> 1555: }
+</span><span class=""> 1556: 
+</span><span class=""> 1557: # ---------------------------------------------------------------------------
+</span><span class=""> 1558: # _slurp_remote -- read a single file from a remote host via SSH.
+</span><span class=""> 1559: #
+</span><span class=""> 1560: # Wraps File::Slurp::Remote::read_file; returns the raw string on success
+</span><span class=""> 1561: # or undef on any error (connection refused, file absent, permission denied).
+</span><span class=""> 1562: # Errors are logged at debug level so missing files are not noisy.
+</span><span class=""> 1563: # ---------------------------------------------------------------------------
+</span><span class=""> 1564: sub _slurp_remote
+</span><span class=""> 1565: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1566 → 1573 → 1579</span></span> 1566: 	my ($self, $host, $path) = @_;
+</span><span class=""> 1567: 	my $logger = $self-&gt;{&#39;logger&#39;};
 </span><span class=""> 1568: 
-</span><span class=""> 1569: =head1 COMMON PITFALLS
-</span><span class=""> 1570: 
-</span><span class=""> 1571: =over 4
+</span><span class=""> 1569: 	# NOTE: verify the calling convention of your installed File::Slurp::Remote.
+</span><span class=""> 1570: 	# Common forms: read_file(&quot;$host:$path&quot;) or read_file($host, $path).
+</span><span class=""> 1571: 	my $content = eval { File::Slurp::Remote::read_file($host, $path) };
 </span><span class=""> 1572: 
-</span><span class=""> 1573: =item * Nested hashes
-</span><span class=""> 1574: 
-</span><span class=""> 1575: Merging replaces entire nested hashes unless you enable deep merging.
-</span><span class=""> 1576: 
-</span><span class=""> 1577: =item * Undef values
-</span><span class=""> 1578: 
-</span><span class=""> 1579: Keys explicitly set to C&lt;undef&gt; in a later source override earlier values.
-</span><span class=""> 1580: 
-</span><span class=""> 1581: =item * Environment
-</span><span class=""> 1582: 
-</span><span class=""> 1583: When using environment variables,
-</span><span class=""> 1584: remember that double underscores (__) create nested structures,
-</span><span class=""> 1585: while single underscores remain as part of the key name under the prefix namespace.
-</span><span class=""> 1586: 
-</span><span class=""> 1587: =back
-</span><span class=""> 1588: 
-</span><span class=""> 1589: =head1 BUGS
-</span><span class=""> 1590: 
-</span><span class=""> 1591: It should be possible to escape the separator character either with backslashes or quotes.
-</span><span class=""> 1592: 
-</span><span class=""> 1593: Due to the case-insensitive nature of environment variables on Windows,
-</span><span class=""> 1594: it may be challenging to override values using environment variables on that platform.
-</span><span class=""> 1595: 
-</span><span class=""> 1596: =head1 REPOSITORY
-</span><span class=""> 1597: 
-</span><span class=""> 1598: L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
-</span><span class=""> 1599: 
-</span><span class=""> 1600: =head1 SUPPORT
-</span><span class=""> 1601: 
-</span><span class=""> 1602: This module is provided as-is without any warranty.
-</span><span class=""> 1603: 
-</span><span class=""> 1604: Please report any bugs or feature requests to C&lt;bug-config-abstraction at rt.cpan.org&gt;,
-</span><span class=""> 1605: or through the web interface at
-</span><span class=""> 1606: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Config-Abstraction&gt;.
-</span><span class=""> 1607: I will be notified, and then you&#39;ll
-</span><span class=""> 1608: automatically be notified of progress on your bug as I make changes.
-</span><span class=""> 1609: 
-</span><span class=""> 1610: You can find documentation for this module with the perldoc command.
-</span><span class=""> 1611: 
-</span><span class=""> 1612:     perldoc Config::Abstraction
-</span><span class=""> 1613: 
-</span><span class=""> 1614: =head1 SEE ALSO
-</span><span class=""> 1615: 
-</span><span class=""> 1616: =over 4
-</span><span class=""> 1617: 
-</span><span class=""> 1618: =item * L&lt;File::Slurp::Remote&gt;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1573: 	if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1574: 		if($logger) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1575: 			$logger-&gt;debug(ref($self), &#39; &#39;, __LINE__, &quot;: Could not read $path from $host: $@&quot;);
+</span><span class=""> 1576: 		}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1577: 		return undef;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1578: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1579: 	return $content;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1580: }
+</span><span class=""> 1581: 
+</span><span class=""> 1582: # ---------------------------------------------------------------------------
+</span><span class=""> 1583: # _parse_config_string -- parse a raw config string by extension.
+</span><span class=""> 1584: #
+</span><span class=""> 1585: # Mirrors the format-detection logic used for local files.  INI content is
+</span><span class=""> 1586: # written to a File::Temp scratch file because Config::IniFiles requires a
+</span><span class=""> 1587: # real filesystem path; the temp file is removed as soon as parsing returns.
+</span><span class=""> 1588: #
+</span><span class=""> 1589: # Returns a hashref on success, undef on failure.
+</span><span class=""> 1590: # ---------------------------------------------------------------------------
+</span><span class=""> 1591: sub _parse_config_string
+</span><span class=""> 1592: {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1593 → 1593 → 1597</span></span> 1593: 	if(!UNIVERSAL::isa((caller)[0], __PACKAGE__)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1594: 		Carp::croak(&#39;Illegal Operation: This method can only be called by a subclass&#39;);
+</span><span class=""> 1595: 	}
+</span><span class=""> 1596: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1597 → 1635 → 1642</span></span> 1597: 	my ($self, $raw, $filename, $label) = @_;
+</span><span class=""> 1598: 	my $logger = $self-&gt;{&#39;logger&#39;};
+</span><span class=""> 1599: 	my $data;
+</span><span class=""> 1600: 
+</span><span class=""> 1601: 	eval {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1602: 		if($filename =~ /\.ya?ml$/i) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1603: 			$self-&gt;_load_driver(&#39;YAML::XS&#39;, [&#39;Load&#39;]);
+</span><span class=""> 1604: 			$data = YAML::XS::Load($raw);
+</span><span class=""> 1605: 
+</span><span class=""> 1606: 		} elsif($filename =~ /\.json$/i) {
+</span><span class=""> 1607: 			$data = decode_json($raw);
+</span><span class=""> 1608: 
+</span><span class=""> 1609: 		} elsif($filename =~ /\.xml$/i) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1610: 			if($self-&gt;_load_driver(&#39;XML::Simple&#39;, [&#39;XMLin&#39;])) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1611: 				$data = XMLin(\$raw, ForceArray =&gt; 0, KeyAttr =&gt; []);
+</span><span class=""> 1612: 			} elsif($self-&gt;_load_driver(&#39;XML::PP&#39;)) {
+</span><span class=""> 1613: 				my $pp = XML::PP-&gt;new();
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1614: 				if(my $tree = $pp-&gt;parse(\$raw)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1615: 					$data = $pp-&gt;collapse_structure($tree);
+</span><span class=""> 1616: 					$data = $data-&gt;{&#39;config&#39;} if ($data &amp;&amp; $data-&gt;{&#39;config&#39;});
+</span><span class=""> 1617: 				}
+</span><span class=""> 1618: 			}
 </span><span class=""> 1619: 
-</span><span class=""> 1620:     Used to fetch configuration from remote hosts when C&lt;config_dirs&gt; contains
-</span><span class=""> 1621:     Newcastle Connection paths (C&lt;/../hostname/path&gt;).
-</span><span class=""> 1622: 
-</span><span class=""> 1623: =item * L&lt;Config::Any&gt;
-</span><span class=""> 1624: 
-</span><span class=""> 1625: =item * L&lt;Config::Auto&gt;
-</span><span class=""> 1626: 
-</span><span class=""> 1627: =item * L&lt;Data::Reuse&gt;
-</span><span class=""> 1628: 
-</span><span class=""> 1629: Used to C&lt;fixate()&gt; elements when installed, unless C&lt;no-fixate&gt; is given
-</span><span class=""> 1630: 
-</span><span class=""> 1631: =item * L&lt;Hash::Merge&gt;
-</span><span class=""> 1632: 
-</span><span class=""> 1633: =item * L&lt;Log::Abstraction&gt;
+</span><span class=""> 1620: 		} elsif($filename =~ /\.ini$/i) {
+</span><span class=""> 1621: 			$self-&gt;_load_driver(&#39;Config::IniFiles&#39;);
+</span><span class=""> 1622: 			require File::Temp;
+</span><span class=""> 1623: 			my $tmp = File::Temp-&gt;new(SUFFIX =&gt; &#39;.ini&#39;, UNLINK =&gt; 1);
+</span><span class=""> 1624: 			print {$tmp} $raw;
+</span><span class=""> 1625: 			$tmp-&gt;flush();
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1626: 			if(my $ini = Config::IniFiles-&gt;new(-file =&gt; $tmp-&gt;filename())) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1627: 				$data = { map {
+</span><span class=""> 1628: 					my $section = $_;
+</span><span class=""> 1629: 					$section =&gt; { map { $_ =&gt; $ini-&gt;val($section, $_) } $ini-&gt;Parameters($section) }
+</span><span class=""> 1630: 				} $ini-&gt;Sections() };
+</span><span class=""> 1631: 			}
+</span><span class=""> 1632: 		}
+</span><span class=""> 1633: 	};
 </span><span class=""> 1634: 
-</span><span class=""> 1635: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Config-Abstraction/coverage/&gt;
-</span><span class=""> 1636: 
-</span><span class=""> 1637: =item * Development version on GitHub L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
-</span><span class=""> 1638: 
-</span><span class=""> 1639: =back
-</span><span class=""> 1640: 
-</span><span class=""> 1641: =head1 AUTHOR
-</span><span class=""> 1642: 
-</span><span class=""> 1643: Nigel Horne, C&lt;&lt; &lt;njh at nigelhorne.com&gt; &gt;&gt;
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1635: 	if($@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1636: 		my $err = $@;
+</span><span class=""> 1637: 		my $msg = ref($self) . &quot;: Failed to parse $label: $err&quot;;
+</span><span class=""> 1638: 		$logger ? $logger-&gt;warn($msg) : Carp::carp($msg);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1639: 		return undef;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1640: 	}
+</span><span class=""> 1641: 
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1642: 	return $data;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1643: }
 </span><span class=""> 1644: 
-</span><span class=""> 1645: =head1 LICENCE AND COPYRIGHT
-</span><span class=""> 1646: 
-</span><span class=""> 1647: Copyright 2025-2026 Nigel Horne.
+</span><span class=""> 1645: sub AUTOLOAD
+</span><span class=""> 1646: {
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1647 → 1661 → 1665</span></span> 1647: 	our $AUTOLOAD;
 </span><span class=""> 1648: 
-</span><span class=""> 1649: Usage is subject to the GPL2 licence terms.
-</span><span class=""> 1650: If you use it,
-</span><span class=""> 1651: please let me know.
-</span><span class=""> 1652: 
-</span><span class=""> 1653: =cut
+</span><span class=""> 1649: 	my $self = shift;
+</span><span class=""> 1650: 	my $key = $AUTOLOAD;
+</span><span class=""> 1651: 
+</span><span class=""> 1652: 	$key =~ s/.*:://;	# remove package name
+</span><span class=""> 1653: 	return if $key eq &#39;DESTROY&#39;;
 </span><span class=""> 1654: 
-</span><span class=""> 1655: 1;
+</span><span class=""> 1655: 	# my $val = $self-&gt;get($key);
+</span><span class=""> 1656: 	# return $val if(defined($val));
+</span><span class=""> 1657: 
+</span><span class=""> 1658: 	my $data = $self-&gt;{data} || $self-&gt;{&#39;config&#39;};
+</span><span class=""> 1659: 
+</span><span class=""> 1660: 	# If flattening is ON, assume keys are pre-flattened
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."> 1661: 	if ($self-&gt;{flatten}) {
+</span>
+					<details class="mutant-details">
+					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
+					<ul>
+				<li><b>COND_INV_1661_2: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
+</li></ul></details>
+<span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1662: 		return $data-&gt;{$key} if(exists $data-&gt;{$key});
+</span>
+					<details class="mutant-details">
+					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
+					<ul>
+				<li><b>BOOL_NEGATE_1662_3: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Boolean branch test suggestion
+ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
+</pre>
+								</div>
+							</li><li><b>RETURN_UNDEF_1662_3: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
+
+								<div class="suggested-test">
+								<div class="suggest-label">🧪 Suggested Test</div>
+								<pre># Return value assertion
+is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
+</pre>
+								</div>
+							</li></ul></details>
+<span class=""> 1663: 	}
+</span><span class=""> 1664: 
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">1665 → 1669 → 1676</span></span> 1665: 	my $sep = $self-&gt;{&#39;sep_char&#39;};
+</span><span class=""> 1666: 
+</span><span class=""> 1667: 	# Fallback: try resolving nested structure dynamically
+</span><span class=""> 1668: 	my $val = $data;
+</span><span class=""> 1669: 	foreach my $part(split /\Q$sep\E/, $key) {
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1670: 		if((ref($val) eq &#39;HASH&#39;) &amp;&amp; (exists $val-&gt;{$part})) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 1671: 			$val = $val-&gt;{$part};
+</span><span class=""> 1672: 		} else {
+</span><span class=""> 1673: 			croak &quot;No such config key &#39;$key&#39;&quot;;
+</span><span class=""> 1674: 		}
+</span><span class=""> 1675: 	}
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1676: 	return $val;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1677: }
+</span><span class=""> 1678: 
+</span><span class=""> 1679: 1;
+</span><span class=""> 1680: 
+</span><span class=""> 1681: =head1 COMMON PITFALLS
+</span><span class=""> 1682: 
+</span><span class=""> 1683: =over 4
+</span><span class=""> 1684: 
+</span><span class=""> 1685: =item * Nested hashes
+</span><span class=""> 1686: 
+</span><span class=""> 1687: Merging replaces entire nested hashes unless you enable deep merging.
+</span><span class=""> 1688: 
+</span><span class=""> 1689: =item * Undef values
+</span><span class=""> 1690: 
+</span><span class=""> 1691: Keys explicitly set to C&lt;undef&gt; in a later source override earlier values.
+</span><span class=""> 1692: 
+</span><span class=""> 1693: =item * Environment
+</span><span class=""> 1694: 
+</span><span class=""> 1695: When using environment variables,
+</span><span class=""> 1696: remember that double underscores (__) create nested structures,
+</span><span class=""> 1697: while single underscores remain as part of the key name under the prefix namespace.
+</span><span class=""> 1698: 
+</span><span class=""> 1699: =back
+</span><span class=""> 1700: 
+</span><span class=""> 1701: =head1 BUGS
+</span><span class=""> 1702: 
+</span><span class=""> 1703: It should be possible to escape the separator character either with backslashes or quotes.
+</span><span class=""> 1704: 
+</span><span class=""> 1705: Due to the case-insensitive nature of environment variables on Windows,
+</span><span class=""> 1706: it may be challenging to override values using environment variables on that platform.
+</span><span class=""> 1707: 
+</span><span class=""> 1708: =head1 REPOSITORY
+</span><span class=""> 1709: 
+</span><span class=""> 1710: L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
+</span><span class=""> 1711: 
+</span><span class=""> 1712: =head1 SUPPORT
+</span><span class=""> 1713: 
+</span><span class=""> 1714: This module is provided as-is without any warranty.
+</span><span class=""> 1715: 
+</span><span class=""> 1716: Please report any bugs or feature requests to C&lt;bug-config-abstraction at rt.cpan.org&gt;,
+</span><span class=""> 1717: or through the web interface at
+</span><span class=""> 1718: L&lt;http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Config-Abstraction&gt;.
+</span><span class=""> 1719: I will be notified, and then you&#39;ll
+</span><span class=""> 1720: automatically be notified of progress on your bug as I make changes.
+</span><span class=""> 1721: 
+</span><span class=""> 1722: You can find documentation for this module with the perldoc command.
+</span><span class=""> 1723: 
+</span><span class=""> 1724:     perldoc Config::Abstraction
+</span><span class=""> 1725: 
+</span><span class=""> 1726: =head1 SEE ALSO
+</span><span class=""> 1727: 
+</span><span class=""> 1728: =over 4
+</span><span class=""> 1729: 
+</span><span class=""> 1730: =item * L&lt;File::Slurp::Remote&gt;
+</span><span class=""> 1731: 
+</span><span class=""> 1732:     Used to fetch configuration from remote hosts when C&lt;config_dirs&gt; contains
+</span><span class=""> 1733:     Newcastle Connection paths (C&lt;/../hostname/path&gt;).
+</span><span class=""> 1734: 
+</span><span class=""> 1735: =item * L&lt;Config::Any&gt;
+</span><span class=""> 1736: 
+</span><span class=""> 1737: =item * L&lt;Config::Auto&gt;
+</span><span class=""> 1738: 
+</span><span class=""> 1739: =item * L&lt;Data::Reuse&gt;
+</span><span class=""> 1740: 
+</span><span class=""> 1741: Used to C&lt;fixate()&gt; elements when installed, unless C&lt;no-fixate&gt; is given
+</span><span class=""> 1742: 
+</span><span class=""> 1743: =item * L&lt;Hash::Merge&gt;
+</span><span class=""> 1744: 
+</span><span class=""> 1745: =item * L&lt;Log::Abstraction&gt;
+</span><span class=""> 1746: 
+</span><span class=""> 1747: =item * L&lt;Test Dashboard|https://nigelhorne.github.io/Config-Abstraction/coverage/&gt;
+</span><span class=""> 1748: 
+</span><span class=""> 1749: =item * Development version on GitHub L&lt;https://github.com/nigelhorne/Config-Abstraction&gt;
+</span><span class=""> 1750: 
+</span><span class=""> 1751: =back
+</span><span class=""> 1752: 
+</span><span class=""> 1753: =head1 AUTHOR
+</span><span class=""> 1754: 
+</span><span class=""> 1755: Nigel Horne, C&lt;&lt; &lt;njh at nigelhorne.com&gt; &gt;&gt;
+</span><span class=""> 1756: 
+</span><span class=""> 1757: =head1 LICENCE AND COPYRIGHT
+</span><span class=""> 1758: 
+</span><span class=""> 1759: Copyright 2025-2026 Nigel Horne.
+</span><span class=""> 1760: 
+</span><span class=""> 1761: Usage is subject to the GPL2 licence terms.
+</span><span class=""> 1762: If you use it,
+</span><span class=""> 1763: please let me know.
+</span><span class=""> 1764: 
+</span><span class=""> 1765: =cut
+</span><span class=""> 1766: 
+</span><span class=""> 1767: 1;
 </span></pre>
 
 <script>
