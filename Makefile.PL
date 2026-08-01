@@ -46,6 +46,7 @@ WriteMakefile(
 		'Params::Validate::Strict' => 0.37,
 		'Pod::Usage' => 0,
 		'Scalar::Util' => 0,
+		'TOML::Tiny' => 0,
 		'YAML::XS' => 0
 	}, META_MERGE => {
 		'meta-spec' => { version => 2 },

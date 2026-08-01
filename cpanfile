@@ -18,6 +18,7 @@ requires 'Params::Get', '0.15';
 requires 'Params::Validate::Strict', '0.37';
 requires 'Pod::Usage';
 requires 'Scalar::Util';
+requires 'TOML::Tiny';
 requires 'XML::PP', '0.06';
 requires 'YAML::XS';
 

@@ -2,6 +2,11 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.40
 	[ Enhancements ]
+	- TOML file support: base.toml and local.toml are now discovered
+	  automatically in config_dirs alongside YAML/JSON/XML/INI equivalents;
+	  TOML is also tried as a fallback parser in the all-parsers chain used
+	  for extensionless config_file entries.  Requires TOML::Tiny (TOML 1.0).
+	  If TOML::Tiny is absent the module gracefully skips .toml files.
 	- New C<lazy> constructor option: when true, all source discovery and file
 	  I/O are deferred until the first accessor call (get/exists/all/explain_sources/
 	  prefer_*/merge_defaults/AUTOLOAD), reducing startup overhead for applications

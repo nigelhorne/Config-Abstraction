@@ -2568,4 +2568,135 @@ subtest 'nested merge_defaults: merge => 1 uses Hash::Merge and combines nested 
 		'Hash::Merge merge: extra key from defaults survives at top level');
 };
 
+# ---------------------------------------------------------------------------
+# TOML FORMAT SUPPORT
+# Verifies that base.toml / local.toml are discovered and merged with the
+# same precedence rules as YAML/JSON/INI, and that TOML is tried as a
+# fallback parser for extensionless config_file entries.
+# ---------------------------------------------------------------------------
+
+subtest 'TOML: base.toml is loaded from config_dirs' => sub {
+	# Verify that base.toml in a config_dir is read and its values accessible.
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', qq{host = "toml_host"\nport = 5432\n});
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(defined($cfg), 'object created when only base.toml is present');
+	is($cfg->get('host'), 'toml_host', 'scalar string from base.toml is loaded');
+	is($cfg->get('port'), 5432,        'integer from base.toml is loaded');
+};
+
+subtest 'TOML: nested table section is loaded as hashref' => sub {
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', qq{[database]\nhost = "db.example.com"\nport = 5432\n});
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('database.host'), 'db.example.com', 'nested TOML table key is accessible via dotted notation');
+	is($cfg->get('database.port'), 5432,              'nested TOML integer is accessible');
+};
+
+subtest 'TOML: local.toml overrides base.toml (file-tier precedence)' => sub {
+	# Within the file tier, local.toml has higher precedence than base.toml.
+	# A key in local.toml must win; keys only in base.toml must survive.
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml',  qq{host = "base_host"\nport = 5432\n});
+	_write_file($dir, 'local.toml', qq{host = "local_host"\n});
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('host'), 'local_host', 'local.toml host overrides base.toml host');
+	is($cfg->get('port'), 5432,         'base.toml port survives when local.toml does not mention it');
+};
+
+subtest 'TOML: data constructor has lower precedence than base.toml' => sub {
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', qq{host = "toml_host"\n});
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'data_host', extra => 'kept' },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('host'),  'toml_host', 'base.toml overrides data constructor value');
+	is($cfg->get('extra'), 'kept',      'data key not in base.toml survives');
+};
+
+subtest 'TOML: TOML boolean and array types are loaded without corruption' => sub {
+	# TOML::Tiny returns Perl values: booleans as JSON::PP::Boolean objects,
+	# arrays as arrayrefs.  Verify they arrive intact.
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', qq{debug = true\ntags = ["web", "api"]\n});
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok($cfg->get('debug'), 'TOML boolean true is truthy');
+	my $tags = $cfg->get('tags');
+	ok(ref($tags) eq 'ARRAY', 'TOML array is loaded as arrayref');
+	is($tags->[0], 'web', 'first TOML array element is correct');
+	is($tags->[1], 'api', 'second TOML array element is correct');
+};
+
+subtest 'TOML: malformed TOML file is skipped with a carp warning' => sub {
+	# A TOML file with syntax errors should emit a carp and be skipped,
+	# not abort construction.  data values must survive.
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', qq{host = "unclosed string\n});
+
+	my @warnings;
+	local $SIG{__WARN__} = sub { push @warnings, $_[0] };
+
+	my $cfg = Config::Abstraction->new(
+		data        => { fallback => 'alive' },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(@warnings > 0, 'malformed TOML emits at least one carp warning');
+	ok(defined($cfg), 'construction succeeds despite malformed base.toml');
+	is($cfg->get('fallback'), 'alive', 'data values survive a malformed TOML file');
+};
+
+subtest 'TOML: config_file with .toml extension is loaded via extensionless chain' => sub {
+	# When config_file points to a .toml file, the all-parsers chain
+	# should try TOML::Tiny and succeed.
+	plan skip_all => 'TOML::Tiny not installed' unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'myapp.toml', qq{[server]\nhost = "explicit_host"\nport = 9000\n});
+
+	my $cfg = Config::Abstraction->new(
+		config_file => 'myapp.toml',
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(defined($cfg), 'config_file pointing to a .toml file is loaded');
+	is($cfg->get('server.host'), 'explicit_host', 'TOML section key accessible via dotted notation from config_file');
+	is($cfg->get('server.port'), 9000,             'TOML section integer accessible from config_file');
+};
+
 done_testing();

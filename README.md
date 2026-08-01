@@ -106,25 +106,25 @@ to configuration management.
 
 Sources are applied in the order shown below.  Each row wins over every row
 above it.  When the same key appears in multiple sources, the highest-priority
-source always determines the final value — including when that value is `undef`.
+source always determines the final value - including when that value is `undef`.
 
     Priority   Source                         Set with
     --------   ------                         --------
        1 (lo)  data constructor argument      data => { key => 'default' }
-       2        base.*  config files          config/base.yaml, base.json, …
-       3        local.* config files          config/local.yaml, local.json, …
-       4        default / script-name files   config/default.yaml, myapp.yaml, …
+       2        base.*  config files          config/base.yaml, base.json, ...
+       3        local.* config files          config/local.yaml, local.json, ...
+       4        default / script-name files   config/default.yaml, myapp.yaml, ...
        5        config_file / config_files    config_file => '/etc/myapp.yaml'
        6        Environment variables         APP_DATABASE__HOST=db.prod.example.com
        7 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
 
-Within the file tier (rows 2–5), later files override earlier files using
+Within the file tier (rows 2-5), later files override earlier files using
 `Hash::Merge` LEFT\_PRECEDENT: every key in the later file wins over the same
 key in an earlier file, even when the later value is `undef` (YAML `~`).
 Nested hashes are merged recursively, so a `local.yaml` that only sets
 `database.host` will not erase `database.port` from `base.yaml`.
 
-    Example — what wins for the key C<database.host>:
+    Example - what wins for the key C<database.host>:
 
     data         =>  'localhost'       (overridden by base.yaml)
     base.yaml    =>  'db.example.com'  (overridden by local.yaml)
@@ -185,19 +185,44 @@ Nested hashes are merged recursively, so a `local.yaml` that only sets
 
 - YAML (`*.yaml`, `*.yml`)
 
-    The module supports loading YAML files using the `YAML::XS` module.
+    Loaded with `YAML::XS`.
 
 - JSON (`*.json`)
 
-    The module supports loading JSON files using `JSON::MaybeXS`.
+    Loaded with `JSON::MaybeXS`.
 
 - XML (`*.xml`)
 
-    The module supports loading XML files using `XML::Simple`.
+    Loaded with `XML::Simple` (preferred) or `XML::PP` (fallback).
 
 - INI (`*.ini`)
 
-    The module supports loading INI files using `Config::IniFiles`.
+    Loaded with `Config::IniFiles`.
+
+- TOML (`*.toml`)
+
+    Loaded with `TOML::Tiny`, which implements TOML 1.0.  TOML is a good choice
+    for human-editable configuration because its syntax is unambiguous: all values
+    are typed, strings must be quoted, and nesting uses `[section]` headers or
+    dotted keys rather than indentation.
+
+        # Example: config/base.toml
+        [database]
+        host   = "db.example.com"
+        port   = 5432
+        user   = "app"
+
+        [cache]
+        ttl    = 300
+        debug  = false
+
+    `base.toml` and `local.toml` are discovered automatically in `config_dirs`;
+    `local.toml` has higher precedence than `base.toml`, following the same
+    layering rules as all other formats.  TOML is also tried as a fallback parser
+    in the all-parsers chain used for extensionless `config_file` entries.
+
+    If `TOML::Tiny` is not installed, TOML files are silently skipped with a
+    `carp` warning.
 
 ## ENVIRONMENT VARIABLE HANDLING
 
@@ -761,7 +786,7 @@ parameter bag and returns the full config without merging anything.
 
 Without `merge => 1`, `merge_defaults()` uses a plain Perl hash merge
 (`{ %defaults, %config }`) at the top level.  If the config contains a nested hash
-for a key, it entirely replaces the corresponding nested hash in your defaults — any
+for a key, it entirely replaces the corresponding nested hash in your defaults - any
 keys that exist only in the defaults' nested hash are silently discarded.
 
     my $cfg = Config::Abstraction->new(
@@ -850,7 +875,7 @@ Always pass `config_dirs => []` in tests that use only in-memory `data`:
 
 ## 9. lazy => 1 defers errors until the first accessor call
 
-With `lazy => 1`, `new()` always returns a blessed object — it cannot return
+With `lazy => 1`, `new()` always returns a blessed object - it cannot return
 `undef` for a missing config, and any schema validation errors surface at the first
 `get()` or `all()` call rather than at construction time.  See the `lazy`
 option documentation in ["new"](#new) for the full list of debugging implications.
@@ -861,6 +886,10 @@ Notable changes by release.  Full details are in the `Changes` file.
 
 - **0.40** (unreleased)
 
+    TOML file support (`*.toml`) via `TOML::Tiny`; `base.toml` and `local.toml`
+    are now discovered automatically alongside the YAML/JSON/XML/INI equivalents,
+    and TOML is also tried in the all-parsers chain for extensionless `config_file`
+    entries.
     Lazy loading (`lazy => 1` constructor option) defers all source discovery
     and file I/O until the first accessor call.
     New `explain_sources()` method returns a per-key audit trail showing every
@@ -875,11 +904,11 @@ Notable changes by release.  Full details are in the `Changes` file.
     Newcastle Connection remote configuration: `config_dirs` entries beginning with
     `/../hostname/path` are fetched over SSH via [File::Slurp::Remote](https://metacpan.org/pod/File%3A%3ASlurp%3A%3ARemote).
     Local-host entries (`/../localhost/`, `/../127.0.0.1/`, etc.) are short-circuited
-    to a plain local read — no SSH connection is made.
+    to a plain local read - no SSH connection is made.
 
 - **0.39** (2026-05-24)
 
-    Disabled `Data::Reuse::fixate()` — behaviour differed between Linux and macOS
+    Disabled `Data::Reuse::fixate()` - behaviour differed between Linux and macOS
     in a way that could not be resolved portably.
 
 - **0.38** (2026-05-20)

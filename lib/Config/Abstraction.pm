@@ -1,6 +1,5 @@
 package Config::Abstraction;
 
-# TODO: add TOML file support
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
 # TODO: devise a scheme to encrypt passwords in config files
 # TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
@@ -21,8 +20,6 @@ use Scalar::Util;
 =head1 NAME
 
 Config::Abstraction - Merge and manage configuration data from different sources
-
-=encoding UTF-8
 
 =head1 VERSION
 
@@ -139,25 +136,25 @@ to configuration management.
 
 Sources are applied in the order shown below.  Each row wins over every row
 above it.  When the same key appears in multiple sources, the highest-priority
-source always determines the final value — including when that value is C<undef>.
+source always determines the final value - including when that value is C<undef>.
 
   Priority   Source                         Set with
   --------   ------                         --------
      1 (lo)  data constructor argument      data => { key => 'default' }
-     2        base.*  config files          config/base.yaml, base.json, …
-     3        local.* config files          config/local.yaml, local.json, …
-     4        default / script-name files   config/default.yaml, myapp.yaml, …
+     2        base.*  config files          config/base.yaml, base.json, ...
+     3        local.* config files          config/local.yaml, local.json, ...
+     4        default / script-name files   config/default.yaml, myapp.yaml, ...
      5        config_file / config_files    config_file => '/etc/myapp.yaml'
      6        Environment variables         APP_DATABASE__HOST=db.prod.example.com
      7 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
 
-Within the file tier (rows 2–5), later files override earlier files using
+Within the file tier (rows 2-5), later files override earlier files using
 C<Hash::Merge> LEFT_PRECEDENT: every key in the later file wins over the same
 key in an earlier file, even when the later value is C<undef> (YAML C<~>).
 Nested hashes are merged recursively, so a C<local.yaml> that only sets
 C<database.host> will not erase C<database.port> from C<base.yaml>.
 
-  Example — what wins for the key C<database.host>:
+  Example - what wins for the key C<database.host>:
 
   data         =>  'localhost'       (overridden by base.yaml)
   base.yaml    =>  'db.example.com'  (overridden by local.yaml)
@@ -224,19 +221,44 @@ so that configuration on remote machines can be centrally managed.
 
 =item * YAML (C<*.yaml>, C<*.yml>)
 
-The module supports loading YAML files using the C<YAML::XS> module.
+Loaded with C<YAML::XS>.
 
 =item * JSON (C<*.json>)
 
-The module supports loading JSON files using C<JSON::MaybeXS>.
+Loaded with C<JSON::MaybeXS>.
 
 =item * XML (C<*.xml>)
 
-The module supports loading XML files using C<XML::Simple>.
+Loaded with C<XML::Simple> (preferred) or C<XML::PP> (fallback).
 
 =item * INI (C<*.ini>)
 
-The module supports loading INI files using C<Config::IniFiles>.
+Loaded with C<Config::IniFiles>.
+
+=item * TOML (C<*.toml>)
+
+Loaded with C<TOML::Tiny>, which implements TOML 1.0.  TOML is a good choice
+for human-editable configuration because its syntax is unambiguous: all values
+are typed, strings must be quoted, and nesting uses C<[section]> headers or
+dotted keys rather than indentation.
+
+  # Example: config/base.toml
+  [database]
+  host   = "db.example.com"
+  port   = 5432
+  user   = "app"
+
+  [cache]
+  ttl    = 300
+  debug  = false
+
+C<base.toml> and C<local.toml> are discovered automatically in C<config_dirs>;
+C<local.toml> has higher precedence than C<base.toml>, following the same
+layering rules as all other formats.  TOML is also tried as a fallback parser
+in the all-parsers chain used for extensionless C<config_file> entries.
+
+If C<TOML::Tiny> is not installed, TOML files are silently skipped with a
+C<carp> warning.
 
 =back
 
@@ -698,7 +720,7 @@ sub _load_config
 			next;
 		}
 
-		for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
+		for my $file (qw/base.yaml base.yml base.json base.xml base.ini base.toml local.yaml local.yml local.json local.xml local.ini local.toml/) {
 			my $path = File::Spec->catfile($effective_dir, $file);
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");
@@ -772,6 +794,22 @@ sub _load_config
 						$logger->notice("Failed to load INI from $path: $@");
 					} else {
 						Carp::carp("Failed to load INI from $path: $@");
+					}
+				}
+			} elsif ($file =~ /\.toml$/) {
+				if($self->_load_driver('TOML::Tiny', ['from_toml'])) {
+					# scalar() forces read_file into scalar context; without it
+					# read_file returns a list of lines and from_toml (no prototype)
+					# only sees the first line.
+					my ($toml_data, $toml_err) = from_toml(scalar(read_file($path)));
+					if($toml_err) {
+						if($logger) {
+							$logger->notice("Failed to load TOML from $path: $toml_err");
+						} else {
+							Carp::carp("Failed to load TOML from $path: $toml_err");
+						}
+					} elsif(ref($toml_data) eq 'HASH' && scalar(keys %$toml_data)) {
+						$data = $toml_data;
 					}
 				}
 			}
@@ -892,6 +930,18 @@ sub _load_config
 							}
 							if($data) {
 								$self->{'type'} = 'YAML';
+							}
+						}
+						if((!$data) || (ref($data) ne 'HASH')) {
+							if($self->_load_driver('TOML::Tiny', ['from_toml'])) {
+								# scalar() forces read_file into scalar context; without it
+								# read_file returns a list of lines and from_toml (no prototype)
+								# only sees the first line.
+								my ($toml_data, $toml_err) = eval { from_toml(scalar(read_file($path))) };
+								if(!$toml_err && ref($toml_data) eq 'HASH' && scalar(keys %$toml_data)) {
+									$data = $toml_data;
+									$self->{'type'} = 'TOML';
+								}
 							}
 						}
 						if((!$data) || (ref($data) ne 'HASH')) {
@@ -1891,7 +1941,7 @@ parameter bag and returns the full config without merging anything.
 
 Without C<merge =E<gt> 1>, C<merge_defaults()> uses a plain Perl hash merge
 (C<{ %defaults, %config }>) at the top level.  If the config contains a nested hash
-for a key, it entirely replaces the corresponding nested hash in your defaults — any
+for a key, it entirely replaces the corresponding nested hash in your defaults - any
 keys that exist only in the defaults' nested hash are silently discarded.
 
   my $cfg = Config::Abstraction->new(
@@ -1980,7 +2030,7 @@ Always pass C<config_dirs =E<gt> []> in tests that use only in-memory C<data>:
 
 =head2 9. lazy => 1 defers errors until the first accessor call
 
-With C<lazy =E<gt> 1>, C<new()> always returns a blessed object — it cannot return
+With C<lazy =E<gt> 1>, C<new()> always returns a blessed object - it cannot return
 C<undef> for a missing config, and any schema validation errors surface at the first
 C<get()> or C<all()> call rather than at construction time.  See the C<lazy>
 option documentation in L</new> for the full list of debugging implications.
@@ -1993,6 +2043,10 @@ Notable changes by release.  Full details are in the C<Changes> file.
 
 =item * B<0.40> (unreleased)
 
+TOML file support (C<*.toml>) via C<TOML::Tiny>; C<base.toml> and C<local.toml>
+are now discovered automatically alongside the YAML/JSON/XML/INI equivalents,
+and TOML is also tried in the all-parsers chain for extensionless C<config_file>
+entries.
 Lazy loading (C<lazy =E<gt> 1> constructor option) defers all source discovery
 and file I/O until the first accessor call.
 New C<explain_sources()> method returns a per-key audit trail showing every
@@ -2007,11 +2061,11 @@ items" crashes when C<data> contains coderefs).
 Newcastle Connection remote configuration: C<config_dirs> entries beginning with
 C</../hostname/path> are fetched over SSH via L<File::Slurp::Remote>.
 Local-host entries (C</../localhost/>, C</../127.0.0.1/>, etc.) are short-circuited
-to a plain local read — no SSH connection is made.
+to a plain local read - no SSH connection is made.
 
 =item * B<0.39> (2026-05-24)
 
-Disabled C<Data::Reuse::fixate()> — behaviour differed between Linux and macOS
+Disabled C<Data::Reuse::fixate()> - behaviour differed between Linux and macOS
 in a way that could not be resolved portably.
 
 =item * B<0.38> (2026-05-20)
