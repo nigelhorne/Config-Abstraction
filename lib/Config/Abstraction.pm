@@ -2,8 +2,6 @@ package Config::Abstraction;
 
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
 # TODO: devise a scheme to encrypt passwords in config files
-# TODO: Think of a way of validating values - e.g. a value must be an integer, or match a regex
-# TODO: Support Config::Checker
 
 use strict;
 use warnings;
@@ -430,6 +428,98 @@ such as C<'database.user'>.
 
 A L<Params::Validate::Strict> compatible schema to validate the configuration file against.
 
+=item * C<validators>
+
+A hashref mapping dotted config keys to validation rules.  Each rule is applied to the
+corresponding value in the merged configuration immediately after all sources have been
+merged (or on first access when C<lazy> is set).  A validation failure croaks.
+
+Each rule may be one of:
+
+=over 4
+
+=item A type name string
+
+  validators => {
+      'database.port' => 'integer',
+      'app.name'      => 'string',
+      'price'         => 'number',
+      'enabled'       => 'boolean',
+      'tags'          => 'array',
+      'settings'      => 'hash',
+  }
+
+Supported types: C<integer> (matches C</^-?\d+$/> -- no decimal point),
+C<number> or C<float> (C<Scalar::Util::looks_like_number>), C<boolean>
+(C<0>, C<1>, C<true>, C<false>, C<yes>, C<no> -- case-insensitive),
+C<string> (any defined non-reference scalar), C<array> (arrayref),
+C<hash> (hashref).
+
+=item A compiled regular expression
+
+  validators => {
+      'log.level' => qr/^(?:debug|info|warn|error|fatal)$/i,
+      'app.name'  => qr/^\w[\w\-]{1,63}$/,
+  }
+
+The value must be defined and must match the regex.
+
+=item A coderef
+
+  validators => {
+      'database.port' => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 },
+  }
+
+Called with the value as its only argument.  Must return a true value; otherwise the
+constructor croaks.
+
+=item A hashref combining multiple constraints
+
+  validators => {
+      'database.port' => {
+          type     => 'integer',
+          min      => 1,
+          max      => 65535,
+          required => 1,
+      },
+      'api.key' => {
+          pattern  => qr/^[A-Za-z0-9]{32}$/,
+          required => 1,
+      },
+  }
+
+Keys: C<type> (type-name string as above), C<pattern> (compiled regex), C<min> (numeric
+lower bound, inclusive), C<max> (numeric upper bound, inclusive), C<required> (if true,
+the key must exist and its value must be defined).
+
+=back
+
+All constraint types may be freely combined: specifying both C<type> and C<pattern>
+requires the value to satisfy both.
+
+=item * C<checker>
+
+A prototype string (YAML) or hashref passed to L<Config::Checker> for template-based
+structural validation.  C<Config::Checker> must be installed; if it is absent a C<carp>
+warning is emitted and validation is skipped.
+
+The prototype mirrors the expected config structure.  Keys and values can carry type
+annotations (C<[INTEGER]>, C<[PATH]>, C<[HOSTNAME]>, ...), custom code checks
+(C<{...}>), and quantity specifiers (C<?>: optional, C<+>: one or more, C<*>: zero or
+more):
+
+  my $config = Config::Abstraction->new(
+      config_dirs => ['config'],
+      checker     => <<'END_PROTOTYPE',
+  database:
+    host: hostname of the database server[HOSTNAME]
+    port: '?<5432>port number[INTEGER]'
+    user: database username
+  END_PROTOTYPE
+  );
+
+See L<Config::Checker> for the full prototype syntax.
+
 =item * C<lazy>
 
 When set to a true value, all source discovery and file I/O are deferred until the first
@@ -583,8 +673,10 @@ sub new
 	}
 	if($self->{'lazy'}) {
 		# Defer all source scanning to the first accessor call.
-		# Stash the schema for later validation (after _load_config runs).
-		$self->{'_lazy_schema'} = delete $self->{'schema'} if $self->{'schema'};
+		# Stash validators/checker/schema for later (after _load_config runs).
+		$self->{'_lazy_schema'}     = delete $self->{'schema'}     if $self->{'schema'};
+		$self->{'_lazy_validators'} = delete $self->{'validators'} if $self->{'validators'};
+		$self->{'_lazy_checker'}    = delete $self->{'checker'}    if $self->{'checker'};
 		return $self;
 	}
 
@@ -592,6 +684,12 @@ sub new
 
 	if(my $schema = $params->{'schema'}) {
 		$self->{'config'} = Params::Validate::Strict::validate_strict(schema => $schema, input => $self->{'config'});
+	}
+	if(my $validators = $params->{'validators'}) {
+		$self->_run_validators($validators);
+	}
+	if(my $checker = $params->{'checker'}) {
+		$self->_run_checker($checker);
 	}
 
 	if(defined($self->{'config'}) && scalar(keys %{$self->{'config'}})) {
@@ -611,6 +709,121 @@ sub _ensure_loaded
 	if(my $schema = delete $self->{'_lazy_schema'}) {
 		$self->{'config'} = Params::Validate::Strict::validate_strict(schema => $schema, input => $self->{'config'});
 	}
+	if(my $validators = delete $self->{'_lazy_validators'}) {
+		$self->_run_validators($validators);
+	}
+	if(my $checker = delete $self->{'_lazy_checker'}) {
+		$self->_run_checker($checker);
+	}
+}
+
+# Apply the validators hash supplied as a constructor option.
+# Each key is a dotted config key; each value is a coderef, regex, type string, or spec hashref.
+sub _run_validators
+{
+	my ($self, $validators) = @_;
+
+	for my $key (sort keys %{$validators}) {
+		my $spec  = $validators->{$key};
+		my $value = $self->get($key);
+
+		if(ref($spec) eq 'CODE') {
+			unless($spec->($value)) {
+				Carp::croak(ref($self) . ": validation failed for '$key': custom validator returned false");
+			}
+		} elsif(ref($spec) eq 'Regexp') {
+			unless(defined($value) && $value =~ $spec) {
+				Carp::croak(ref($self) . ": '$key' value " .
+					(defined($value) ? "'$value'" : '(undef)') . " does not match required pattern");
+			}
+		} elsif(ref($spec) eq 'HASH') {
+			$self->_validate_value_spec($key, $value, $spec);
+		} elsif(!ref($spec)) {
+			_validate_type($key, $value, $spec);
+		} else {
+			Carp::croak(ref($self) . ": invalid validator for '$key': must be a type string, regex, coderef, or hashref");
+		}
+	}
+}
+
+# Apply a hashref spec (type / pattern / min / max / required) to a single value.
+sub _validate_value_spec
+{
+	my ($self, $key, $value, $spec) = @_;
+
+	if($spec->{'required'} && (!$self->exists($key) || !defined($value))) {
+		Carp::croak(ref($self) . ": required key '$key' is missing or undefined");
+	}
+	if(my $type = $spec->{'type'}) {
+		_validate_type($key, $value, $type);
+	}
+	if(my $pattern = $spec->{'pattern'}) {
+		unless(defined($value) && $value =~ $pattern) {
+			Carp::croak(ref($self) . ": '$key' value " .
+				(defined($value) ? "'$value'" : '(undef)') . " does not match required pattern");
+		}
+	}
+	if(defined(my $min = $spec->{'min'})) {
+		Carp::croak(ref($self) . ": '$key' value '$value' is less than minimum $min")
+			if defined($value) && $value < $min;
+	}
+	if(defined(my $max = $spec->{'max'})) {
+		Carp::croak(ref($self) . ": '$key' value '$value' exceeds maximum $max")
+			if defined($value) && $value > $max;
+	}
+}
+
+# Validate a single value against a named type.
+# Not a method — takes (key, value, type_string).
+sub _validate_type
+{
+	my ($key, $value, $type) = @_;
+	my $ltype = lc($type);
+
+	if($ltype eq 'integer') {
+		Carp::croak("Config::Abstraction: '$key' must be an integer (got " .
+			(defined $value ? "'$value'" : 'undef') . ')')
+			unless defined($value) && $value =~ /^-?\d+$/;
+	} elsif($ltype eq 'number' || $ltype eq 'float') {
+		Carp::croak("Config::Abstraction: '$key' must be a number (got " .
+			(defined $value ? "'$value'" : 'undef') . ')')
+			unless defined($value) && Scalar::Util::looks_like_number($value);
+	} elsif($ltype eq 'boolean') {
+		Carp::croak("Config::Abstraction: '$key' must be a boolean (0/1/true/false/yes/no), got " .
+			(defined $value ? "'$value'" : 'undef'))
+			unless defined($value) && $value =~ /^(?:1|0|true|false|yes|no)$/i;
+	} elsif($ltype eq 'string') {
+		Carp::croak("Config::Abstraction: '$key' must be a defined string (got undef)")
+			unless defined($value) && !ref($value);
+	} elsif($ltype eq 'array') {
+		Carp::croak("Config::Abstraction: '$key' must be an array reference")
+			unless ref($value) eq 'ARRAY';
+	} elsif($ltype eq 'hash') {
+		Carp::croak("Config::Abstraction: '$key' must be a hash reference")
+			unless ref($value) eq 'HASH';
+	} else {
+		Carp::croak("Config::Abstraction: unknown type '$type' in validators for '$key'");
+	}
+}
+
+# Invoke Config::Checker with the merged config and caller-supplied prototype.
+# prototype may be a YAML string or a hashref.
+sub _run_checker
+{
+	my ($self, $prototype) = @_;
+
+	unless($self->_load_driver('Config::Checker')) {
+		Carp::carp(ref($self) . ': Config::Checker not available; skipping checker validation');
+		return;
+	}
+
+	# config_checker_source() returns Perl source text (a sub { ... } literal)
+	# that must be eval'd so it can import into our namespace.
+	my $checker = eval Config::Checker::config_checker_source();	## no critic (ProhibitStringyEval)
+	Carp::croak(ref($self) . ": failed to compile Config::Checker: $@") if $@;
+
+	eval { $checker->($self->{'config'}, $prototype) };
+	Carp::croak(ref($self) . ": checker validation failed: $@") if $@;
 }
 
 # Determine if a value is a plain, unblessed, non-reference scalar

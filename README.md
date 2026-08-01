@@ -386,6 +386,94 @@ Options:
 
     A [Params::Validate::Strict](https://metacpan.org/pod/Params%3A%3AValidate%3A%3AStrict) compatible schema to validate the configuration file against.
 
+- `validators`
+
+    A hashref mapping dotted config keys to validation rules.  Each rule is applied to the
+    corresponding value in the merged configuration immediately after all sources have been
+    merged (or on first access when `lazy` is set).  A validation failure croaks.
+
+    Each rule may be one of:
+
+    - A type name string
+
+            validators => {
+                'database.port' => 'integer',
+                'app.name'      => 'string',
+                'price'         => 'number',
+                'enabled'       => 'boolean',
+                'tags'          => 'array',
+                'settings'      => 'hash',
+            }
+
+        Supported types: `integer` (matches `/^-?\d+$/` -- no decimal point),
+        `number` or `float` (`Scalar::Util::looks_like_number`), `boolean`
+        (`0`, `1`, `true`, `false`, `yes`, `no` -- case-insensitive),
+        `string` (any defined non-reference scalar), `array` (arrayref),
+        `hash` (hashref).
+
+    - A compiled regular expression
+
+            validators => {
+                'log.level' => qr/^(?:debug|info|warn|error|fatal)$/i,
+                'app.name'  => qr/^\w[\w\-]{1,63}$/,
+            }
+
+        The value must be defined and must match the regex.
+
+    - A coderef
+
+            validators => {
+                'database.port' => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 },
+            }
+
+        Called with the value as its only argument.  Must return a true value; otherwise the
+        constructor croaks.
+
+    - A hashref combining multiple constraints
+
+            validators => {
+                'database.port' => {
+                    type     => 'integer',
+                    min      => 1,
+                    max      => 65535,
+                    required => 1,
+                },
+                'api.key' => {
+                    pattern  => qr/^[A-Za-z0-9]{32}$/,
+                    required => 1,
+                },
+            }
+
+        Keys: `type` (type-name string as above), `pattern` (compiled regex), `min` (numeric
+        lower bound, inclusive), `max` (numeric upper bound, inclusive), `required` (if true,
+        the key must exist and its value must be defined).
+
+    All constraint types may be freely combined: specifying both `type` and `pattern`
+    requires the value to satisfy both.
+
+- `checker`
+
+    A prototype string (YAML) or hashref passed to [Config::Checker](https://metacpan.org/pod/Config%3A%3AChecker) for template-based
+    structural validation.  `Config::Checker` must be installed; if it is absent a `carp`
+    warning is emitted and validation is skipped.
+
+    The prototype mirrors the expected config structure.  Keys and values can carry type
+    annotations (`[INTEGER]`, `[PATH]`, `[HOSTNAME]`, ...), custom code checks
+    (`{...}`), and quantity specifiers (`?`: optional, `+`: one or more, `*`: zero or
+    more):
+
+        my $config = Config::Abstraction->new(
+            config_dirs => ['config'],
+            checker     => <<'END_PROTOTYPE',
+        database:
+          host: hostname of the database server[HOSTNAME]
+          port: '?<5432>port number[INTEGER]'
+          user: database username
+        END_PROTOTYPE
+        );
+
+    See [Config::Checker](https://metacpan.org/pod/Config%3A%3AChecker) for the full prototype syntax.
+
 - `lazy`
 
     When set to a true value, all source discovery and file I/O are deferred until the first

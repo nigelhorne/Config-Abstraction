@@ -2,6 +2,14 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.40
 	[ Enhancements ]
+	- New C<validators> constructor option: a hashref mapping dotted config keys to
+	  per-key validation rules. Each rule may be a type-name string (integer, number,
+	  float, boolean, string, array, hash), a compiled regex, a coderef, or a hashref
+	  combining type/pattern/min/max/required constraints. Violations croak immediately
+	  after the merge (or on first access when lazy => 1).
+	- New C<checker> constructor option: a YAML string or hashref prototype passed to
+	  Config::Checker for template-based structural validation. Config::Checker is
+	  optional; if absent a carp warning is emitted and validation is skipped.
 	- TOML file support: base.toml and local.toml are now discovered
 	  automatically in config_dirs alongside YAML/JSON/XML/INI equivalents;
 	  TOML is also tried as a fallback parser in the all-parsers chain used

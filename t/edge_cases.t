@@ -2699,4 +2699,320 @@ subtest 'TOML: config_file with .toml extension is loaded via extensionless chai
 	is($cfg->get('server.port'), 9000,             'TOML section integer accessible from config_file');
 };
 
+# ---------------------------------------------------------------------------
+# validators option - per-key value validation
+# ---------------------------------------------------------------------------
+
+subtest 'validators: type integer accepts valid integer strings' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { port => 8080 },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { 'port' => 'integer' },
+	);
+	ok(defined($cfg), 'construction succeeds for valid integer');
+	is($cfg->get('port'), 8080, 'value unchanged after integer validation');
+};
+
+subtest 'validators: type integer rejects non-integer string' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { port => '80.5' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { 'port' => 'integer' },
+		);
+	} 'construction croaks for float value failing integer type';
+	like($@, qr/must be an integer/, 'error message names the type');
+};
+
+subtest 'validators: type integer rejects undef' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { port => undef },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { 'port' => 'integer' },
+		);
+	} 'undef value fails integer validation';
+};
+
+subtest 'validators: type number accepts integer and float' => sub {
+	for my $val (42, 3.14, -1, '0.001', '1e5') {
+		my $cfg = Config::Abstraction->new(
+			data        => { n => $val },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { n => 'number' },
+		);
+		ok(defined($cfg), "number type accepts '$val'");
+	}
+};
+
+subtest 'validators: type boolean accepts canonical values' => sub {
+	for my $val (qw(0 1 true false yes no TRUE FALSE YES NO)) {
+		my $cfg = Config::Abstraction->new(
+			data        => { flag => $val },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { flag => 'boolean' },
+		);
+		ok(defined($cfg), "boolean type accepts '$val'");
+	}
+};
+
+subtest 'validators: type boolean rejects non-boolean' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { flag => 'maybe' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { flag => 'boolean' },
+		);
+	} "boolean type rejects 'maybe'";
+};
+
+subtest 'validators: type string accepts defined scalar, rejects undef' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { name => 'hello' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { name => 'string' },
+	);
+	ok(defined($cfg), 'string type accepts defined scalar');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { name => undef },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { name => 'string' },
+		);
+	} 'string type rejects undef';
+};
+
+subtest 'validators: type array and hash' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { tags => [qw(a b)], meta => { k => 1 } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { tags => 'array', meta => 'hash' },
+	);
+	ok(defined($cfg), 'array and hash types accept correct references');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { tags => 'not_an_array' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { tags => 'array' },
+		);
+	} 'array type rejects plain scalar';
+};
+
+subtest 'validators: unknown type string croaks' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { x => 'y' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { x => 'imaginary_type' },
+		);
+	} 'unknown type string causes croak';
+	like($@, qr/unknown type/, 'error message mentions unknown type');
+};
+
+subtest 'validators: regex spec accepts matching value, rejects non-matching' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { level => 'debug' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { level => qr/^(?:debug|info|warn|error|fatal)$/i },
+	);
+	ok(defined($cfg), 'regex validator passes for matching value');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { level => 'verbose' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { level => qr/^(?:debug|info|warn|error|fatal)$/i },
+		);
+	} 'regex validator rejects non-matching value';
+	like($@, qr/does not match required pattern/, 'regex failure error message correct');
+};
+
+subtest 'validators: coderef validator - passes and fails' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { port => 443 },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { port => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 } },
+	);
+	ok(defined($cfg), 'coderef validator passes for value in range');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { port => 70000 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { port => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 } },
+		);
+	} 'coderef validator rejects out-of-range value';
+	like($@, qr/custom validator returned false/, 'coderef failure error message correct');
+};
+
+subtest 'validators: hashref spec with type, min, max, pattern' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { port => 8080, name => 'myapp' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => {
+			port => { type => 'integer', min => 1,    max => 65535 },
+			name => { pattern => qr/^\w[\w\-]{1,63}$/ },
+		},
+	);
+	ok(defined($cfg), 'hashref spec passes for valid values');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { port => 0 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { port => { type => 'integer', min => 1 } },
+		);
+	} 'hashref spec with min rejects value below minimum';
+	like($@, qr/less than minimum/, 'min error message correct');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { port => 99999 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { port => { type => 'integer', max => 65535 } },
+		);
+	} 'hashref spec with max rejects value above maximum';
+	like($@, qr/exceeds maximum/, 'max error message correct');
+};
+
+subtest 'validators: hashref spec with required croaks for missing key' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { other => 1 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { port => { type => 'integer', required => 1 } },
+		);
+	} 'required key missing croaks';
+	like($@, qr/required key/, 'required error message correct');
+};
+
+subtest 'validators: invalid spec type (arrayref) croaks' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { x => 1 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { x => [1, 2, 3] },
+		);
+	} 'arrayref validator spec croaks with clear message';
+	like($@, qr/invalid validator/, 'error message names invalid validator');
+};
+
+subtest 'validators: works in lazy mode (deferred until first access)' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { port => 'not_a_number' },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		lazy        => 1,
+		validators  => { port => 'integer' },
+	);
+	ok(defined($cfg), 'lazy construction with failing validator does not croak at new()');
+
+	dies_ok { $cfg->get('port') } 'lazy validator fires on first accessor call';
+	like($@, qr/must be an integer/, 'lazy validator error message correct');
+};
+
+subtest 'validators: dotted key validated against nested config' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { port => 5432 } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { 'database.port' => 'integer' },
+	);
+	ok(defined($cfg), 'dotted-key validator resolves through nested config');
+};
+
+# ---------------------------------------------------------------------------
+# checker option - Config::Checker prototype-based validation
+# ---------------------------------------------------------------------------
+
+subtest 'checker: graceful skip when Config::Checker absent' => sub {
+	# Use Test::Without::Module to simulate Config::Checker being absent.
+	# If the module is already loaded, mask it from %INC so require re-evaluates.
+	{
+		local %INC = %INC;
+		delete $INC{'Config/Checker.pm'};
+		eval { require Test::Without::Module; 1 } or plan skip_all => 'Test::Without::Module not installed';
+		Test::Without::Module->import('Config::Checker');
+
+		my @warnings;
+		local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+		my $cfg = Config::Abstraction->new(
+			data        => { host => 'localhost' },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			checker     => "host: hostname of the server\n",
+		);
+		ok(defined($cfg), 'construction succeeds when Config::Checker is absent');
+		ok(scalar(grep { /Config::Checker not available/ } @warnings),
+			'carp warning emitted when Config::Checker is absent');
+
+		Test::Without::Module->unimport('Config::Checker');
+	}
+};
+
+subtest 'checker: valid config passes prototype' => sub {
+	plan skip_all => 'Config::Checker not installed' unless eval { require Config::Checker; 1 };
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => 'localhost', port => 5432 },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		checker     => "host: the database hostname\nport: '?<5432>port number[INTEGER]'\n",
+	);
+	ok(defined($cfg), 'valid config passes Config::Checker prototype');
+};
+
+subtest 'checker: invalid config fails prototype and croaks' => sub {
+	plan skip_all => 'Config::Checker not installed' unless eval { require Config::Checker; 1 };
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => {},
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			checker     => "host: required hostname\n",
+		);
+	} 'Config::Checker failure croaks';
+	like($@, qr/checker validation failed/, 'checker error message names the cause');
+};
+
+subtest 'checker: works in lazy mode' => sub {
+	plan skip_all => 'Config::Checker not installed' unless eval { require Config::Checker; 1 };
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		lazy        => 1,
+		checker     => "host: required hostname\n",
+	);
+	ok(defined($cfg), 'lazy construction with failing checker does not croak at new()');
+
+	dies_ok { $cfg->get('anything') } 'lazy checker fires on first accessor call';
+	like($@, qr/checker validation failed/, 'lazy checker error message correct');
+};
+
 done_testing();
