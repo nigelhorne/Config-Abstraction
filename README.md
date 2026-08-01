@@ -112,24 +112,32 @@ source always determines the final value - including when that value is `undef`.
     --------   ------                         --------
        1 (lo)  data constructor argument      data => { key => 'default' }
        2        base.*  config files          config/base.yaml, base.json, ...
-       3        local.* config files          config/local.yaml, local.json, ...
-       4        default / script-name files   config/default.yaml, myapp.yaml, ...
-       5        config_file / config_files    config_file => '/etc/myapp.yaml'
-       6        Environment variables         APP_DATABASE__HOST=db.prod.example.com
-       7 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
+       3        base.{env}.* config files     config/base.prod.yaml, ...
+       4        local.* config files          config/local.yaml, local.json, ...
+       5        local.{env}.* config files    config/local.prod.yaml, ...
+       6        default / script-name files   config/default.yaml, myapp.yaml, ...
+       7        config_file / config_files    config_file => '/etc/myapp.yaml'
+       8        Environment variables         APP_DATABASE__HOST=db.prod.example.com
+       9 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
 
-Within the file tier (rows 2-5), later files override earlier files using
+The active environment is set by the `environment` constructor option, or
+auto-detected from `{env_prefix}ENV` (e.g. `APP_ENV`), `PLACK_ENV`, or
+`NODE_ENV`.  When no environment is configured, rows 3 and 5 are skipped.
+
+Within the file tier (rows 2-7), later files override earlier files using
 `Hash::Merge` LEFT\_PRECEDENT: every key in the later file wins over the same
 key in an earlier file, even when the later value is `undef` (YAML `~`).
 Nested hashes are merged recursively, so a `local.yaml` that only sets
 `database.host` will not erase `database.port` from `base.yaml`.
 
-    Example - what wins for the key C<database.host>:
+    Example - what wins for the key C<database.host> when APP_ENV=prod:
 
-    data         =>  'localhost'       (overridden by base.yaml)
-    base.yaml    =>  'db.example.com'  (overridden by local.yaml)
-    local.yaml   =>  'db.prod.example.com'   (overridden by $APP_DATABASE__HOST)
-    $APP_DATABASE__HOST => 'db.staging.example.com'   <-- this wins
+    data              =>  'localhost'              (overridden by base.yaml)
+    base.yaml         =>  'db.example.com'         (overridden by base.prod.yaml)
+    base.prod.yaml    =>  'db.prod.example.com'    (overridden by local.yaml)
+    local.yaml        =>  'db.local.example.com'   (overridden by local.prod.yaml)
+    local.prod.yaml   =>  'db.prod-local.example.com'  (overridden by $APP_DATABASE__HOST)
+    $APP_DATABASE__HOST  =>  'db.override.example.com'    <-- this wins
 
 ## KEY FEATURES
 
@@ -372,6 +380,28 @@ Options:
 
     A prefix for environment variable keys and comment line options, e.g. `MYAPP_DATABASE__USER`,
     (default: `'APP_'`).
+
+- `environment`
+
+    The name of the active deployment environment (e.g. `'dev'`, `'staging'`, `'prod'`).
+    When set, config files named `base.{env}.*` are loaded immediately after their `base.*`
+    equivalents, and `local.{env}.*` files are loaded immediately after `local.*` files,
+    giving two additional override tiers at no cost to the base configuration.
+
+        my $cfg = Config::Abstraction->new(
+            config_dirs => ['config'],
+            environment => 'prod',          # loads base.prod.yaml, local.prod.yaml, ...
+        );
+
+    If `environment` is not given, the value is auto-detected in this order:
+
+    - 1. `{env_prefix}ENV` environment variable (e.g. `APP_ENV`)
+    - 2. `PLACK_ENV`
+    - 3. `NODE_ENV`
+
+    When none of these is set, the environment-specific tiers are silently skipped.
+    The environment name must contain only ASCII letters, digits, hyphens, and underscores
+    (matched against `/^[A-Za-z0-9_\-]+$/`); any other value causes a `croak`.
 
 - `file`
 

@@ -2,6 +2,12 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.40
 	[ Enhancements ]
+	- New C<environment> constructor option: activates two additional file tiers --
+	  base.{env}.* (loaded immediately after base.*) and local.{env}.* (loaded
+	  immediately after local.*). When not supplied, auto-detected from
+	  {env_prefix}ENV (e.g. APP_ENV), then PLACK_ENV, then NODE_ENV.  Missing
+	  env-specific files are silently skipped; invalid names (anything other than
+	  /^[A-Za-z0-9_\-]+$/) cause a croak.
 	- New C<validators> constructor option: a hashref mapping dotted config keys to
 	  per-key validation rules. Each rule may be a type-name string (integer, number,
 	  float, boolean, string, array, hash), a compiled regex, a coderef, or a hashref

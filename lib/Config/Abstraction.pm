@@ -1,7 +1,5 @@
 package Config::Abstraction;
 
-# TODO: environment-specific encodings - automatic loading of dev/staging/prod
-
 use strict;
 use warnings;
 
@@ -139,24 +137,32 @@ source always determines the final value - including when that value is C<undef>
   --------   ------                         --------
      1 (lo)  data constructor argument      data => { key => 'default' }
      2        base.*  config files          config/base.yaml, base.json, ...
-     3        local.* config files          config/local.yaml, local.json, ...
-     4        default / script-name files   config/default.yaml, myapp.yaml, ...
-     5        config_file / config_files    config_file => '/etc/myapp.yaml'
-     6        Environment variables         APP_DATABASE__HOST=db.prod.example.com
-     7 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
+     3        base.{env}.* config files     config/base.prod.yaml, ...
+     4        local.* config files          config/local.yaml, local.json, ...
+     5        local.{env}.* config files    config/local.prod.yaml, ...
+     6        default / script-name files   config/default.yaml, myapp.yaml, ...
+     7        config_file / config_files    config_file => '/etc/myapp.yaml'
+     8        Environment variables         APP_DATABASE__HOST=db.prod.example.com
+     9 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
 
-Within the file tier (rows 2-5), later files override earlier files using
+The active environment is set by the C<environment> constructor option, or
+auto-detected from C<{env_prefix}ENV> (e.g. C<APP_ENV>), C<PLACK_ENV>, or
+C<NODE_ENV>.  When no environment is configured, rows 3 and 5 are skipped.
+
+Within the file tier (rows 2-7), later files override earlier files using
 C<Hash::Merge> LEFT_PRECEDENT: every key in the later file wins over the same
 key in an earlier file, even when the later value is C<undef> (YAML C<~>).
 Nested hashes are merged recursively, so a C<local.yaml> that only sets
 C<database.host> will not erase C<database.port> from C<base.yaml>.
 
-  Example - what wins for the key C<database.host>:
+  Example - what wins for the key C<database.host> when APP_ENV=prod:
 
-  data         =>  'localhost'       (overridden by base.yaml)
-  base.yaml    =>  'db.example.com'  (overridden by local.yaml)
-  local.yaml   =>  'db.prod.example.com'   (overridden by $APP_DATABASE__HOST)
-  $APP_DATABASE__HOST => 'db.staging.example.com'   <-- this wins
+  data              =>  'localhost'              (overridden by base.yaml)
+  base.yaml         =>  'db.example.com'         (overridden by base.prod.yaml)
+  base.prod.yaml    =>  'db.prod.example.com'    (overridden by local.yaml)
+  local.yaml        =>  'db.local.example.com'   (overridden by local.prod.yaml)
+  local.prod.yaml   =>  'db.prod-local.example.com'  (overridden by $APP_DATABASE__HOST)
+  $APP_DATABASE__HOST  =>  'db.override.example.com'    <-- this wins
 
 =head2 KEY FEATURES
 
@@ -419,6 +425,34 @@ supplied directly via C<encryption_key>.
 
 A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DATABASE__USER>,
 (default: C<'APP_'>).
+
+=item * C<environment>
+
+The name of the active deployment environment (e.g. C<'dev'>, C<'staging'>, C<'prod'>).
+When set, config files named C<base.{env}.*> are loaded immediately after their C<base.*>
+equivalents, and C<local.{env}.*> files are loaded immediately after C<local.*> files,
+giving two additional override tiers at no cost to the base configuration.
+
+  my $cfg = Config::Abstraction->new(
+      config_dirs => ['config'],
+      environment => 'prod',          # loads base.prod.yaml, local.prod.yaml, ...
+  );
+
+If C<environment> is not given, the value is auto-detected in this order:
+
+=over 4
+
+=item 1. C<{env_prefix}ENV> environment variable (e.g. C<APP_ENV>)
+
+=item 2. C<PLACK_ENV>
+
+=item 3. C<NODE_ENV>
+
+=back
+
+When none of these is set, the environment-specific tiers are silently skipped.
+The environment name must contain only ASCII letters, digits, hyphens, and underscores
+(matched against C</^[A-Za-z0-9_\-]+$/>); any other value causes a C<croak>.
 
 =item * C<file>
 
@@ -745,6 +779,35 @@ sub _ensure_loaded
 	}
 }
 
+# Resolve the active deployment environment name.
+# Checked in order: 'environment' constructor option, {prefix}ENV env var,
+# PLACK_ENV, NODE_ENV.  Returns undef when none is set.
+# The value must match /^[A-Za-z0-9_\-]+$/ or a croak is raised.
+sub _get_environment
+{
+	my $self = shift;
+
+	my $env;
+
+	if(defined($self->{'environment'})) {
+		$env = $self->{'environment'};
+	} else {
+		my $prefix = $self->{'env_prefix'} // 'APP_';
+		$env = $ENV{$prefix . 'ENV'}
+			// $ENV{'PLACK_ENV'}
+			// $ENV{'NODE_ENV'};
+	}
+
+	return undef unless defined $env;
+	return undef if $env eq '';
+
+	unless($env =~ /^[A-Za-z0-9_\-]+$/) {
+		Carp::croak(ref($self) . ": invalid environment name '$env': must contain only alphanumerics, hyphens, or underscores");
+	}
+
+	return $env;
+}
+
 # Resolve the AES-256 encryption key from constructor option, env vars, or key file.
 # Returns 32 raw bytes, or undef when no key is configured.
 sub _get_encryption_key
@@ -1046,6 +1109,15 @@ sub _load_config
 		$logger->trace(ref($self), ' ', __LINE__, ': Entered _load_config');
 	}
 
+	my $environment = $self->_get_environment();
+	my @_formats    = qw(yaml yml json xml ini toml);
+	my @_file_list  = (
+		(map { "base.$_"              } @_formats),
+		($environment ? (map { "base.$environment.$_"  } @_formats) : ()),
+		(map { "local.$_"             } @_formats),
+		($environment ? (map { "local.$environment.$_" } @_formats) : ()),
+	);
+
 	my @dirs = @{$self->{'config_dirs'}};
 	if($self->{'config_file'} && (scalar(@dirs) > 1)) {
 		if(File::Spec->file_name_is_absolute($self->{'config_file'})) {
@@ -1078,7 +1150,7 @@ sub _load_config
 			next;
 		}
 
-		for my $file (qw/base.yaml base.yml base.json base.xml base.ini base.toml local.yaml local.yml local.json local.xml local.ini local.toml/) {
+		for my $file (@_file_list) {
 			my $path = File::Spec->catfile($effective_dir, $file);
 			if($logger) {
 				$logger->debug(ref($self), ' ', __LINE__, ": Looking for configuration $path");

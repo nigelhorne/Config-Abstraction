@@ -3281,4 +3281,196 @@ subtest 'encryption: works in lazy mode (decryption deferred to first access)' =
 	is($cfg->get('pw'), 'lazy_secret', 'lazy ENC[] decrypted on first access');
 };
 
+# ---------------------------------------------------------------------------
+# environment option - environment-specific file tier (base.{env}.* / local.{env}.*)
+# ---------------------------------------------------------------------------
+
+subtest 'environment: base.{env}.yaml loaded after base.yaml, overrides it' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',       "host: base\nport: 5432\n");
+	_write_file($dir, 'base.prod.yaml',  "host: prod-db\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'prod',
+	);
+	ok(defined($cfg), 'construction succeeds with env-specific file');
+	is($cfg->get('host'), 'prod-db', 'base.prod.yaml overrides base.yaml');
+	is($cfg->get('port'), 5432,      'base.yaml key not in base.prod.yaml survives');
+};
+
+subtest 'environment: local.{env}.yaml loaded after local.yaml, overrides it' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',         "host: base\nport: 5432\n");
+	_write_file($dir, 'local.yaml',        "host: local\n");
+	_write_file($dir, 'local.staging.yaml', "host: staging-db\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'staging',
+	);
+	is($cfg->get('host'), 'staging-db', 'local.staging.yaml overrides local.yaml');
+	is($cfg->get('port'), 5432,         'base.yaml key survives through all env tiers');
+};
+
+subtest 'environment: full 5-tier merge order is correct' => sub {
+	# data < base.yaml < base.prod.yaml < local.yaml < local.prod.yaml
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',       "a: base\nb: base\nc: base\nd: base\n");
+	_write_file($dir, 'base.prod.yaml',  "b: base_prod\nc: base_prod\nd: base_prod\n");
+	_write_file($dir, 'local.yaml',      "c: local\nd: local\n");
+	_write_file($dir, 'local.prod.yaml', "d: local_prod\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { a => 'data', b => 'data', c => 'data', d => 'data' },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'prod',
+	);
+	is($cfg->get('a'), 'base',       'base.yaml overrides data');
+	is($cfg->get('b'), 'base_prod',  'base.prod.yaml overrides base.yaml');
+	is($cfg->get('c'), 'local',      'local.yaml overrides base.prod.yaml');
+	is($cfg->get('d'), 'local_prod', 'local.prod.yaml overrides local.yaml');
+};
+
+subtest 'environment: no env set means env-specific files are skipped' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',      "host: base\n");
+	_write_file($dir, 'base.prod.yaml', "host: prod\n");  # should be ignored
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		# no environment option
+	);
+	is($cfg->get('host'), 'base', 'base.prod.yaml ignored when no environment set');
+};
+
+subtest 'environment: auto-detected from {env_prefix}ENV' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',     "tier: base\n");
+	_write_file($dir, 'base.dev.yaml', "tier: dev\n");
+
+	local %ENV = (%ENV, $ENV_PREFIX . 'ENV' => 'dev');
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('tier'), 'dev', 'environment auto-detected from {env_prefix}ENV');
+};
+
+subtest 'environment: auto-detected from PLACK_ENV' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',          "tier: base\n");
+	_write_file($dir, 'base.staging.yaml',  "tier: staging\n");
+
+	local %ENV = (%ENV, PLACK_ENV => 'staging');
+	delete $ENV{$ENV_PREFIX . 'ENV'};
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('tier'), 'staging', 'environment auto-detected from PLACK_ENV');
+};
+
+subtest 'environment: auto-detected from NODE_ENV when PLACK_ENV absent' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',          "tier: base\n");
+	_write_file($dir, 'base.production.yaml', "tier: production\n");
+
+	local %ENV = (%ENV, NODE_ENV => 'production');
+	delete $ENV{$ENV_PREFIX . 'ENV'};
+	delete $ENV{'PLACK_ENV'};
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->get('tier'), 'production', 'environment auto-detected from NODE_ENV');
+};
+
+subtest 'environment: constructor option overrides env vars' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',      "tier: base\n");
+	_write_file($dir, 'base.prod.yaml', "tier: prod\n");
+	_write_file($dir, 'base.dev.yaml',  "tier: dev\n");
+
+	local %ENV = (%ENV, PLACK_ENV => 'dev', NODE_ENV => 'dev');
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'prod',          # explicit wins over PLACK_ENV/NODE_ENV
+	);
+	is($cfg->get('tier'), 'prod', 'explicit environment constructor option overrides env vars');
+};
+
+subtest 'environment: missing env-specific file is silently skipped' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "host: base\n");
+	# no base.canary.yaml -- should not error
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'canary',
+	);
+	ok(defined($cfg), 'missing env-specific file is silently skipped');
+	is($cfg->get('host'), 'base', 'base.yaml value used when env file absent');
+};
+
+subtest 'environment: invalid environment name croaks' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { x => 1 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			environment => 'prod/../../etc',  # path traversal attempt
+		);
+	} 'environment name with path separators croaks';
+	like($@, qr/invalid environment name/, 'error message names the invalid value');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { x => 1 },
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			environment => 'prod env',        # space not allowed
+		);
+	} 'environment name with space croaks';
+};
+
+subtest 'environment: env-specific JSON and INI files are also loaded' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.json',      '{"format":"json","from":"base"}');
+	_write_file($dir, 'base.test.json', '{"from":"test"}');
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'test',
+	);
+	is($cfg->get('format'), 'json',  'base key from base.json survives');
+	is($cfg->get('from'),   'test',  'base.test.json overrides base.json value');
+};
+
+subtest 'environment: works in lazy mode' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',      "host: base\n");
+	_write_file($dir, 'base.qa.yaml',   "host: qa-server\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+		environment => 'qa',
+		lazy        => 1,
+	);
+	ok(defined($cfg), 'lazy construction with environment option succeeds');
+	is($cfg->get('host'), 'qa-server', 'environment-specific file loaded in lazy mode');
+};
+
 done_testing();
