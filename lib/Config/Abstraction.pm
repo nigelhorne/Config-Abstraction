@@ -811,7 +811,7 @@ sub _get_environment
 	return undef unless defined $env;
 	return undef if $env eq '';
 
-	unless($env =~ /^[A-Za-z0-9_\-]+$/) {
+	unless($env =~ /^[A-Za-z0-9_-]+$/) {
 		Carp::croak(ref($self) . ": invalid environment name '$env': must contain only alphanumerics, hyphens, or underscores");
 	}
 
@@ -900,7 +900,13 @@ sub _decrypt_enc_value
 {
 	my ($self, $token, $key) = @_;
 
-	unless($token =~ /^ENC\[([A-Za-z0-9]+),([A-Za-z0-9_\-]+)\]$/) {
+	unless($token =~ /^
+		ENC\[
+		([A-Za-z0-9]+)		# algorithm name  (e.g. AES256GCM)
+		,
+		([A-Za-z0-9_-]+)	# base64url payload (RFC 4648 §5 alphabet)
+		\]
+	$/x) {
 		Carp::croak(ref($self) . ": malformed ENC token: $token");
 	}
 	my ($algo, $b64) = ($1, $2);
@@ -1001,7 +1007,7 @@ sub _validate_type
 	if($ltype eq 'integer') {
 		Carp::croak("Config::Abstraction: '$key' must be an integer (got " .
 			(defined $value ? "'$value'" : 'undef') . ')')
-			unless defined($value) && $value =~ /^-?\d+$/;
+			unless defined($value) && $value =~ /^-?[0-9]+$/;
 	} elsif($ltype eq 'number' || $ltype eq 'float') {
 		Carp::croak("Config::Abstraction: '$key' must be a number (got " .
 			(defined $value ? "'$value'" : 'undef') . ')')
@@ -1303,7 +1309,7 @@ sub _load_config
 					$logger->debug(ref($self), ' ', __LINE__, ": Loading data from $path");
 				}
 				eval {
-					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/.+>/)) {
+					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/[^>]+>/)) {
 						if($self->_load_driver('XML::Simple', ['XMLin'])) {
 							if($data = XMLin($path, ForceArray => 0, KeyAttr => [])) {
 								$self->{'type'} = 'XML';
@@ -1319,7 +1325,13 @@ sub _load_config
 								}
 							}
 						}
-					} elsif($data =~ /\{.+:.\}/s) {
+					} elsif($data =~ /
+						\{		# opening brace
+						.+		# key material; dot matches newlines because of the s modifier
+						:		# colon separator
+						.		# one value character
+						\}		# closing brace
+					/xs) {
 						$self->_load_driver('JSON::Parse');
 						# CPanel::JSON is very noisy, so be careful before attempting to use it
 						my $is_json;
@@ -1355,12 +1367,12 @@ sub _load_config
 								# Do not inspect or modify coderefs, blessed objects, or any reference
 								next unless _is_plain_scalar($v);
 
-								next if($v =~ /^".+"$/);	# Quotes to keep in one field
+								next if($v =~ /^"[^"]+"$/);	# Single-quoted field — skip comma-splitting
 								if($v =~ /,/) {
 									my @vals = split(/\s*,\s*/, $v);
 									delete $data->{$k};
 									foreach my $val (@vals) {
-										if($val =~ /(.+)=(.+)/) {
+										if($val =~ /([^=]+)=(.+)/) {
 											$data->{$k}{$1} = $2;
 										} else {
 											$data->{$k}{$val} = 1;
@@ -1492,7 +1504,7 @@ sub _load_config
 	foreach my $arg(@ARGV) {
 		next unless($arg =~ /=/);
 		my ($key, $value) = split(/=/, $arg, 2);
-		next unless $key =~ /^\-\-\Q$self->{env_prefix}\E(.*)$/;
+		next unless $key =~ /^--\Q$self->{env_prefix}\E(.*)$/;
 
 		my $path = lc($1);
 		my @parts = split(/__/, $path);

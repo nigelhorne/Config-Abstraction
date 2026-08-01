@@ -1361,7 +1361,7 @@ subtest '_run_validators() - hashref spec: pattern enforced' => sub {
 		Config::Abstraction->new(
 			data        => { code => 'abc' },
 			config_dirs => [],
-			validators  => { code => { pattern => qr/^\d+$/ } },
+			validators  => { code => { pattern => qr/^[0-9]+$/ } },
 		);
 	} qr/does not match required pattern/, 'pattern in hashref spec enforced';
 };
