@@ -600,19 +600,114 @@ If just one argument is given, it is assumed to be the name of a file.
 ## get(key)
 
 Retrieve a configuration value using dotted key notation (e.g.,
-`'database.user'`). Returns `undef` if the key doesn't exist.
+`'database.user'`). Returns `undef` if the key doesn't exist or if
+`key` is `undef`.
+
+### EXAMPLE
+
+    my $cfg = Config::Abstraction->new(
+        data        => { database => { host => 'localhost', port => 5432 } },
+        config_dirs => [],
+    );
+
+    my $host = $cfg->get('database.host');   # 'localhost'
+    my $port = $cfg->get('database.port');   # 5432
+    my $miss = $cfg->get('database.user');   # undef  -- key absent
+
+### API SPECIFICATION
+
+#### Input
+
+    key  -- SCALAR  -- dotted key path (e.g. 'database.host').
+                       C<undef> is allowed and returns C<undef> silently.
+
+#### Output
+
+    SCALAR or reference -- the value stored under C<key>, or C<undef> if absent.
+
+### MESSAGES
+
+    (none) -- missing keys return undef, no warning is raised.
+
+### PSEUDOCODE
+
+    if key is undef: return undef
+    call _ensure_loaded
+    if flatten mode: return config[key] (direct lookup)
+    parts = split sep_char from key
+    ref = config hashref
+    for each part:
+      if ref is not a HASH: return undef
+      if part not in ref:   return undef
+      ref = ref[part]
+    return ref
 
 ## exists(key)
 
-Does a configuration value using dotted key notation (e.g., `'database.user'`) exist?
-Returns 0 or 1.
+Test whether a configuration key is present, using dotted key notation
+(e.g., `'database.user'`).  Returns `1` when the key exists (even if its
+value is `undef`), `0` otherwise.  Returns `0` when `key` is `undef`.
+
+### EXAMPLE
+
+    my $cfg = Config::Abstraction->new(
+        data        => { timeout => undef, retries => 3 },
+        config_dirs => [],
+    );
+
+    $cfg->exists('timeout');   # 1 -- key present even though value is undef
+    $cfg->exists('retries');   # 1
+    $cfg->exists('missing');   # 0
+    $cfg->exists(undef);       # 0
+
+### API SPECIFICATION
+
+#### Input
+
+    key  -- SCALAR  -- dotted key path.  C<undef> returns C<0>.
+
+#### Output
+
+    0 | 1
+
+### MESSAGES
+
+    (none)
 
 ## all()
 
-Returns the entire configuration hash,
-possibly flattened depending on the `flatten` option.
+Returns the entire merged configuration as a hashref, or `undef` when no
+configuration data was found.  When `flatten => 1` was given to the
+constructor the keys are dotted strings (e.g. `'database.host'`); otherwise
+the hash is nested.
 
-The entry `config_path` contains a list of the files that the configuration was loaded from.
+The special key `config_path` within the returned hashref is an arrayref
+listing every file that was loaded, in load order.
+
+### EXAMPLE
+
+    my $cfg = Config::Abstraction->new(
+        data        => { host => 'localhost', port => 5432 },
+        config_dirs => [],
+    );
+
+    my $all = $cfg->all();
+    # { host => 'localhost', port => 5432, config_path => [] }
+
+### API SPECIFICATION
+
+#### Input
+
+    (none)
+
+#### Output
+
+    HASHREF  -- the full merged config (includes C<config_path> key).
+    undef    -- when the merged config is empty and no data was supplied.
+
+### MESSAGES
+
+    (none) -- returns undef silently when empty.
 
 ## explain\_sources()
 
@@ -700,9 +795,21 @@ any later sources (e.g. CLI arguments) that may have overridden it.
 Falls back to the normal merged value from `get(key)` when no environment
 variable contributed to `key`.
 
+### EXAMPLE
+
     local $ENV{APP_DATABASE__HOST} = 'env-host';
     my $host = $cfg->prefer_env('database.host');
     # Returns 'env-host' even if --APP_DATABASE__HOST=cli-host was also passed.
+
+### API SPECIFICATION
+
+#### Input
+
+    key -- SCALAR -- dotted key path.
+
+#### Output
+
+    SCALAR  -- the env-layer value, or C<get(key)> when no env var set it.
 
 ## prefer\_file(key)
 
@@ -711,8 +818,20 @@ environment variables and CLI arguments that may have overridden it.
 Falls back to the normal merged value from `get(key)` when no file
 contributed to `key`.
 
+### EXAMPLE
+
     my $host = $cfg->prefer_file('database.host');
     # Returns the file-sourced value even if APP_DATABASE__HOST is set.
+
+### API SPECIFICATION
+
+#### Input
+
+    key -- SCALAR -- dotted key path.
+
+#### Output
+
+    SCALAR  -- the file-layer value, or C<get(key)> when no file set it.
 
 ## prefer\_data(key)
 
@@ -722,11 +841,23 @@ overridden it.
 Falls back to the normal merged value from `get(key)` when `data` did not
 contribute to `key`.
 
+### EXAMPLE
+
     my $cfg = Config::Abstraction->new(
         data        => { timeout => 30 },
         config_dirs => ['/etc/myapp'],
     );
     my $t = $cfg->prefer_data('timeout');   # always 30, regardless of files/env
+
+### API SPECIFICATION
+
+#### Input
+
+    key -- SCALAR -- dotted key path.
+
+#### Output
+
+    SCALAR  -- the data-layer value, or C<get(key)> when C<data> did not set it.
 
 ## prefer\_argv(key)
 
@@ -738,28 +869,73 @@ Because CLI arguments are the highest-precedence source, this method is
 primarily useful for writing self-documenting code or for detecting whether
 a key was explicitly supplied on the command line.
 
+### EXAMPLE
+
     my $level = $cfg->prefer_argv('log.level');
     # Equivalent to $cfg->get('log.level') unless you specifically need to
     # confirm the value came from @ARGV.
+
+### API SPECIFICATION
+
+#### Input
+
+    key -- SCALAR -- dotted key path.
+
+#### Output
+
+    SCALAR  -- the argv-layer value, or C<get(key)> when no CLI arg set it.
 
 ## encrypt\_value($plaintext)
 
 Encrypt a plaintext string using the configured AES-256-GCM key and return an
 `ENC[AES256GCM,...]` token suitable for storing in a configuration file.
 
-    # Generate a token to paste into base.yaml:
-    my $cfg = Config::Abstraction->new(
-        encryption_key => $hex_key,
-        config_dirs    => ['config'],
-    );
-    print $cfg->encrypt_value('s3cr3t_password'), "\n";
-    # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
-
 Each call generates a fresh random nonce, so the same plaintext produces a
 different token every time.  The token is authenticated (GCM tag); any
 modification causes decryption to croak.
 
 Requires [CryptX](https://metacpan.org/pod/CryptX) (`Crypt::AuthEnc::GCM`, `Crypt::PRNG`).
+
+### EXAMPLE
+
+    # Generate a token to paste into base.yaml:
+    my $cfg = Config::Abstraction->new(
+        encryption_key => $hex_key,
+        config_dirs    => [],
+        lazy           => 1,
+    );
+    my $token = $cfg->encrypt_value('s3cr3t_password');
+    # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
+
+    # Or use config-dump from the command line:
+    #   config-dump --encrypt-value 's3cr3t_password' --encryption-key $KEY
+
+### API SPECIFICATION
+
+#### Input
+
+    plaintext  -- SCALAR  -- the string to encrypt.  May be empty.
+
+#### Output
+
+    SCALAR  -- the ENC[AES256GCM,...] token (always a printable ASCII string).
+
+### MESSAGES
+
+    "<class>: no encryption key configured ..." -- croak when no key is available.
+    "<class>: CryptX (Crypt::AuthEnc::GCM) is required ..." -- croak when CryptX absent.
+
+### PSEUDOCODE
+
+    call _ensure_loaded
+    key = _get_encryption_key() -- croak if undef
+    load Crypt::AuthEnc::GCM and Crypt::PRNG -- croak if absent
+    nonce = 12 random bytes
+    gcm = new GCM('AES', key)
+    gcm.iv_add(nonce)
+    ciphertext = gcm.encrypt_add(plaintext)
+    tag = gcm.encrypt_done()
+    return "ENC[AES256GCM," + base64url(nonce + ciphertext + tag) + "]"
 
 ## merge\_defaults
 
@@ -1197,6 +1373,39 @@ Notable changes by release.  Full details are in the `Changes` file.
 
     First release.
 
+# LIMITATIONS
+
+- **No separator escaping**
+
+    The separator character (`sep_char`, default `.`) cannot be embedded in a key name.
+    A key that literally contains a dot cannot be accessed via `get()` when `sep_char` is
+    the default.  Workaround: set `sep_char` to a character not present in any key.
+
+- **Data::Reuse fixation disabled**
+
+    The `Data::Reuse::fixate()` call inside `get()` is currently a no-op because the
+    behaviour of `Crypt::Storable::dclone` differs between Linux and macOS in a way
+    that cannot be resolved portably (RT#100461).  Hash values returned by `get()` are
+    mutable references, not read-only copies.
+
+- **Windows environment variable case sensitivity**
+
+    On Windows, environment variable names are case-insensitive at the OS level but
+    case-sensitive in `%ENV` as seen by Perl.  Overriding config keys via environment
+    variables may silently fail if the case does not match exactly.
+
+- **AUTOLOAD requires sep\_char set to '\_'**
+
+    AUTOLOAD method dispatch converts underscores to key separators.  If `sep_char` is
+    the default `'.'`, AUTOLOAD cannot reach nested keys because Perl method names cannot
+    contain dots.
+
+- **Remote directory TOML support requires File::Slurp::Remote**
+
+    TOML files in Newcastle Connection remote directories are only fetched when the
+    `File::Slurp::Remote` module is installed.  Without it, remote directories are
+    skipped entirely regardless of file format.
+
 # BUGS
 
 It should be possible to escape the separator character either with backslashes or quotes.
@@ -1243,6 +1452,39 @@ You can find documentation for this module with the perldoc command.
 # AUTHOR
 
 Nigel Horne, `<njh at nigelhorne.com>`
+
+# FORMAL SPECIFICATION
+
+## get
+
+    get : Config x Key → Value ∪ {⊥}
+    get(c, k) ≜ if k = ⊥ then ⊥
+                else lookup(c.config, split(c.sep_char, k))
+    lookup(h, [])      ≜ h
+    lookup(h, p:rest)  ≜ if p ∉ dom(h) then ⊥
+                          else lookup(h[p], rest)
+
+## encrypt\_value
+
+    encrypt_value : Config x Plaintext → Token
+    encrypt_value(c, p) ≜
+      let k  = resolve_key(c)  where k ≠ ⊥
+      let n  ~ Uniform(Bytes^12)            -- fresh random nonce
+      let ct = AES256GCM_enc(k, n, p)
+      let t  = GCM_tag(k, n, p)
+      in "ENC[AES256GCM," || base64url(n || ct || t) || "]"
+
+## exists
+
+    exists : Config x Key → {0, 1}
+    exists(c, k) ≜ if k = ⊥ then 0
+                   else 1 if lookup(c.config, split(c.sep_char, k)) ≠ ⊥
+                   else 0
+
+## all
+
+    all : Config → HashRef ∪ {⊥}
+    all(c) ≜ if |dom(c.config)| = 0 then ⊥ else c.config
 
 # LICENCE AND COPYRIGHT
 

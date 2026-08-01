@@ -11,6 +11,16 @@ use Hash::Merge qw(merge);
 use Params::Get 0.15;
 use Params::Validate::Strict 0.37;
 use Scalar::Util;
+use Readonly;
+
+# AES-256-GCM constants — do not change without updating _decrypt_enc_value and encrypt_value
+Readonly::Scalar my $_AES_NONCE_SIZE  => 12;	# GCM standard nonce length in bytes
+Readonly::Scalar my $_AES_TAG_SIZE    => 16;	# GCM authentication tag length in bytes
+Readonly::Scalar my $_AES_KEY_SIZE    => 32;	# AES-256 key length in bytes
+Readonly::Scalar my $_ENC_PAYLOAD_MIN => 28;	# shortest valid payload: nonce(12) + tag(16)
+Readonly::Scalar my $_HEX_KEY_LEN     => 64;	# 32 bytes expressed as hexadecimal
+Readonly::Scalar my $_B64_KEY_MIN     => 43;	# minimum base64/base64url chars for 32 bytes
+Readonly::Scalar my $_B64_KEY_MAX     => 44;	# maximum base64/base64url chars for 32 bytes
 
 =head1 NAME
 
@@ -22,7 +32,7 @@ Version 0.39
 
 =cut
 
-our $VERSION = '0.39';
+our $VERSION = '0.40';
 
 =head1 SYNOPSIS
 
@@ -845,21 +855,21 @@ sub _decode_encryption_key
 {
 	my ($self, $raw) = @_;
 
-	return $raw if length($raw) == 32;
+	return $raw if length($raw) == $_AES_KEY_SIZE;
 
-	if(length($raw) == 64 && $raw =~ /^[0-9A-Fa-f]{64}$/) {
+	if(length($raw) == $_HEX_KEY_LEN && $raw =~ /^[0-9A-Fa-f]{$_HEX_KEY_LEN}$/) {
 		return pack('H*', $raw);
 	}
 
-	if(length($raw) >= 43 && length($raw) <= 44) {
+	if(length($raw) >= $_B64_KEY_MIN && length($raw) <= $_B64_KEY_MAX) {
 		require MIME::Base64;
 		(my $b64 = $raw) =~ tr/-_/+\//;   # base64url → base64
 		$b64 .= '=' x ((4 - length($b64) % 4) % 4);
 		my $bytes = MIME::Base64::decode_base64($b64);
-		return $bytes if length($bytes) == 32;
+		return $bytes if length($bytes) == $_AES_KEY_SIZE;
 	}
 
-	Carp::croak(ref($self) . ': encryption_key must be 32 raw bytes, 64 hex chars, or 44 base64 chars (got length ' . length($raw) . ')');
+	Carp::croak(ref($self) . ': encryption_key must be ' . $_AES_KEY_SIZE . ' raw bytes, ' . $_HEX_KEY_LEN . ' hex chars, or ' . $_B64_KEY_MAX . ' base64 chars (got length ' . length($raw) . ')');
 }
 
 # Recursively walk $href and decrypt any leaf value matching ENC[...].
@@ -905,13 +915,13 @@ sub _decrypt_enc_value
 	require MIME::Base64;
 	my $raw = MIME::Base64::decode_base64url($b64);
 
-	if(length($raw) < 28) {
+	if(length($raw) < $_ENC_PAYLOAD_MIN) {
 		Carp::croak(ref($self) . ": ENC token payload is too short to be valid");
 	}
 
-	my $nonce = substr($raw,  0, 12);
-	my $tag   = substr($raw, -16);
-	my $ct    = substr($raw, 12, length($raw) - 28);
+	my $nonce = substr($raw,  0, $_AES_NONCE_SIZE);
+	my $tag   = substr($raw, -$_AES_TAG_SIZE);
+	my $ct    = substr($raw, $_AES_NONCE_SIZE, length($raw) - $_ENC_PAYLOAD_MIN);
 
 	my $gcm = Crypt::AuthEnc::GCM->new('AES', $key);
 	$gcm->iv_add($nonce);
@@ -1141,7 +1151,7 @@ sub _load_config
 			if($self->_is_local_host($host)) {
 				$effective_dir = $remote_dir;
 			} else {
-				$self->_load_remote_dir($host, $remote_dir, \%merged);
+				$self->_load_remote_dir($host, $remote_dir, \%merged, \@_file_list);
 				next;
 			}
 		}
@@ -1519,7 +1529,47 @@ sub _load_config
 =head2 get(key)
 
 Retrieve a configuration value using dotted key notation (e.g.,
-C<'database.user'>). Returns C<undef> if the key doesn't exist.
+C<'database.user'>). Returns C<undef> if the key doesn't exist or if
+C<key> is C<undef>.
+
+=head3 EXAMPLE
+
+  my $cfg = Config::Abstraction->new(
+      data        => { database => { host => 'localhost', port => 5432 } },
+      config_dirs => [],
+  );
+
+  my $host = $cfg->get('database.host');   # 'localhost'
+  my $port = $cfg->get('database.port');   # 5432
+  my $miss = $cfg->get('database.user');   # undef  -- key absent
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key  -- SCALAR  -- dotted key path (e.g. 'database.host').
+                     C<undef> is allowed and returns C<undef> silently.
+
+=head4 Output
+
+  SCALAR or reference -- the value stored under C<key>, or C<undef> if absent.
+
+=head3 MESSAGES
+
+  (none) -- missing keys return undef, no warning is raised.
+
+=head3 PSEUDOCODE
+
+  if key is undef: return undef
+  call _ensure_loaded
+  if flatten mode: return config[key] (direct lookup)
+  parts = split sep_char from key
+  ref = config hashref
+  for each part:
+    if ref is not a HASH: return undef
+    if part not in ref:   return undef
+    ref = ref[part]
+  return ref
 
 =cut
 
@@ -1588,8 +1638,35 @@ sub _load_data_reuse
 
 =head2 exists(key)
 
-Does a configuration value using dotted key notation (e.g., C<'database.user'>) exist?
-Returns 0 or 1.
+Test whether a configuration key is present, using dotted key notation
+(e.g., C<'database.user'>).  Returns C<1> when the key exists (even if its
+value is C<undef>), C<0> otherwise.  Returns C<0> when C<key> is C<undef>.
+
+=head3 EXAMPLE
+
+  my $cfg = Config::Abstraction->new(
+      data        => { timeout => undef, retries => 3 },
+      config_dirs => [],
+  );
+
+  $cfg->exists('timeout');   # 1 -- key present even though value is undef
+  $cfg->exists('retries');   # 1
+  $cfg->exists('missing');   # 0
+  $cfg->exists(undef);       # 0
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key  -- SCALAR  -- dotted key path.  C<undef> returns C<0>.
+
+=head4 Output
+
+  0 | 1
+
+=head3 MESSAGES
+
+  (none)
 
 =cut
 
@@ -1615,10 +1692,38 @@ sub exists
 
 =head2 all()
 
-Returns the entire configuration hash,
-possibly flattened depending on the C<flatten> option.
+Returns the entire merged configuration as a hashref, or C<undef> when no
+configuration data was found.  When C<flatten =E<gt> 1> was given to the
+constructor the keys are dotted strings (e.g. C<'database.host'>); otherwise
+the hash is nested.
 
-The entry C<config_path> contains a list of the files that the configuration was loaded from.
+The special key C<config_path> within the returned hashref is an arrayref
+listing every file that was loaded, in load order.
+
+=head3 EXAMPLE
+
+  my $cfg = Config::Abstraction->new(
+      data        => { host => 'localhost', port => 5432 },
+      config_dirs => [],
+  );
+
+  my $all = $cfg->all();
+  # { host => 'localhost', port => 5432, config_path => [] }
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  (none)
+
+=head4 Output
+
+  HASHREF  -- the full merged config (includes C<config_path> key).
+  undef    -- when the merged config is empty and no data was supplied.
+
+=head3 MESSAGES
+
+  (none) -- returns undef silently when empty.
 
 =cut
 
@@ -1795,9 +1900,21 @@ any later sources (e.g. CLI arguments) that may have overridden it.
 Falls back to the normal merged value from C<get(key)> when no environment
 variable contributed to C<key>.
 
+=head3 EXAMPLE
+
   local $ENV{APP_DATABASE__HOST} = 'env-host';
   my $host = $cfg->prefer_env('database.host');
   # Returns 'env-host' even if --APP_DATABASE__HOST=cli-host was also passed.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key -- SCALAR -- dotted key path.
+
+=head4 Output
+
+  SCALAR  -- the env-layer value, or C<get(key)> when no env var set it.
 
 =cut
 
@@ -1815,8 +1932,20 @@ environment variables and CLI arguments that may have overridden it.
 Falls back to the normal merged value from C<get(key)> when no file
 contributed to C<key>.
 
+=head3 EXAMPLE
+
   my $host = $cfg->prefer_file('database.host');
   # Returns the file-sourced value even if APP_DATABASE__HOST is set.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key -- SCALAR -- dotted key path.
+
+=head4 Output
+
+  SCALAR  -- the file-layer value, or C<get(key)> when no file set it.
 
 =cut
 
@@ -1835,11 +1964,23 @@ overridden it.
 Falls back to the normal merged value from C<get(key)> when C<data> did not
 contribute to C<key>.
 
+=head3 EXAMPLE
+
   my $cfg = Config::Abstraction->new(
       data        => { timeout => 30 },
       config_dirs => ['/etc/myapp'],
   );
   my $t = $cfg->prefer_data('timeout');   # always 30, regardless of files/env
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key -- SCALAR -- dotted key path.
+
+=head4 Output
+
+  SCALAR  -- the data-layer value, or C<get(key)> when C<data> did not set it.
 
 =cut
 
@@ -1860,9 +2001,21 @@ Because CLI arguments are the highest-precedence source, this method is
 primarily useful for writing self-documenting code or for detecting whether
 a key was explicitly supplied on the command line.
 
+=head3 EXAMPLE
+
   my $level = $cfg->prefer_argv('log.level');
   # Equivalent to $cfg->get('log.level') unless you specifically need to
   # confirm the value came from @ARGV.
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  key -- SCALAR -- dotted key path.
+
+=head4 Output
+
+  SCALAR  -- the argv-layer value, or C<get(key)> when no CLI arg set it.
 
 =cut
 
@@ -1878,19 +2031,52 @@ sub prefer_argv
 Encrypt a plaintext string using the configured AES-256-GCM key and return an
 C<ENC[AES256GCM,...]> token suitable for storing in a configuration file.
 
-  # Generate a token to paste into base.yaml:
-  my $cfg = Config::Abstraction->new(
-      encryption_key => $hex_key,
-      config_dirs    => ['config'],
-  );
-  print $cfg->encrypt_value('s3cr3t_password'), "\n";
-  # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
-
 Each call generates a fresh random nonce, so the same plaintext produces a
 different token every time.  The token is authenticated (GCM tag); any
 modification causes decryption to croak.
 
 Requires L<CryptX> (C<Crypt::AuthEnc::GCM>, C<Crypt::PRNG>).
+
+=head3 EXAMPLE
+
+  # Generate a token to paste into base.yaml:
+  my $cfg = Config::Abstraction->new(
+      encryption_key => $hex_key,
+      config_dirs    => [],
+      lazy           => 1,
+  );
+  my $token = $cfg->encrypt_value('s3cr3t_password');
+  # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
+
+  # Or use config-dump from the command line:
+  #   config-dump --encrypt-value 's3cr3t_password' --encryption-key $KEY
+
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  plaintext  -- SCALAR  -- the string to encrypt.  May be empty.
+
+=head4 Output
+
+  SCALAR  -- the ENC[AES256GCM,...] token (always a printable ASCII string).
+
+=head3 MESSAGES
+
+  "<class>: no encryption key configured ..." -- croak when no key is available.
+  "<class>: CryptX (Crypt::AuthEnc::GCM) is required ..." -- croak when CryptX absent.
+
+=head3 PSEUDOCODE
+
+  call _ensure_loaded
+  key = _get_encryption_key() -- croak if undef
+  load Crypt::AuthEnc::GCM and Crypt::PRNG -- croak if absent
+  nonce = 12 random bytes
+  gcm = new GCM('AES', key)
+  gcm.iv_add(nonce)
+  ciphertext = gcm.encrypt_add(plaintext)
+  tag = gcm.encrypt_done()
+  return "ENC[AES256GCM," + base64url(nonce + ciphertext + tag) + "]"
 
 =cut
 
@@ -1912,7 +2098,7 @@ sub encrypt_value
 
 	require MIME::Base64;
 
-	my $nonce = random_bytes(12);
+	my $nonce = random_bytes($_AES_NONCE_SIZE);
 	my $gcm   = Crypt::AuthEnc::GCM->new('AES', $key);
 	$gcm->iv_add($nonce);
 	my $ct  = $gcm->encrypt_add($plaintext);
@@ -2226,7 +2412,7 @@ sub _load_remote_dir
 		Carp::croak('Illegal Operation: This method can only be called by a subclass');
 	}
 
-	my ($self, $host, $remote_dir, $merged_ref) = @_;
+	my ($self, $host, $remote_dir, $merged_ref, $file_list) = @_;
 	my $logger = $self->{'logger'};
 
 	unless($self->_load_driver('File::Slurp::Remote')) {
@@ -2235,7 +2421,13 @@ sub _load_remote_dir
 		return;
 	}
 
-	for my $file (qw/base.yaml base.yml base.json base.xml base.ini local.yaml local.yml local.json local.xml local.ini/) {
+	# Use the same file list as the local pipeline (includes TOML and env-specific tiers).
+	# Fall back to the legacy list if none was passed (e.g. from very old callers).
+	my @files = $file_list ? @{$file_list}
+		: qw(base.yaml base.yml base.json base.xml base.ini base.toml
+		     local.yaml local.yml local.json local.xml local.ini local.toml);
+
+	for my $file (@files) {
 		my $remote_path = "/../$host$remote_dir/$file";
 
 		if($logger) {
@@ -2371,18 +2563,24 @@ sub AUTOLOAD
 	# my $val = $self->get($key);
 	# return $val if(defined($val));
 
-	my $data = $self->{data} || $self->{'config'};
+	# Always use the merged config, not the raw pre-merge $self->{data}.
+	# Using $self->{data} here would bypass file and env overrides entirely.
+	my $data = $self->{'config'};
+	my $sep  = $self->{'sep_char'};
 
-	# If flattening is ON, assume keys are pre-flattened
-	if ($self->{flatten}) {
-		return $data->{$key} if(exists $data->{$key});
+	# When flattening is ON, Hash::Flatten stores keys with '.' as separator.
+	# Convert the sep_char-separated AUTOLOAD key to the dotted form first,
+	# then fall back to the raw key in case sep_char happens to be '.'.
+	if($self->{flatten}) {
+		my $dot_key = ($sep ne '.') ? do { (my $k = $key) =~ s/\Q$sep\E/./g; $k } : $key;
+		return $data->{$dot_key} if exists $data->{$dot_key};
+		return $data->{$key}     if exists $data->{$key};
+		croak "No such config key '$key'";
 	}
 
-	my $sep = $self->{'sep_char'};
-
-	# Fallback: try resolving nested structure dynamically
+	# Nested (non-flat) mode: walk the config tree one part at a time.
 	my $val = $data;
-	foreach my $part(split /\Q$sep\E/, $key) {
+	foreach my $part (split /\Q$sep\E/, $key) {
 		if((ref($val) eq 'HASH') && (exists $val->{$part})) {
 			$val = $val->{$part};
 		} else {
@@ -2694,6 +2892,43 @@ First release.
 
 =back
 
+=head1 LIMITATIONS
+
+=over 4
+
+=item * B<No separator escaping>
+
+The separator character (C<sep_char>, default C<.>) cannot be embedded in a key name.
+A key that literally contains a dot cannot be accessed via C<get()> when C<sep_char> is
+the default.  Workaround: set C<sep_char> to a character not present in any key.
+
+=item * B<Data::Reuse fixation disabled>
+
+The C<Data::Reuse::fixate()> call inside C<get()> is currently a no-op because the
+behaviour of C<Crypt::Storable::dclone> differs between Linux and macOS in a way
+that cannot be resolved portably (RT#100461).  Hash values returned by C<get()> are
+mutable references, not read-only copies.
+
+=item * B<Windows environment variable case sensitivity>
+
+On Windows, environment variable names are case-insensitive at the OS level but
+case-sensitive in C<%ENV> as seen by Perl.  Overriding config keys via environment
+variables may silently fail if the case does not match exactly.
+
+=item * B<AUTOLOAD requires sep_char set to '_'>
+
+AUTOLOAD method dispatch converts underscores to key separators.  If C<sep_char> is
+the default C<'.'>, AUTOLOAD cannot reach nested keys because Perl method names cannot
+contain dots.
+
+=item * B<Remote directory TOML support requires File::Slurp::Remote>
+
+TOML files in Newcastle Connection remote directories are only fetched when the
+C<File::Slurp::Remote> module is installed.  Without it, remote directories are
+skipped entirely regardless of file format.
+
+=back
+
 =head1 BUGS
 
 It should be possible to escape the separator character either with backslashes or quotes.
@@ -2749,6 +2984,41 @@ Used to C<fixate()> elements when installed, unless C<no-fixate> is given
 =head1 AUTHOR
 
 Nigel Horne, C<< <njh at nigelhorne.com> >>
+
+=encoding UTF-8
+
+=head1 FORMAL SPECIFICATION
+
+=head2 get
+
+  get : Config x Key → Value ∪ {⊥}
+  get(c, k) ≜ if k = ⊥ then ⊥
+              else lookup(c.config, split(c.sep_char, k))
+  lookup(h, [])      ≜ h
+  lookup(h, p:rest)  ≜ if p ∉ dom(h) then ⊥
+                        else lookup(h[p], rest)
+
+=head2 encrypt_value
+
+  encrypt_value : Config x Plaintext → Token
+  encrypt_value(c, p) ≜
+    let k  = resolve_key(c)  where k ≠ ⊥
+    let n  ~ Uniform(Bytes^12)            -- fresh random nonce
+    let ct = AES256GCM_enc(k, n, p)
+    let t  = GCM_tag(k, n, p)
+    in "ENC[AES256GCM," || base64url(n || ct || t) || "]"
+
+=head2 exists
+
+  exists : Config x Key → {0, 1}
+  exists(c, k) ≜ if k = ⊥ then 0
+                 else 1 if lookup(c.config, split(c.sep_char, k)) ≠ ⊥
+                 else 0
+
+=head2 all
+
+  all : Config → HashRef ∪ {⊥}
+  all(c) ≜ if |dom(c.config)| = 0 then ⊥ else c.config
 
 =head1 LICENCE AND COPYRIGHT
 

@@ -1,7 +1,31 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.40
+	[ Bug Fixes ]
+	- Fix AUTOLOAD method dispatch using stale $self->{data} (raw constructor
+	  defaults) instead of the fully merged $self->{config}; file and environment
+	  overrides were silently invisible through AUTOLOAD accessor calls.
+	- Fix AUTOLOAD in flatten mode: Hash::Flatten uses '.' as separator regardless
+	  of sep_char, so the sep_char-separated method name is now translated to dotted
+	  form before lookup in the flat config hash.
+	- Fix _load_remote_dir using a hardcoded file list that omitted TOML files and
+	  the new environment-specific tiers (base.{env}.* / local.{env}.*); the
+	  dynamic @_file_list is now passed from _load_config to _load_remote_dir.
+
 	[ Enhancements ]
+	- Add Readonly constants for AES-256-GCM sizes ($_AES_NONCE_SIZE,
+	  $_AES_TAG_SIZE, $_AES_KEY_SIZE, $_ENC_PAYLOAD_MIN, $_HEX_KEY_LEN,
+	  $_B64_KEY_MIN, $_B64_KEY_MAX) replacing inline magic numbers.
+	- Add =head1 LIMITATIONS documenting: separator escaping, Data::Reuse status,
+	  Windows env-var case sensitivity, AUTOLOAD sep_char requirement, and TOML
+	  in remote directories.
+	- Add full POD (EXAMPLE / API SPECIFICATION / MESSAGES / FORMAL SPECIFICATION /
+	  PSEUDOCODE) to get(), exists(), all(), encrypt_value(), and prefer_*().
+	- New t/locales.t: geographic (ISO-3166 country-code environment tiers) and
+	  POSIX locale subtests; uses local $! = ENOENT; my $msg = "$!"; idiom to
+	  obtain locale-specific strings without POSIX::strerror.
+
+	[ Previous Enhancements ]
 	- New C<environment> constructor option: activates two additional file tiers --
 	  base.{env}.* (loaded immediately after base.*) and local.{env}.* (loaded
 	  immediately after local.*). When not supplied, auto-detected from
