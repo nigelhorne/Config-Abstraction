@@ -1,7 +1,6 @@
 package Config::Abstraction;
 
 # TODO: environment-specific encodings - automatic loading of dev/staging/prod
-# TODO: devise a scheme to encrypt passwords in config files
 
 use strict;
 use warnings;
@@ -387,6 +386,35 @@ The C<env_prefix> value,
 if provided as a top-level argument,
 still takes precedence over any C<env_prefix> that might exist inside the C<defaults> hash.
 
+=item * C<encryption_key>
+
+A 256-bit (32-byte) AES key used to transparently decrypt C<ENC[...]> values found in any
+configuration source after the full merge.  The key may be supplied as:
+
+=over 4
+
+=item 32 raw bytes
+
+=item 64 lowercase or uppercase hex characters
+
+=item 44 Base64 or Base64url characters (standard or URL-safe alphabet, with or without trailing C<=>)
+
+=back
+
+If no key is configured (and neither C<encryption_key_file> nor the corresponding
+environment variables are set), C<ENC[...]> tokens are left as literal strings.
+Decryption requires L<CryptX> (C<Crypt::AuthEnc::GCM>); if that module is absent a
+C<croak> is raised when an encrypted value is encountered.
+
+See L</ENCRYPTED VALUES> for the full workflow.
+
+=item * C<encryption_key_file>
+
+Path to a file whose first line contains the encryption key in any of the formats accepted
+by C<encryption_key>.  Takes precedence over the C<ENCRYPTION_KEY_FILE> and
+C<{env_prefix}ENCRYPTION_KEY_FILE> environment variables, but is overridden by a key
+supplied directly via C<encryption_key>.
+
 =item * C<env_prefix>
 
 A prefix for environment variable keys and comment line options, e.g. C<MYAPP_DATABASE__USER>,
@@ -715,6 +743,123 @@ sub _ensure_loaded
 	if(my $checker = delete $self->{'_lazy_checker'}) {
 		$self->_run_checker($checker);
 	}
+}
+
+# Resolve the AES-256 encryption key from constructor option, env vars, or key file.
+# Returns 32 raw bytes, or undef when no key is configured.
+sub _get_encryption_key
+{
+	my $self = shift;
+
+	my $raw = $self->{'encryption_key'};
+
+	if(!defined($raw)) {
+		my $prefix = $self->{'env_prefix'} // 'APP_';
+		$raw = $ENV{$prefix . 'ENCRYPTION_KEY'} // $ENV{'ENCRYPTION_KEY'};
+	}
+
+	if(!defined($raw)) {
+		my $prefix = $self->{'env_prefix'} // 'APP_';
+		my $kf = $self->{'encryption_key_file'}
+			// $ENV{$prefix . 'ENCRYPTION_KEY_FILE'}
+			// $ENV{'ENCRYPTION_KEY_FILE'};
+		if(defined($kf) && -f $kf) {
+			open my $fh, '<', $kf
+				or Carp::croak(ref($self) . ": cannot open encryption_key_file '$kf': $!");
+			$raw = <$fh>;
+			close $fh;
+			chomp $raw if defined $raw;
+		}
+	}
+
+	return undef unless defined $raw;
+	return $self->_decode_encryption_key($raw);
+}
+
+# Accept a key as 32 raw bytes, 64 hex chars, or 43-44 base64/base64url chars.
+# Returns 32 raw bytes or croaks.
+sub _decode_encryption_key
+{
+	my ($self, $raw) = @_;
+
+	return $raw if length($raw) == 32;
+
+	if(length($raw) == 64 && $raw =~ /^[0-9A-Fa-f]{64}$/) {
+		return pack('H*', $raw);
+	}
+
+	if(length($raw) >= 43 && length($raw) <= 44) {
+		require MIME::Base64;
+		(my $b64 = $raw) =~ tr/-_/+\//;   # base64url → base64
+		$b64 .= '=' x ((4 - length($b64) % 4) % 4);
+		my $bytes = MIME::Base64::decode_base64($b64);
+		return $bytes if length($bytes) == 32;
+	}
+
+	Carp::croak(ref($self) . ': encryption_key must be 32 raw bytes, 64 hex chars, or 44 base64 chars (got length ' . length($raw) . ')');
+}
+
+# Recursively walk $href and decrypt any leaf value matching ENC[...].
+sub _decrypt_config_values
+{
+	my ($self, $href, $key) = @_;
+
+	for my $k (keys %{$href}) {
+		next if $k eq 'config_path';
+		my $v = $href->{$k};
+		if(ref($v) eq 'HASH') {
+			$self->_decrypt_config_values($v, $key);
+		} elsif(ref($v) eq 'ARRAY') {
+			for my $i (0..$#{$v}) {
+				if(!ref($v->[$i]) && defined($v->[$i]) && $v->[$i] =~ /^ENC\[/) {
+					$v->[$i] = $self->_decrypt_enc_value($v->[$i], $key);
+				}
+			}
+		} elsif(!ref($v) && defined($v) && $v =~ /^ENC\[/) {
+			$href->{$k} = $self->_decrypt_enc_value($v, $key);
+		}
+	}
+}
+
+# Decrypt a single ENC[AES256GCM,<base64url>] token.
+# Returns the plaintext string or croaks on failure.
+sub _decrypt_enc_value
+{
+	my ($self, $token, $key) = @_;
+
+	unless($token =~ /^ENC\[([A-Za-z0-9]+),([A-Za-z0-9_\-]+)\]$/) {
+		Carp::croak(ref($self) . ": malformed ENC token: $token");
+	}
+	my ($algo, $b64) = ($1, $2);
+
+	unless(lc($algo) eq 'aes256gcm') {
+		Carp::croak(ref($self) . ": unsupported encryption algorithm '$algo' in ENC token");
+	}
+	unless($self->_load_driver('Crypt::AuthEnc::GCM')) {
+		Carp::croak(ref($self) . ': CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX');
+	}
+
+	require MIME::Base64;
+	my $raw = MIME::Base64::decode_base64url($b64);
+
+	if(length($raw) < 28) {
+		Carp::croak(ref($self) . ": ENC token payload is too short to be valid");
+	}
+
+	my $nonce = substr($raw,  0, 12);
+	my $tag   = substr($raw, -16);
+	my $ct    = substr($raw, 12, length($raw) - 28);
+
+	my $gcm = Crypt::AuthEnc::GCM->new('AES', $key);
+	$gcm->iv_add($nonce);
+	my $pt = $gcm->decrypt_add($ct);
+
+	my $ok = eval { $gcm->decrypt_done($tag) };
+	unless($ok && !$@) {
+		Carp::croak(ref($self) . ": decryption failed (wrong key or tampered data)");
+	}
+
+	return $pt;
 }
 
 # Apply the validators hash supplied as a constructor option.
@@ -1293,6 +1438,10 @@ sub _load_config
 	$self->{config} = $self->{flatten} ? flatten(\%merged) : \%merged;
 
 	Hash::Merge::set_clone_behavior($saved_clone);
+
+	if(my $enc_key = $self->_get_encryption_key()) {
+		$self->_decrypt_config_values($self->{'config'}, $enc_key);
+	}
 }
 
 =head2 get(key)
@@ -1650,6 +1799,54 @@ sub prefer_argv
 	my ($self, $key) = @_;
 	my ($found, $val) = $self->_value_from_type('argv', $key);
 	return $found ? $val : $self->get($key);
+}
+
+=head2 encrypt_value($plaintext)
+
+Encrypt a plaintext string using the configured AES-256-GCM key and return an
+C<ENC[AES256GCM,...]> token suitable for storing in a configuration file.
+
+  # Generate a token to paste into base.yaml:
+  my $cfg = Config::Abstraction->new(
+      encryption_key => $hex_key,
+      config_dirs    => ['config'],
+  );
+  print $cfg->encrypt_value('s3cr3t_password'), "\n";
+  # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
+
+Each call generates a fresh random nonce, so the same plaintext produces a
+different token every time.  The token is authenticated (GCM tag); any
+modification causes decryption to croak.
+
+Requires L<CryptX> (C<Crypt::AuthEnc::GCM>, C<Crypt::PRNG>).
+
+=cut
+
+sub encrypt_value
+{
+	my ($self, $plaintext) = @_;
+
+	$self->_ensure_loaded();
+
+	my $key = $self->_get_encryption_key()
+		or Carp::croak(ref($self) . ': no encryption key configured (set encryption_key, encryption_key_file, or ENCRYPTION_KEY env var)');
+
+	unless($self->_load_driver('Crypt::AuthEnc::GCM')) {
+		Carp::croak(ref($self) . ': CryptX (Crypt::AuthEnc::GCM) is required; install it with: cpanm CryptX');
+	}
+	unless($self->_load_driver('Crypt::PRNG', ['random_bytes'])) {
+		Carp::croak(ref($self) . ': CryptX (Crypt::PRNG) is required; install it with: cpanm CryptX');
+	}
+
+	require MIME::Base64;
+
+	my $nonce = random_bytes(12);
+	my $gcm   = Crypt::AuthEnc::GCM->new('AES', $key);
+	$gcm->iv_add($nonce);
+	my $ct  = $gcm->encrypt_add($plaintext);
+	my $tag = $gcm->encrypt_done();
+
+	return 'ENC[AES256GCM,' . MIME::Base64::encode_base64url($nonce . $ct . $tag, '') . ']';
 }
 
 =head2 merge_defaults
@@ -2124,6 +2321,100 @@ sub AUTOLOAD
 }
 
 1;
+
+=head1 ENCRYPTED VALUES
+
+Config::Abstraction supports transparent AES-256-GCM encryption of individual
+configuration values.  This lets you store secrets (passwords, API keys, tokens)
+in config files without exposing them as plaintext, even when those files are
+committed to version control.
+
+=head2 Quick start
+
+B<Step 1 -- generate a key:>
+
+  # 32 random bytes, encoded as 64 hex chars
+  perl -e 'use Crypt::PRNG qw(random_bytes); use MIME::Base64 qw(encode_base64url);
+           print encode_base64url(random_bytes(32)), "\n"'
+
+Store the result in an environment variable or a key file (outside version control):
+
+  export ENCRYPTION_KEY=<the 44-char base64url output>
+
+B<Step 2 -- encrypt a secret value:>
+
+  perl -MConfig::Abstraction -e '
+    my $cfg = Config::Abstraction->new(data => {});
+    print $cfg->encrypt_value("my_secret_password"), "\n";
+  '
+
+This prints something like:
+
+  ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5...]
+
+B<Step 3 -- paste the token into your config file:>
+
+  # config/base.yaml
+  database:
+    host: db.example.com
+    user: myapp
+    password: 'ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5...]'
+
+B<Step 4 -- load and use normally:>
+
+  my $cfg = Config::Abstraction->new(config_dirs => ['config']);
+  # $cfg->get('database.password') returns 'my_secret_password' -- already decrypted
+
+=head2 Key configuration
+
+The encryption key is resolved in this order (first match wins):
+
+=over 4
+
+=item 1. C<encryption_key> constructor option (raw bytes, hex, or base64)
+
+=item 2. C<{env_prefix}ENCRYPTION_KEY> environment variable (default: C<APP_ENCRYPTION_KEY>)
+
+=item 3. C<ENCRYPTION_KEY> environment variable
+
+=item 4. File at C<encryption_key_file> constructor option
+
+=item 5. File at C<{env_prefix}ENCRYPTION_KEY_FILE> environment variable
+
+=item 6. File at C<ENCRYPTION_KEY_FILE> environment variable
+
+=back
+
+The key file should contain the key on its first line in any supported format.
+B<Never commit the key to version control.>
+
+=head2 Token format
+
+  ENC[AES256GCM,<base64url(nonce || ciphertext || tag)>]
+
+=over 4
+
+=item * C<AES256GCM> -- AES-256 in GCM mode (authenticated encryption)
+
+=item * Nonce -- 12 random bytes (fresh per encryption, never reused)
+
+=item * GCM authentication tag -- 16 bytes; any modification causes decryption to croak
+
+=item * Base64url encoding -- URL-safe alphabet, no padding ambiguity
+
+=back
+
+=head2 Behaviour when no key is configured
+
+If no key is found, C<ENC[...]> tokens are left as literal strings.  This means
+the feature is purely opt-in: existing deployments without a key configured are
+unaffected.
+
+=head2 Requirements
+
+L<CryptX> (C<Crypt::AuthEnc::GCM>, C<Crypt::PRNG>) must be installed:
+
+  cpanm CryptX
 
 =head1 COMMON PITFALLS
 

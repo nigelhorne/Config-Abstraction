@@ -3015,4 +3015,270 @@ subtest 'checker: works in lazy mode' => sub {
 	like($@, qr/checker validation failed/, 'lazy checker error message correct');
 };
 
+# ---------------------------------------------------------------------------
+# Encrypted values (ENC[AES256GCM,...]) - requires CryptX
+# ---------------------------------------------------------------------------
+
+my $CRYPTX_AVAILABLE = eval { require Crypt::AuthEnc::GCM; require Crypt::PRNG; 1 };
+
+subtest 'encryption: ENC[] tokens pass through unchanged when no key configured' => sub {
+	# Without a key, ENC[] tokens are left as literal strings (opt-in feature).
+	my $token = 'ENC[AES256GCM,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA]';
+	my $cfg = Config::Abstraction->new(
+		data        => { password => $token },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	ok(defined($cfg), 'construction succeeds with ENC[] token and no key');
+	is($cfg->get('password'), $token, 'ENC[] token left unchanged when no key configured');
+};
+
+subtest 'encryption: encrypt_value and transparent decryption round-trip' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	# Generate a 32-byte test key (NOT from /dev/urandom for determinism in tests)
+	my $key_hex = '0' x 64;   # 32 zero bytes as hex -- valid for tests only
+
+	# Encrypt via encrypt_value()
+	my $cfg = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => pack('H*', $key_hex),
+		lazy           => 1,
+	);
+	my $token = $cfg->encrypt_value('s3cr3t_pass');
+	like($token, qr/^ENC\[AES256GCM,[A-Za-z0-9_\-]+\]$/, 'encrypt_value returns well-formed ENC token');
+
+	# Decrypt transparently on construction
+	my $cfg2 = Config::Abstraction->new(
+		data           => { password => $token },
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => pack('H*', $key_hex),
+	);
+	ok(defined($cfg2), 'construction with ENC[] token and key succeeds');
+	is($cfg2->get('password'), 's3cr3t_pass', 'ENC[] token decrypted transparently');
+};
+
+subtest 'encryption: each call to encrypt_value produces a different token (fresh nonce)' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $cfg = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => 'A' x 32,
+		lazy           => 1,
+	);
+	my $t1 = $cfg->encrypt_value('same');
+	my $t2 = $cfg->encrypt_value('same');
+	isnt($t1, $t2, 'same plaintext produces different tokens (fresh nonce each time)');
+};
+
+subtest 'encryption: key as 64-char hex string' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $cfg_enc = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => 'a' x 64,   # 64 hex chars = 32 bytes
+		lazy           => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('hexkey_test');
+
+	my $cfg_dec = Config::Abstraction->new(
+		data           => { pw => $token },
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => 'a' x 64,
+	);
+	is($cfg_dec->get('pw'), 'hexkey_test', 'key supplied as 64-char hex string works');
+};
+
+subtest 'encryption: key via ENCRYPTION_KEY environment variable' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	require MIME::Base64;
+	my $key_b64 = MIME::Base64::encode_base64url('K' x 32, '');
+
+	local %ENV = (%ENV, ENCRYPTION_KEY => $key_b64);
+
+	my $cfg_enc = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		lazy        => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('env_key_test');
+
+	my $cfg_dec = Config::Abstraction->new(
+		data        => { secret => $token },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg_dec->get('secret'), 'env_key_test', 'key resolved from ENCRYPTION_KEY env var');
+};
+
+subtest 'encryption: key via encryption_key_file' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $dir = tempdir(CLEANUP => 1);
+	my $kf  = File::Spec->catfile($dir, 'enc.key');
+	_write_file($dir, 'enc.key', 'B' x 64 . "\n");  # 64 hex chars
+
+	my $cfg_enc = Config::Abstraction->new(
+		data                => {},
+		config_dirs         => [],
+		env_prefix          => $ENV_PREFIX,
+		encryption_key_file => $kf,
+		lazy                => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('keyfile_test');
+
+	my $cfg_dec = Config::Abstraction->new(
+		data                => { pw => $token },
+		config_dirs         => [],
+		env_prefix          => $ENV_PREFIX,
+		encryption_key_file => $kf,
+	);
+	is($cfg_dec->get('pw'), 'keyfile_test', 'key resolved from encryption_key_file');
+};
+
+subtest 'encryption: wrong key causes croak on decryption' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $cfg = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => 'A' x 32,
+		lazy           => 1,
+	);
+	my $token = $cfg->encrypt_value('secret');
+
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { pw => $token },
+			config_dirs    => [],
+			env_prefix     => $ENV_PREFIX,
+			encryption_key => 'B' x 32,   # different key
+		);
+	} 'wrong decryption key croaks';
+	like($@, qr/decryption failed/, 'error message names the cause');
+};
+
+subtest 'encryption: malformed ENC token croaks' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { pw => 'ENC[AES256GCM,!!!not-base64url!!!]' },
+			config_dirs    => [],
+			env_prefix     => $ENV_PREFIX,
+			encryption_key => 'A' x 32,
+		);
+	} 'malformed ENC token croaks';
+	like($@, qr/malformed ENC token/, 'error message names malformed token');
+};
+
+subtest 'encryption: unsupported algorithm in ENC token croaks' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { pw => 'ENC[BLOWFISH,AAAAAAAAAAAAAAAAAAAA]' },
+			config_dirs    => [],
+			env_prefix     => $ENV_PREFIX,
+			encryption_key => 'A' x 32,
+		);
+	} 'unsupported algorithm in ENC token croaks';
+	like($@, qr/unsupported encryption algorithm/, 'error message names the algorithm');
+};
+
+subtest 'encryption: nested config values are decrypted' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $key = 'C' x 32;
+	my $cfg_enc = Config::Abstraction->new(
+		data => {}, config_dirs => [], env_prefix => $ENV_PREFIX,
+		encryption_key => $key, lazy => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('nested_secret');
+
+	my $cfg = Config::Abstraction->new(
+		data           => { database => { password => $token } },
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => $key,
+	);
+	is($cfg->get('database.password'), 'nested_secret', 'nested ENC[] value decrypted transparently');
+};
+
+subtest 'encryption: ENC[] in array element is decrypted' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $key = 'D' x 32;
+	my $cfg_enc = Config::Abstraction->new(
+		data => {}, config_dirs => [], env_prefix => $ENV_PREFIX,
+		encryption_key => $key, lazy => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('array_secret');
+
+	my $cfg = Config::Abstraction->new(
+		data           => { secrets => [$token, 'plain'] },
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => $key,
+	);
+	my $arr = $cfg->get('secrets');
+	is($arr->[0], 'array_secret', 'ENC[] in array element decrypted');
+	is($arr->[1], 'plain',        'non-ENC array element unchanged');
+};
+
+subtest 'encryption: encrypt_value croaks when no key configured' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		lazy        => 1,
+	);
+	dies_ok { $cfg->encrypt_value('oops') } 'encrypt_value croaks with no key';
+	like($@, qr/no encryption key configured/, 'error message is clear');
+};
+
+subtest 'encryption: invalid key length croaks' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { pw => 'x' },
+			config_dirs    => [],
+			env_prefix     => $ENV_PREFIX,
+			encryption_key => 'tooshort',
+		);
+	} 'key with wrong length croaks';
+	like($@, qr/encryption_key must be/, 'error names valid formats');
+};
+
+subtest 'encryption: works in lazy mode (decryption deferred to first access)' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $key = 'E' x 32;
+	my $cfg_enc = Config::Abstraction->new(
+		data => {}, config_dirs => [], env_prefix => $ENV_PREFIX,
+		encryption_key => $key, lazy => 1,
+	);
+	my $token = $cfg_enc->encrypt_value('lazy_secret');
+
+	my $cfg = Config::Abstraction->new(
+		data           => { pw => $token },
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => $key,
+		lazy           => 1,
+	);
+	ok(defined($cfg), 'lazy construction with ENC[] token succeeds');
+	is($cfg->get('pw'), 'lazy_secret', 'lazy ENC[] decrypted on first access');
+};
+
 done_testing();

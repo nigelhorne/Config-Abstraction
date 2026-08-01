@@ -345,6 +345,29 @@ Options:
     if provided as a top-level argument,
     still takes precedence over any `env_prefix` that might exist inside the `defaults` hash.
 
+- `encryption_key`
+
+    A 256-bit (32-byte) AES key used to transparently decrypt `ENC[...]` values found in any
+    configuration source after the full merge.  The key may be supplied as:
+
+    - 32 raw bytes
+    - 64 lowercase or uppercase hex characters
+    - 44 Base64 or Base64url characters (standard or URL-safe alphabet, with or without trailing `=`)
+
+    If no key is configured (and neither `encryption_key_file` nor the corresponding
+    environment variables are set), `ENC[...]` tokens are left as literal strings.
+    Decryption requires [CryptX](https://metacpan.org/pod/CryptX) (`Crypt::AuthEnc::GCM`); if that module is absent a
+    `croak` is raised when an encrypted value is encountered.
+
+    See ["ENCRYPTED VALUES"](#encrypted-values) for the full workflow.
+
+- `encryption_key_file`
+
+    Path to a file whose first line contains the encryption key in any of the formats accepted
+    by `encryption_key`.  Takes precedence over the `ENCRYPTION_KEY_FILE` and
+    `{env_prefix}ENCRYPTION_KEY_FILE` environment variables, but is overridden by a key
+    supplied directly via `encryption_key`.
+
 - `env_prefix`
 
     A prefix for environment variable keys and comment line options, e.g. `MYAPP_DATABASE__USER`,
@@ -689,6 +712,25 @@ a key was explicitly supplied on the command line.
     # Equivalent to $cfg->get('log.level') unless you specifically need to
     # confirm the value came from @ARGV.
 
+## encrypt\_value($plaintext)
+
+Encrypt a plaintext string using the configured AES-256-GCM key and return an
+`ENC[AES256GCM,...]` token suitable for storing in a configuration file.
+
+    # Generate a token to paste into base.yaml:
+    my $cfg = Config::Abstraction->new(
+        encryption_key => $hex_key,
+        config_dirs    => ['config'],
+    );
+    print $cfg->encrypt_value('s3cr3t_password'), "\n";
+    # ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5jwqB1R...]
+
+Each call generates a fresh random nonce, so the same plaintext produces a
+different token every time.  The token is authenticated (GCM tag); any
+modification causes decryption to croak.
+
+Requires [CryptX](https://metacpan.org/pod/CryptX) (`Crypt::AuthEnc::GCM`, `Crypt::PRNG`).
+
 ## merge\_defaults
 
 Merge the configuration hash into the given hash.
@@ -844,6 +886,84 @@ when `sep_char` is set to '\_'.
 
     # Attempting to call a nonexistent key
     my $foo = $config->nonexistent_key();       # dies with error
+
+# ENCRYPTED VALUES
+
+Config::Abstraction supports transparent AES-256-GCM encryption of individual
+configuration values.  This lets you store secrets (passwords, API keys, tokens)
+in config files without exposing them as plaintext, even when those files are
+committed to version control.
+
+## Quick start
+
+**Step 1 -- generate a key:**
+
+    # 32 random bytes, encoded as 64 hex chars
+    perl -e 'use Crypt::PRNG qw(random_bytes); use MIME::Base64 qw(encode_base64url);
+             print encode_base64url(random_bytes(32)), "\n"'
+
+Store the result in an environment variable or a key file (outside version control):
+
+    export ENCRYPTION_KEY=<the 44-char base64url output>
+
+**Step 2 -- encrypt a secret value:**
+
+    perl -MConfig::Abstraction -e '
+      my $cfg = Config::Abstraction->new(data => {});
+      print $cfg->encrypt_value("my_secret_password"), "\n";
+    '
+
+This prints something like:
+
+    ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5...]
+
+**Step 3 -- paste the token into your config file:**
+
+    # config/base.yaml
+    database:
+      host: db.example.com
+      user: myapp
+      password: 'ENC[AES256GCM,QkJCQkJCQkJCQkJCO6Gfb0o5...]'
+
+**Step 4 -- load and use normally:**
+
+    my $cfg = Config::Abstraction->new(config_dirs => ['config']);
+    # $cfg->get('database.password') returns 'my_secret_password' -- already decrypted
+
+## Key configuration
+
+The encryption key is resolved in this order (first match wins):
+
+- 1. `encryption_key` constructor option (raw bytes, hex, or base64)
+- 2. `{env_prefix}ENCRYPTION_KEY` environment variable (default: `APP_ENCRYPTION_KEY`)
+- 3. `ENCRYPTION_KEY` environment variable
+- 4. File at `encryption_key_file` constructor option
+- 5. File at `{env_prefix}ENCRYPTION_KEY_FILE` environment variable
+- 6. File at `ENCRYPTION_KEY_FILE` environment variable
+
+The key file should contain the key on its first line in any supported format.
+**Never commit the key to version control.**
+
+## Token format
+
+    ENC[AES256GCM,<base64url(nonce || ciphertext || tag)>]
+
+- `AES256GCM` -- AES-256 in GCM mode (authenticated encryption)
+- Nonce -- 12 random bytes (fresh per encryption, never reused)
+- GCM authentication tag -- 16 bytes; any modification causes decryption to croak
+- Base64url encoding -- URL-safe alphabet, no padding ambiguity
+
+## Behaviour when no key is configured
+
+If no key is found, `ENC[...]` tokens are left as literal strings.  This means
+the feature is purely opt-in: existing deployments without a key configured are
+unaffected.
+
+## Requirements
+
+[CryptX](https://metacpan.org/pod/CryptX) (`Crypt::AuthEnc::GCM`, `Crypt::PRNG`) must be installed:
+
+    cpanm CryptX
 
 # COMMON PITFALLS
 
