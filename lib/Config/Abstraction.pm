@@ -919,15 +919,19 @@ sub _decrypt_enc_value
 	unless(lc($algo) eq 'aes256gcm') {
 		Carp::croak(ref($self) . ": unsupported encryption algorithm '$algo' in ENC token");
 	}
-	unless($self->_load_driver('Crypt::AuthEnc::GCM')) {
-		Carp::croak(ref($self) . ': CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX');
-	}
 
+	# Decode and validate payload length before requiring CryptX: a structurally
+	# invalid token should be rejected regardless of whether the crypto library
+	# is installed.  MIME::Base64 is a core module and always available.
 	require MIME::Base64;
 	my $raw = MIME::Base64::decode_base64url($b64);
 
 	if(length($raw) < $_ENC_PAYLOAD_MIN) {
 		Carp::croak(ref($self) . ": ENC token payload is too short to be valid");
+	}
+
+	unless($self->_load_driver('Crypt::AuthEnc::GCM')) {
+		Carp::croak(ref($self) . ': CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX');
 	}
 
 	my $nonce = substr($raw,  0, $_AES_NONCE_SIZE);
