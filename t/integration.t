@@ -227,6 +227,60 @@ subtest 'optional dep: File::Slurp::Remote absent - Newcastle dir skipped, local
 	diag("FSR warning: @warnings") if $ENV{TEST_VERBOSE};
 };
 
+# TOML::Tiny is in PREREQ_PM but the module advertises graceful degradation.
+# When absent, .toml files must be silently skipped with a carp warning, and
+# any coexisting YAML files in the same directory must load normally.
+subtest 'optional dep: TOML::Tiny absent - .toml silently skipped, YAML still loads' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml', "[database]\nuser = \"toml_user\"\n");
+	_write_file($dir, $YAML_BASE,  "yaml_key: yaml_val\n");
+
+	{
+		local %INC = %INC;
+		delete $INC{'TOML/Tiny.pm'};
+		Test::Without::Module->import('TOML::Tiny');
+
+		my @warnings;
+		local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+		my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+
+		Test::Without::Module->unimport('TOML::Tiny');
+
+		ok(defined($cfg),                       'object created when TOML::Tiny absent');
+		is($cfg->get('yaml_key'), 'yaml_val',   'YAML file loaded when TOML::Tiny absent');
+		ok(!defined($cfg->get('database.user')),'.toml file skipped (TOML::Tiny absent)');
+		diag("TOML warning: @warnings") if $ENV{TEST_VERBOSE};
+	}
+};
+
+# Config::Checker is truly optional -- not in PREREQ_PM.
+# When absent and the checker option is supplied, a carp must be emitted and
+# the object constructed successfully without structural validation.
+subtest 'optional dep: Config::Checker absent - checker option yields carp, object created' => sub {
+	{
+		local %INC = %INC;
+		delete $INC{'Config/Checker.pm'};
+		Test::Without::Module->import('Config::Checker');
+
+		my @warnings;
+		local $SIG{__WARN__} = sub { push @warnings, @_ };
+
+		my $cfg = Config::Abstraction->new(
+			data        => { host => 'localhost', port => 8080 },
+			config_dirs => [],
+			checker     => "host: the hostname\n",
+		);
+
+		Test::Without::Module->unimport('Config::Checker');
+
+		ok(defined($cfg),                    'object created when Config::Checker absent');
+		is($cfg->get('host'), 'localhost',   'config accessible without Config::Checker');
+		ok(scalar(@warnings) > 0,           'carp warning emitted about absent Config::Checker');
+		diag("Checker warning: @warnings") if $ENV{TEST_VERBOSE};
+	}
+};
+
 # ===========================================================================
 # Basic end-to-end: data -> get -> exists -> all
 # ===========================================================================
@@ -999,5 +1053,545 @@ subtest 'end-to-end: merge_defaults() deep option merges nested global section' 
 	is($deep->{extra},         'kept',     'deep: caller extra key preserved');
 	ok(!exists $deep->{global}, 'deep: global key removed after merge');
 };
+
+# ===========================================================================
+# explain_sources() integration: full multi-layer audit trail
+#
+# Three or more sources contribute to the same key.  The method must return
+# each layer in the correct order (lowest to highest precedence) with the
+# mandatory type, label, and value fields on every record.
+# ===========================================================================
+
+subtest 'end-to-end: explain_sources() tracks all source layers for a key' => sub {
+	# data (lowest) < file < env < argv (highest) all set database.user
+	local %ENV = %ENV;
+	local @ARGV = ("--${ENV_PREFIX}DATABASE__USER=cli_user");
+	$ENV{"${ENV_PREFIX}DATABASE__USER"} = 'env_user';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "database:\n  user: file_user\n  host: $EXPECTED_HOST\n");
+
+	my $cfg = new_ok($MODULE => [
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	]);
+
+	my $es = $cfg->explain_sources();
+	returns_ok($es, { type => 'hashref' }, 'explain_sources() returns hashref');
+
+	my $key_info = $es->{'database.user'};
+	ok(defined($key_info),                   'database.user entry present');
+	is($key_info->{value}, $cfg->get('database.user'),
+		'explain_sources top-level value matches get()');
+
+	my $srcs = $key_info->{sources};
+	is(ref($srcs), 'ARRAY',      'sources is an arrayref');
+	ok(scalar(@{$srcs}) >= 3,   'at least 3 source records for a 4-layer key');
+
+	# Ordering: lowest precedence first, highest precedence last
+	is($srcs->[0]{type},  'data', 'first source record is data (lowest precedence)');
+	is($srcs->[-1]{type}, 'argv', 'last source record is argv (highest precedence)');
+
+	# Every record carries the three mandatory fields
+	for my $src (@{$srcs}) {
+		ok(defined($src->{type}),  "source record has type ($src->{type})");
+		ok(defined($src->{label}), 'source record has label');
+		ok(exists($src->{value}),  'source record has value field');
+	}
+
+	is($key_info->{value}, 'cli_user', 'winning value is the CLI argument');
+	diag('explain_sources keys: ' . join(', ', sort keys %{$es})) if $ENV{TEST_VERBOSE};
+};
+
+# The file source label must contain the filename; the data source must use
+# the documented fixed label string.
+subtest 'end-to-end: explain_sources() source labels are descriptive' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "timeout: $EXPECTED_TIMEOUT\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { timeout => 99 },
+		config_dirs => [$dir],
+	);
+
+	my $es   = $cfg->explain_sources();
+	my $srcs = $es->{timeout}{sources};
+
+	my ($file_src) = grep { $_->{type} eq 'file' } @{$srcs};
+	ok(defined($file_src),            'file source record present for timeout');
+	like($file_src->{label}, qr/base\.yaml/, 'file source label contains the filename');
+
+	my ($data_src) = grep { $_->{type} eq 'data' } @{$srcs};
+	ok(defined($data_src),            'data source record present for timeout');
+	like($data_src->{label}, qr/constructor data argument/i,
+		'data source label matches the documented string');
+};
+
+# A key contributed by only one source (env) must have exactly one record.
+subtest 'end-to-end: explain_sources() env-only key has exactly one source record' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}CACHE__TTL"} = '120';
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+
+	my $es       = $cfg->explain_sources();
+	my $ttl_info = $es->{'cache.ttl'};
+	ok(defined($ttl_info),            'env-sourced cache.ttl present');
+
+	my $srcs = $ttl_info->{sources};
+	is(scalar(@{$srcs}), 1,    'exactly one source record for env-only key');
+	is($srcs->[0]{type}, 'env', 'single source type is env');
+	is($ttl_info->{value}, '120', 'value matches the env var content');
+};
+
+# ===========================================================================
+# prefer_*() methods: bypass higher-priority sources
+#
+# All four sources contribute to database.user; each prefer_* must return
+# the value from its own layer, falling back to get() when absent.
+# ===========================================================================
+
+subtest 'end-to-end: prefer_*() returns layer-specific value for a fully-stacked key' => sub {
+	local %ENV = %ENV;
+	local @ARGV = ("--${ENV_PREFIX}DATABASE__USER=cli_user");
+	$ENV{"${ENV_PREFIX}DATABASE__USER"} = 'env_user';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "database:\n  user: file_user\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+
+	is($cfg->get('database.user'),         'cli_user',     'get() returns highest-priority CLI value');
+	is($cfg->prefer_env('database.user'),  'env_user',     'prefer_env() bypasses argv');
+	is($cfg->prefer_file('database.user'), 'file_user',    'prefer_file() bypasses env and argv');
+	is($cfg->prefer_data('database.user'), $EXPECTED_USER, 'prefer_data() bypasses all layers');
+	is($cfg->prefer_argv('database.user'), 'cli_user',     'prefer_argv() returns CLI value');
+};
+
+subtest 'end-to-end: prefer_*() falls back to get() when source did not contribute' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "level: $EXPECTED_LEVEL\n");
+
+	local %ENV = %ENV;
+	local @ARGV = ();
+	my $cfg = Config::Abstraction->new(
+		data        => { other => 'value' },
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+
+	# level came only from file; prefer_env/data/argv all fall back to get()
+	is($cfg->prefer_env('level'),  $EXPECTED_LEVEL, 'prefer_env falls back to get()');
+	is($cfg->prefer_data('level'), $EXPECTED_LEVEL, 'prefer_data falls back to get()');
+	is($cfg->prefer_argv('level'), $EXPECTED_LEVEL, 'prefer_argv falls back to get()');
+};
+
+subtest 'end-to-end: prefer_*() on absent key returns undef (same as get())' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { x => 1 },
+		config_dirs => [],
+	);
+
+	ok(!defined($cfg->prefer_env('no_such_key')),  'prefer_env(): absent key returns undef');
+	ok(!defined($cfg->prefer_file('no_such_key')), 'prefer_file(): absent key returns undef');
+	ok(!defined($cfg->prefer_data('no_such_key')), 'prefer_data(): absent key returns undef');
+	ok(!defined($cfg->prefer_argv('no_such_key')), 'prefer_argv(): absent key returns undef');
+};
+
+# ===========================================================================
+# lazy mode: deferred I/O workflow
+#
+# With lazy => 1, new() always returns a blessed object.  All file I/O and
+# validation are deferred until the first public accessor.  After the first
+# accessor, subsequent calls work normally.
+# ===========================================================================
+
+subtest 'end-to-end: lazy mode: new() returns blessed object even with no config data' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [],
+		lazy        => 1,
+	);
+	ok(defined($cfg) && blessed($cfg), 'lazy: new() returns blessed object for empty config');
+};
+
+subtest 'end-to-end: lazy mode: file values accessible after first get()' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "timeout: $EXPECTED_TIMEOUT\nlevel: $EXPECTED_LEVEL\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => { retries => $EXPECTED_RETRIES },
+		config_dirs => [$dir],
+		lazy        => 1,
+	);
+	ok(blessed($cfg), 'lazy: new() returns blessed object before any load');
+
+	# First get() triggers the deferred load
+	is($cfg->get('timeout'), $EXPECTED_TIMEOUT, 'lazy: file value accessible after first get()');
+	is($cfg->get('retries'), $EXPECTED_RETRIES, 'lazy: data value accessible after first get()');
+	is($cfg->exists('level'), 1,                'lazy: exists() works after deferred load');
+
+	my $all = $cfg->all();
+	ok(defined($all->{timeout}), 'lazy: all() contains file key after load');
+};
+
+subtest 'end-to-end: lazy mode: validators deferred and raised on first get()' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { port => 'not_a_number' },
+		config_dirs => [],
+		lazy        => 1,
+		validators  => { port => 'integer' },
+	);
+	ok(blessed($cfg), 'lazy + validators: new() returns blessed object without dying');
+	throws_ok { $cfg->get('port') } qr/.+/,
+		'lazy + validators: validator violation raised on first get()';
+};
+
+subtest 'end-to-end: lazy mode: explain_sources() triggers deferred load' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "lazy_key: lazy_val\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		lazy        => 1,
+	);
+	ok(blessed($cfg), 'lazy: new() returns blessed object before load');
+
+	my $es = $cfg->explain_sources();
+	ok(defined($es) && ref($es) eq 'HASH', 'lazy: explain_sources() triggers the deferred load');
+	ok(exists $es->{lazy_key}, 'lazy: file key present in explain_sources() after load');
+};
+
+subtest 'end-to-end: lazy mode: two independent instances do not share load state' => sub {
+	my $dir1 = tempdir(CLEANUP => 1);
+	my $dir2 = tempdir(CLEANUP => 1);
+	_write_file($dir1, $YAML_BASE, "source: dir1\n");
+	_write_file($dir2, $YAML_BASE, "source: dir2\n");
+
+	my $cfg1 = Config::Abstraction->new(config_dirs => [$dir1], lazy => 1);
+	my $cfg2 = Config::Abstraction->new(config_dirs => [$dir2], lazy => 1);
+
+	is($cfg1->get('source'), 'dir1', 'lazy instance 1 loads from its own dir1');
+	is($cfg2->get('source'), 'dir2', 'lazy instance 2 loads from its own dir2');
+	is($cfg1->get('source'), 'dir1', 'lazy instance 1 unaffected by instance 2 load');
+};
+
+# ===========================================================================
+# environment option: tiered config file loading
+#
+# The environment option activates base.{env}.* and local.{env}.* tiers.
+# The name is auto-detected from {env_prefix}ENV -> PLACK_ENV -> NODE_ENV.
+# ===========================================================================
+
+subtest 'end-to-end: environment option loads base.{env}.yaml over base.yaml' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE,       "stage: base\ntimeout: $EXPECTED_TIMEOUT\n");
+	_write_file($dir, 'base.prod.yaml', "stage: prod\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		environment => 'prod',
+	);
+
+	ok(defined($cfg),                           'environment: object constructed');
+	is($cfg->get('stage'),   'prod',            'base.prod.yaml overrides base.yaml');
+	is($cfg->get('timeout'), $EXPECTED_TIMEOUT, 'base.yaml key retained when absent in env tier');
+};
+
+subtest 'end-to-end: environment: local.{env}.yaml overrides base.{env}.yaml' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE,       "stage: base\n");
+	_write_file($dir, 'base.dev.yaml',  "stage: dev_base\ndebug: 0\n");
+	_write_file($dir, 'local.dev.yaml', "debug: 1\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		environment => 'dev',
+	);
+
+	is($cfg->get('stage'), 'dev_base', 'base.dev.yaml overrides base.yaml');
+	is($cfg->get('debug'), 1,          'local.dev.yaml overrides base.dev.yaml');
+};
+
+subtest 'end-to-end: environment: auto-detected from prefix env var' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}ENV"} = 'staging';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE,          "stage: base\n");
+	_write_file($dir, 'base.staging.yaml', "stage: staging\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+
+	is($cfg->get('stage'), 'staging',
+		'environment auto-detected from {env_prefix}ENV variable');
+};
+
+subtest 'end-to-end: environment: auto-detected from PLACK_ENV when prefix var absent' => sub {
+	local %ENV = %ENV;
+	delete $ENV{"${ENV_PREFIX}ENV"};
+	$ENV{PLACK_ENV} = 'test';
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE,       "stage: base\n");
+	_write_file($dir, 'base.test.yaml', "stage: test\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+
+	is($cfg->get('stage'), 'test',
+		'environment auto-detected from PLACK_ENV when prefix var absent');
+};
+
+# ===========================================================================
+# validators option: all four rule forms with real file / data loading
+# ===========================================================================
+
+# Rule form 1: type-name string
+subtest 'end-to-end: validators type string accepts valid integer from file' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "port: $EXPECTED_PORT\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		validators  => { port => 'integer' },
+	);
+	ok(defined($cfg),                       'type validator: valid integer passes');
+	is($cfg->get('port'), $EXPECTED_PORT,   'validated integer value accessible');
+};
+
+subtest 'end-to-end: validators type string rejects non-integer file value' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "port: not_a_number\n");
+
+	throws_ok {
+		Config::Abstraction->new(
+			config_dirs => [$dir],
+			validators  => { port => 'integer' },
+		);
+	} qr/.+/, 'type validator: non-integer file value causes croak at construction';
+};
+
+# Rule form 2: compiled regex
+subtest 'end-to-end: validators regex accepts matching value from file' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "level: $EXPECTED_LEVEL\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		validators  => { level => qr/^(?:debug|info|warn|error)$/ },
+	);
+	ok(defined($cfg),                        'regex validator: matching value passes');
+	is($cfg->get('level'), $EXPECTED_LEVEL,  'regex-validated value accessible');
+};
+
+subtest 'end-to-end: validators regex rejects non-matching value from file' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "level: verbose\n");
+
+	throws_ok {
+		Config::Abstraction->new(
+			config_dirs => [$dir],
+			validators  => { level => qr/^(?:debug|info|warn|error)$/ },
+		);
+	} qr/.+/, 'regex validator: non-matching file value causes croak';
+};
+
+# Rule form 3: coderef
+subtest 'end-to-end: validators coderef accepts in-range data value' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { retries => $EXPECTED_RETRIES },
+		config_dirs => [],
+		validators  => { retries => sub { $_[0] > 0 && $_[0] < 10 } },
+	);
+	ok(defined($cfg),                        'coderef validator: in-range value passes');
+	is($cfg->get('retries'), $EXPECTED_RETRIES, 'coderef-validated value accessible');
+};
+
+subtest 'end-to-end: validators coderef rejects out-of-range value' => sub {
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { retries => 999 },
+			config_dirs => [],
+			validators  => { retries => sub { $_[0] > 0 && $_[0] < 10 } },
+		);
+	} qr/.+/, 'coderef validator: out-of-range value causes croak';
+};
+
+# Rule form 4: hashref spec with type + min + max
+subtest 'end-to-end: validators hashref spec accepts valid integer from file' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "port: $EXPECTED_PORT\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		validators  => { port => { type => 'integer', min => 1, max => 65535 } },
+	);
+	ok(defined($cfg),                     'hashref spec: in-range integer passes');
+	is($cfg->get('port'), $EXPECTED_PORT, 'hashref-validated port value accessible');
+};
+
+subtest 'end-to-end: validators hashref required croaks when key absent from config' => sub {
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { other => 'value' },
+			config_dirs => [],
+			validators  => { host => { required => 1, type => 'string' } },
+		);
+	} qr/.+/, 'hashref spec: required-but-absent key causes croak';
+};
+
+# ===========================================================================
+# TOML format loading (when TOML::Tiny is installed)
+# ===========================================================================
+
+subtest 'end-to-end: TOML file loaded from config_dirs' => sub {
+	plan skip_all => 'TOML::Tiny not installed'
+		unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.toml',
+		"[database]\nuser = \"$EXPECTED_USER\"\nport = $EXPECTED_PORT\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+
+	ok(defined($cfg),                               'TOML file loaded successfully');
+	is($cfg->get('database.user'), $EXPECTED_USER,  'TOML nested string key loaded');
+	is($cfg->get('database.port'), $EXPECTED_PORT,  'TOML nested integer key loaded');
+};
+
+subtest 'end-to-end: TOML file coexists with YAML in the same directory' => sub {
+	plan skip_all => 'TOML::Tiny not installed'
+		unless eval { require TOML::Tiny; 1 };
+
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_BASE, "source: yaml\ntimeout: $EXPECTED_TIMEOUT\n");
+	_write_file($dir, 'base.toml', "[database]\nuser = \"$EXPECTED_USER\"\n");
+
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+
+	ok(defined($cfg),                              'TOML and YAML coexist in same dir');
+	is($cfg->get('database.user'), $EXPECTED_USER, 'TOML nested key loaded when YAML coexists');
+	ok(defined($cfg->get('timeout')) || defined($cfg->get('source')),
+		'YAML key present when TOML coexists');
+};
+
+# ===========================================================================
+# Config::Checker integration (when installed)
+#
+# When the checker option is supplied and Config::Checker is available,
+# structurally valid config must be accepted silently.
+# ===========================================================================
+
+subtest 'end-to-end: Config::Checker accepts structurally valid config' => sub {
+	plan skip_all => 'Config::Checker not installed'
+		unless eval { require Config::Checker; 1 };
+
+	# Suppress the spurious "uninitialized value $where" warning from Config::Checker.
+	local $SIG{__WARN__} = sub {
+		warn @_ unless $_[0] =~ /uninitialized value \$where/;
+	};
+
+	my $cfg = Config::Abstraction->new(
+		data        => { host => $EXPECTED_HOST, port => $EXPECTED_PORT },
+		config_dirs => [],
+		checker     => "host: the hostname\nport: '?<$EXPECTED_PORT>[INTEGER]'\n",
+	);
+	ok(defined($cfg),                     'Config::Checker: valid config accepted');
+	is($cfg->get('host'), $EXPECTED_HOST, 'checked host value accessible');
+	is($cfg->get('port'), $EXPECTED_PORT, 'checked port value accessible');
+};
+
+# ===========================================================================
+# encrypt_value() + decryption round-trip
+#
+# When CryptX (Crypt::AuthEnc::GCM) is available, encrypt_value() must
+# produce an ENC[AES256GCM,...] token that is transparently decrypted during
+# config loading when the same encryption_key is supplied.  All subtests
+# here are skipped together when CryptX is absent.
+# ===========================================================================
+
+SKIP: {
+	skip 'CryptX (Crypt::AuthEnc::GCM) not installed', 3
+		unless eval { require Crypt::AuthEnc::GCM; 1 };
+
+	Readonly::Scalar my $HEX_KEY  => 'a' x 64;
+	Readonly::Scalar my $WRONG_KEY => 'b' x 64;
+
+	subtest 'end-to-end: encrypt_value() round-trip through a config file' => sub {
+		my $dir = tempdir(CLEANUP => 1);
+
+		# Use a lazy throw-away object to produce a token without loading any files
+		my $enc_obj = Config::Abstraction->new(
+			data           => {},
+			config_dirs    => [],
+			encryption_key => $HEX_KEY,
+			lazy           => 1,
+		);
+		my $token = $enc_obj->encrypt_value('s3cr3t');
+		like($token, qr/^ENC\[/, 'encrypt_value: result starts with ENC[');
+
+		# Write the raw token into a YAML file; the loading object must decrypt it
+		_write_file($dir, $YAML_BASE, "database:\n  password: $token\n");
+
+		my $cfg = Config::Abstraction->new(
+			config_dirs    => [$dir],
+			encryption_key => $HEX_KEY,
+		);
+		ok(defined($cfg), 'object created with encrypted value in file');
+		is($cfg->get('database.password'), 's3cr3t',
+			'ENC[] token in file decrypted transparently on load');
+	};
+
+	subtest 'end-to-end: ENC token in data option decrypted transparently' => sub {
+		my $enc_obj = Config::Abstraction->new(
+			data           => {},
+			config_dirs    => [],
+			encryption_key => $HEX_KEY,
+			lazy           => 1,
+		);
+		my $token = $enc_obj->encrypt_value('my_secret');
+
+		my $cfg = Config::Abstraction->new(
+			data           => { api_key => $token },
+			config_dirs    => [],
+			encryption_key => $HEX_KEY,
+		);
+		ok(defined($cfg), 'object created with encrypted data option value');
+		is($cfg->get('api_key'), 'my_secret',
+			'ENC[] token in data option decrypted transparently');
+	};
+
+	subtest 'end-to-end: wrong encryption key causes croak during decryption' => sub {
+		my $enc_obj = Config::Abstraction->new(
+			data           => {},
+			config_dirs    => [],
+			encryption_key => $HEX_KEY,
+			lazy           => 1,
+		);
+		my $token = $enc_obj->encrypt_value('secret_val');
+
+		throws_ok {
+			Config::Abstraction->new(
+				data           => { val => $token },
+				config_dirs    => [],
+				encryption_key => $WRONG_KEY,
+			);
+		} qr/.+/, 'decryption with wrong key causes croak';
+	};
+}
 
 done_testing();
