@@ -1,6 +1,26 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.40
+	[ Security ]
+	- Fix YAML code injection: YAML::XS v0.91 ignores $YAML::XS::DisableCode and
+	  materialises callable CODE refs from !!perl/code tags. New private helper
+	  _sanitize_yaml_values() recursively replaces CODE and GLOB refs with undef
+	  after every LoadFile/Load call. Do not rely on DisableCode for security.
+	- Fix XML external entity (XXE) injection at all four XMLin() call sites: file
+	  content is now pre-read and checked for <!ENTITY ... SYSTEM|PUBLIC declarations
+	  before parsing; XMLin receives a string reference rather than a filename so no
+	  entity is resolved. Files containing external entity declarations are skipped
+	  with a carp warning.
+	- Fix XXE bypass via Config::Auto fallback: after the XML XXE guard blocked a
+	  file and set $data to undef, YAML::XS returned a non-HASH scalar (truthy),
+	  causing the if(!$data) fallback chain to run; Config::Auto then re-read and
+	  expanded the entity. Fixed by saving raw file content before the parsers run
+	  and conditioning the entire fallback chain on the absence of entity declarations.
+	- Fix encryption_key_file silent failure: when encryption_key_file was specified
+	  explicitly in the constructor but the named file did not exist, the module
+	  silently fell back to unencrypted operation. The constructor now croaks
+	  immediately. Files sourced from environment variables still fail silently.
+
 	[ Performance ]
 	- _flatten_keys: eliminate O(N^2) hash copying by delegating to new private
 	  _flatten_into helper that writes each leaf key into a caller-supplied
@@ -36,8 +56,8 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 	- New t/locales.t: geographic (ISO-3166 country-code environment tiers) and
 	  POSIX locale subtests; uses local $! = ENOENT; my $msg = "$!"; idiom to
 	  obtain locale-specific strings without POSIX::strerror.
-
-	[ Previous Enhancements ]
+	- Declare CryptX as an optional_features entry in META so installers can prompt
+	  users who want AES-256-GCM encryption support.
 	- New C<environment> constructor option: activates two additional file tiers --
 	  base.{env}.* (loaded immediately after base.*) and local.{env}.* (loaded
 	  immediately after local.*). When not supplied, auto-detected from

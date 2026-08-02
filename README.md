@@ -668,7 +668,7 @@ value is `undef`), `0` otherwise.  Returns `0` when `key` is `undef`.
 
 #### Output
 
-    0 | 1
+    boolean
 
 ### MESSAGES
 
