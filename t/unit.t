@@ -133,6 +133,43 @@ my %ledger = (
 	'global-state: all() does not clobber dollar-at'	=> 1,
 	'global-state: methods do not clobber dollar-underscore' => 1,
 	'mockingbird: spy captures get() calls'			=> 1,
+	# get() / exists() undef-key guards
+	'get: returns undef for undef key'			=> 1,
+	'exists: returns 0 for undef key'			=> 1,
+	'exists: returns 1 when key present but value is undef'	=> 1,
+	# new() options not yet covered
+	'new: file synonym for config_file'			=> 1,
+	'new: lazy always returns blessed object'		=> 1,
+	'new: lazy defers schema validation to first access'	=> 1,
+	'new: environment loads base.env.yaml tier'		=> 1,
+	'new: invalid environment name croaks'			=> 1,
+	'new: validators type string accepts valid value'	=> 1,
+	'new: validators type string rejects invalid value'	=> 1,
+	'new: validators regex accepts matching value'		=> 1,
+	'new: validators regex rejects non-matching value'	=> 1,
+	'new: validators coderef accepts truthy return'		=> 1,
+	'new: validators coderef rejects falsy return'		=> 1,
+	'new: validators hashref required key missing croaks'	=> 1,
+	'new: validators hashref min/max enforced'		=> 1,
+	# explain_sources()
+	'explain_sources: returns hashref'			=> 1,
+	'explain_sources: value field matches get()'		=> 1,
+	'explain_sources: sources arrayref ordered lowest first'=> 1,
+	'explain_sources: data source has correct type and label'=> 1,
+	'explain_sources: env source has correct type and label'=> 1,
+	'explain_sources: file source has correct type'		=> 1,
+	# prefer_*() methods
+	'prefer_env: returns env value when env contributed'	=> 1,
+	'prefer_env: falls back to get() when env absent'	=> 1,
+	'prefer_file: returns file value when file contributed'	=> 1,
+	'prefer_file: falls back to get() when no file'		=> 1,
+	'prefer_data: returns data value when data contributed'	=> 1,
+	'prefer_data: falls back to get() when data absent'	=> 1,
+	'prefer_argv: returns argv value when argv contributed'	=> 1,
+	'prefer_argv: falls back to get() when no argv'		=> 1,
+	# encrypt_value()
+	'encrypt_value: returns ENC[AES256GCM,...] token'	=> 1,
+	'encrypt_value: croaks with no encryption key configured'=> 1,
 );
 
 # ---------------------------------------------------------------------------
@@ -1068,6 +1105,461 @@ subtest 'Mockingbird spy: captures get() invocations correctly' => sub {
 	diag('spy calls: ' . scalar(@calls)) if $ENV{TEST_VERBOSE};
 	delete $ledger{'mockingbird: spy captures get() calls'};
 };
+
+# ===========================================================================
+# get() / exists() -- undef-key guards
+# POD: get() returns undef when key is undef; exists() returns 0
+# ===========================================================================
+
+subtest 'get() - returns undef silently when key is undef' => sub {
+	# POD: "undef is allowed and returns undef silently"
+	my $cfg = _make_cfg();
+	ok(!defined($cfg->get(undef)), 'get(undef) returns undef without warning');
+	delete $ledger{'get: returns undef for undef key'};
+};
+
+subtest 'exists() - returns 0 when key is undef' => sub {
+	# POD: "Returns 0 when key is undef"
+	my $cfg = _make_cfg();
+	is($cfg->exists(undef), 0, 'exists(undef) returns 0');
+	delete $ledger{'exists: returns 0 for undef key'};
+};
+
+subtest 'exists() - returns 1 when key is present but value is undef' => sub {
+	# POD example: $cfg->exists('timeout') => 1 even when value is undef
+	my $cfg = Config::Abstraction->new(
+		data        => { timeout => undef },
+		config_dirs => [],
+	);
+	is($cfg->exists('timeout'), 1, 'exists() returns 1 for key with undef value');
+	delete $ledger{'exists: returns 1 when key present but value is undef'};
+};
+
+# ===========================================================================
+# new() -- file synonym
+# POD: 'file' is a synonym for 'config_file'
+# ===========================================================================
+
+subtest 'new() - file is a synonym for config_file' => sub {
+	my $dir  = tempdir(CLEANUP => 1);
+	my $path = _write_file($dir, 'myapp.yaml', "appname: synonymtest\n");
+	my $cfg  = Config::Abstraction->new(file => $path);
+	ok(defined($cfg),                       'object created via file synonym');
+	is($cfg->get('appname'), 'synonymtest', 'file synonym loads the named file');
+	delete $ledger{'new: file synonym for config_file'};
+};
+
+# ===========================================================================
+# new() -- lazy option
+# POD: lazy => 1 always returns a blessed object; schema deferred to first access
+# ===========================================================================
+
+subtest 'new() - lazy always returns a blessed object (even with no config)' => sub {
+	# POD: "new() always returns a blessed object" when lazy => 1
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [],
+		lazy        => 1,
+	);
+	ok(defined($cfg),  'lazy: new() returns defined value for empty config');
+	ok(blessed($cfg),  'lazy: return value is blessed');
+	delete $ledger{'new: lazy always returns blessed object'};
+};
+
+subtest 'new() - lazy defers schema validation until first accessor call' => sub {
+	# POD: "schema validation likewise runs on first access rather than at construction time"
+	# Construction with a failing schema must succeed; accessing the value must croak.
+	my $cfg;
+	lives_ok {
+		$cfg = Config::Abstraction->new(
+			data        => { port => 'not_a_number' },
+			config_dirs => [],
+			lazy        => 1,
+			schema      => { port => { type => 'integer' } },
+		);
+	} 'lazy: construction with invalid schema does not die';
+	ok(defined($cfg) && blessed($cfg), 'lazy: blessed object returned despite bad schema');
+	throws_ok { $cfg->get('port') } qr/.+/, 'lazy: schema failure raised on first get()';
+	delete $ledger{'new: lazy defers schema validation to first access'};
+};
+
+# ===========================================================================
+# new() -- environment option
+# POD: loads base.{env}.* immediately after base.* in each config_dir
+# ===========================================================================
+
+subtest 'new() - environment option loads base.{env}.yaml tier' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',     "stage: base\n");
+	_write_file($dir, 'base.prod.yaml', "stage: prod\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		environment => 'prod',
+	);
+	ok(defined($cfg),                'environment: object constructed');
+	is($cfg->get('stage'), 'prod',   'environment: base.prod.yaml overrides base.yaml');
+	delete $ledger{'new: environment loads base.env.yaml tier'};
+};
+
+subtest 'new() - invalid environment name croaks' => sub {
+	# POD: "any other value causes a croak" for environment names outside /^[A-Za-z0-9_-]+$/
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { x => 1 },
+			config_dirs => [],
+			environment => 'bad/name',
+		);
+	} qr/invalid environment name/i, 'invalid environment name croaks';
+	delete $ledger{'new: invalid environment name croaks'};
+};
+
+# ===========================================================================
+# new() -- validators option
+# POD: hashref mapping dotted keys to type-name, regex, coderef, or hashref rules
+# ===========================================================================
+
+subtest 'new() - validators: type string accepts valid value' => sub {
+	lives_ok {
+		Config::Abstraction->new(
+			data        => { port => 8080 },
+			config_dirs => [],
+			validators  => { port => 'integer' },
+		);
+	} 'validators: integer type passes for integer value';
+	delete $ledger{'new: validators type string accepts valid value'};
+};
+
+subtest 'new() - validators: type string rejects invalid value' => sub {
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { port => 'not_an_int' },
+			config_dirs => [],
+			validators  => { port => 'integer' },
+		);
+	} qr/.+/, 'validators: integer type fails for non-integer value';
+	delete $ledger{'new: validators type string rejects invalid value'};
+};
+
+subtest 'new() - validators: regex accepts matching value' => sub {
+	lives_ok {
+		Config::Abstraction->new(
+			data        => { level => 'info' },
+			config_dirs => [],
+			validators  => { level => qr/^(?:debug|info|warn|error)$/ },
+		);
+	} 'validators: regex passes for matching value';
+	delete $ledger{'new: validators regex accepts matching value'};
+};
+
+subtest 'new() - validators: regex rejects non-matching value' => sub {
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { level => 'verbose' },
+			config_dirs => [],
+			validators  => { level => qr/^(?:debug|info|warn|error)$/ },
+		);
+	} qr/.+/, 'validators: regex fails for non-matching value';
+	delete $ledger{'new: validators regex rejects non-matching value'};
+};
+
+subtest 'new() - validators: coderef accepts truthy return' => sub {
+	lives_ok {
+		Config::Abstraction->new(
+			data        => { port => 8080 },
+			config_dirs => [],
+			validators  => { port => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 } },
+		);
+	} 'validators: coderef passes when sub returns true';
+	delete $ledger{'new: validators coderef accepts truthy return'};
+};
+
+subtest 'new() - validators: coderef rejects falsy return' => sub {
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { port => 99999 },
+			config_dirs => [],
+			validators  => { port => sub { my $v = shift; defined($v) && $v >= 1 && $v <= 65535 } },
+		);
+	} qr/.+/, 'validators: coderef fails when sub returns false';
+	delete $ledger{'new: validators coderef rejects falsy return'};
+};
+
+subtest 'new() - validators: hashref spec with required croaks when key missing' => sub {
+	# POD: "required: if true, the key must exist and its value must be defined"
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { other => 'value' },
+			config_dirs => [],
+			validators  => { port => { type => 'integer', required => 1 } },
+		);
+	} qr/.+/, 'validators: required key absent causes croak';
+	delete $ledger{'new: validators hashref required key missing croaks'};
+};
+
+subtest 'new() - validators: hashref spec enforces min/max bounds' => sub {
+	# POD: "min (numeric lower bound, inclusive), max (numeric upper bound, inclusive)"
+	throws_ok {
+		Config::Abstraction->new(
+			data        => { port => 0 },
+			config_dirs => [],
+			validators  => { port => { type => 'integer', min => 1, max => 65535 } },
+		);
+	} qr/.+/, 'validators: min bound violated causes croak';
+
+	lives_ok {
+		Config::Abstraction->new(
+			data        => { port => 80 },
+			config_dirs => [],
+			validators  => { port => { type => 'integer', min => 1, max => 65535 } },
+		);
+	} 'validators: value within min/max accepted';
+	delete $ledger{'new: validators hashref min/max enforced'};
+};
+
+# ===========================================================================
+# explain_sources()
+# POD: returns hashref; each key has {value, sources:[{type,label,value},...]}
+# ===========================================================================
+
+subtest 'explain_sources() - returns a hashref' => sub {
+	my $cfg = _make_cfg();
+	my $es  = $cfg->explain_sources();
+	ok(defined($es),          'explain_sources() returns defined value');
+	is(ref($es), 'HASH',      'explain_sources() returns hashref');
+	returns_ok($es, { type => 'hashref' }, 'returns_ok: hashref');
+	delete $ledger{'explain_sources: returns hashref'};
+};
+
+subtest 'explain_sources() - value field matches get() for every key' => sub {
+	my $cfg = _make_cfg();
+	my $es  = $cfg->explain_sources();
+	for my $key (keys %{$es}) {
+		next if $key eq 'config_path';
+		is($es->{$key}{value}, $cfg->get($key),
+			"explain_sources value matches get() for '$key'");
+	}
+	delete $ledger{'explain_sources: value field matches get()'};
+};
+
+subtest 'explain_sources() - sources arrayref ordered lowest first' => sub {
+	# POD: sources are ordered from lowest to highest precedence (winning source last).
+	# Use double-underscore env var so it maps directly to a nested dotted key.
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__USER"} = 'env_user';
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $es  = $cfg->explain_sources();
+	my $src = $es->{'database.user'}{sources};
+	ok(defined($src),               'sources field defined');
+	is(ref($src), 'ARRAY',          'sources is an arrayref');
+	ok(scalar(@{$src}) >= 2,        'at least two sources (data + env)');
+	is($src->[0]{type}, 'data',     'lowest source is data');
+	is($src->[-1]{type}, 'env',     'highest (winning) source is env');
+	delete $ledger{'explain_sources: sources arrayref ordered lowest first'};
+};
+
+subtest 'explain_sources() - data source has correct type and label' => sub {
+	my $cfg = _make_cfg();
+	my $es  = $cfg->explain_sources();
+	my ($data_src) = grep { $_->{type} eq 'data' } @{$es->{retries}{sources}};
+	ok(defined($data_src),                   'data source entry present');
+	is($data_src->{type},  'data',           'type field is "data"');
+	like($data_src->{label}, qr/constructor data argument/, 'label identifies data source');
+	is($data_src->{value}, $EXPECTED_RETRIES,'data source value correct');
+	delete $ledger{'explain_sources: data source has correct type and label'};
+};
+
+subtest 'explain_sources() - env source has correct type and label' => sub {
+	# Use double-underscore so the env var maps directly to the dotted key database.user.
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__USER"} = 'env_alice';
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	my $es = $cfg->explain_sources();
+	my ($env_src) = grep { $_->{type} eq 'env' } @{$es->{'database.user'}{sources}};
+	ok(defined($env_src),                 'env source entry present');
+	is($env_src->{type},  'env',          'type field is "env"');
+	like($env_src->{label}, qr/DATABASE/, 'label contains the env var name');
+	is($env_src->{value}, 'env_alice',    'env source value correct');
+	delete $ledger{'explain_sources: env source has correct type and label'};
+};
+
+subtest 'explain_sources() - file source recorded with type "file"' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_FILENAME, "timeout: $EXPECTED_TIMEOUT\n");
+	my $cfg = Config::Abstraction->new(config_dirs => [$dir]);
+	my $es  = $cfg->explain_sources();
+	my ($file_src) = grep { $_->{type} eq 'file' } @{$es->{timeout}{sources}};
+	ok(defined($file_src),           'file source entry present');
+	is($file_src->{type}, 'file',    'type field is "file"');
+	diag('file label: ' . ($file_src->{label} // 'undef')) if $ENV{TEST_VERBOSE};
+	delete $ledger{'explain_sources: file source has correct type'};
+};
+
+# ===========================================================================
+# prefer_env(key)
+# POD: returns env-layer value, or get(key) if no env var contributed
+# ===========================================================================
+
+subtest 'prefer_env() - returns env-layer value when env variable contributed' => sub {
+	# Use double-underscore so the env var maps directly to database.user.
+	# Also set a CLI arg at higher precedence; prefer_env must bypass it.
+	local %ENV = %ENV;
+	local @ARGV = ("--${ENV_PREFIX}DATABASE__USER=cli_user");
+	$ENV{"${ENV_PREFIX}DATABASE__USER"} = 'env_user';
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	# get() returns cli_user (highest precedence), prefer_env must return env_user.
+	is($cfg->prefer_env('database.user'), 'env_user',
+		'prefer_env returns env-layer value bypassing argv');
+	delete $ledger{'prefer_env: returns env value when env contributed'};
+};
+
+subtest 'prefer_env() - falls back to get() when no env variable set the key' => sub {
+	local %ENV = %ENV;
+	delete $ENV{"${ENV_PREFIX}DATABASE__USER"};
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { user => $EXPECTED_USER } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_env('database.user'), $EXPECTED_USER,
+		'prefer_env falls back to get() when no env var contributed');
+	delete $ledger{'prefer_env: falls back to get() when env absent'};
+};
+
+# ===========================================================================
+# prefer_file(key)
+# POD: returns file-layer value, or get(key) if no file contributed
+# ===========================================================================
+
+subtest 'prefer_file() - returns file-layer value when a file set the key' => sub {
+	# Set up env and file both contributing; prefer_file must return the file value.
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}TIMEOUT"} = 'env_val';
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_FILENAME, "timeout: $EXPECTED_TIMEOUT\n");
+	my $cfg = Config::Abstraction->new(
+		config_dirs => [$dir],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_file('timeout'), $EXPECTED_TIMEOUT,
+		'prefer_file returns file-layer value bypassing env');
+	delete $ledger{'prefer_file: returns file value when file contributed'};
+};
+
+subtest 'prefer_file() - falls back to get() when no file set the key' => sub {
+	my $cfg = _make_cfg();    # config_dirs => [] means no files loaded
+	# 'retries' came only from data; prefer_file falls back to get()
+	is($cfg->prefer_file('retries'), $EXPECTED_RETRIES,
+		'prefer_file falls back to get() when no file contributed');
+	delete $ledger{'prefer_file: falls back to get() when no file'};
+};
+
+# ===========================================================================
+# prefer_data(key)
+# POD: returns data-constructor value, or get(key) if data did not set it
+# ===========================================================================
+
+subtest 'prefer_data() - returns data-constructor value bypassing env override' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}RETRIES"} = '99';
+	my $cfg = Config::Abstraction->new(
+		data        => { retries => $EXPECTED_RETRIES },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	# get() returns '99' (env wins), but prefer_data must return the original data value.
+	is($cfg->prefer_data('retries'), $EXPECTED_RETRIES,
+		'prefer_data returns data-constructor value despite env override');
+	delete $ledger{'prefer_data: returns data value when data contributed'};
+};
+
+subtest 'prefer_data() - falls back to get() when data did not set the key' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, $YAML_FILENAME, "fileonly: from_file\n");
+	my $cfg = Config::Abstraction->new(
+		data        => { other => 'x' },
+		config_dirs => [$dir],
+	);
+	# 'fileonly' was never in the data arg; prefer_data falls back to get()
+	is($cfg->prefer_data('fileonly'), 'from_file',
+		'prefer_data falls back to get() when data did not set the key');
+	delete $ledger{'prefer_data: falls back to get() when data absent'};
+};
+
+# ===========================================================================
+# prefer_argv(key)
+# POD: returns argv-layer value, or get(key) when no CLI arg set the key
+# ===========================================================================
+
+subtest 'prefer_argv() - returns argv-layer value when CLI arg contributed' => sub {
+	local @ARGV = ("--${ENV_PREFIX}RETRIES=argv_val");
+	my $cfg = Config::Abstraction->new(
+		data        => { retries => $EXPECTED_RETRIES },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+	);
+	is($cfg->prefer_argv('retries'), 'argv_val',
+		'prefer_argv returns the argv-layer value');
+	delete $ledger{'prefer_argv: returns argv value when argv contributed'};
+};
+
+subtest 'prefer_argv() - falls back to get() when no CLI arg set the key' => sub {
+	local @ARGV = ();
+	my $cfg = _make_cfg();
+	is($cfg->prefer_argv('retries'), $EXPECTED_RETRIES,
+		'prefer_argv falls back to get() when no CLI arg contributed');
+	delete $ledger{'prefer_argv: falls back to get() when no argv'};
+};
+
+# ===========================================================================
+# encrypt_value($plaintext)
+# POD: requires CryptX; croaks when no key configured; returns ENC[AES256GCM,...] token
+# ===========================================================================
+
+Readonly::Scalar my $HEX_KEY => 'a' x 64;    # 64 hex chars = 32-byte AES-256 key
+
+subtest 'encrypt_value() - croaks when no encryption key is configured' => sub {
+	# POD: "<class>: no encryption key configured ..." croak
+	my $cfg = _make_cfg();
+	throws_ok { $cfg->encrypt_value('secret') }
+		qr/no encryption key configured/,
+		'encrypt_value croaks with no key configured';
+	delete $ledger{'encrypt_value: croaks with no encryption key configured'};
+};
+
+SKIP: {
+	skip 'CryptX (Crypt::AuthEnc::GCM) not installed', 1
+		unless eval { require Crypt::AuthEnc::GCM; 1 };
+
+	subtest 'encrypt_value() - returns a well-formed ENC[AES256GCM,...] token' => sub {
+		# POD: "return ENC[AES256GCM,<base64url(nonce+ciphertext+tag)>]"
+		my $cfg = Config::Abstraction->new(
+			data           => {},
+			config_dirs    => [],
+			encryption_key => $HEX_KEY,
+			lazy           => 1,
+		);
+		my $token = $cfg->encrypt_value('plaintext_secret');
+		like($token, qr/^ENC\[AES256GCM,[A-Za-z0-9_-]+\]$/,
+			'token has expected ENC[AES256GCM,...] format');
+		# Each call uses a fresh nonce, so the same plaintext produces different tokens.
+		my $token2 = $cfg->encrypt_value('plaintext_secret');
+		isnt($token, $token2, 'consecutive calls produce distinct tokens (fresh nonce)');
+		delete $ledger{'encrypt_value: returns ENC[AES256GCM,...] token'};
+	};
+}
 
 # ===========================================================================
 # Ledger assertion - every documented POD state must have been exercised
