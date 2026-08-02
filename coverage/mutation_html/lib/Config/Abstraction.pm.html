@@ -244,9 +244,9 @@ pre details.mutant-details ul {
 <div class="nav"><a href="../../../index.html">Index</a>
 </div><div class='summary'>
 <strong>Structural Coverage (Approximate)</strong><p>
-TER1 (Statement): 89.23%<br>
-TER2 (Branch): 85.34%<br>
-TER3 (LCSAJ): 95.5% (64/67)<br>
+TER1 (Statement): 92.56%<br>
+TER2 (Branch): 87.59%<br>
+TER3 (LCSAJ): 100.0% (67/67)<br>
 Approximate LCSAJ segments: 581<br>
 </div>
 
@@ -1295,7 +1295,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  958: 		Carp::croak(ref($self) . &quot;: ENC token payload is too short to be valid&quot;);
 </span><span class="">  959: 	}
 </span><span class="">  960: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 961 → 961 → 965</span></span>  961: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">961 → 961 → 965</span></span>  961: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
@@ -1305,7 +1305,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 <span class="">  962: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX&#39;);
 </span><span class="">  963: 	}
 </span><span class="">  964: 
-</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 965 → 974 → 978</span></span>  965: 	my $nonce = substr($raw,  0, $_AES_NONCE_SIZE);
+</span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">965 → 974 → 978</span></span>  965: 	my $nonce = substr($raw,  0, $_AES_NONCE_SIZE);
 </span><span class="">  966: 	my $tag   = substr($raw, -$_AES_TAG_SIZE);
 </span><span class="">  967: 	my $ct    = substr($raw, $_AES_NONCE_SIZE, length($raw) - $_ENC_PAYLOAD_MIN);
 </span><span class="">  968: 
@@ -2228,7 +2228,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1705: 		return 0;
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1706: 	}
 </span><span class=""> 1707: 	$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1708: 	return 1;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1708: 	return 1;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
@@ -2714,7 +2714,7 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </li></ul></details>
 <span class=""> 2165: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required; install it with: cpanm CryptX&#39;);
 </span><span class=""> 2166: 	}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot-uncovered">●</span><span class="lcsaj-tip-text">[NOT COVERED] 2167 → 2167 → 2171</span></span> 2167: 	unless($self-&gt;_load_driver(&#39;Crypt::PRNG&#39;, [&#39;random_bytes&#39;])) {
+</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">2167 → 2167 → 2171</span></span> 2167: 	unless($self-&gt;_load_driver(&#39;Crypt::PRNG&#39;, [&#39;random_bytes&#39;])) {
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>

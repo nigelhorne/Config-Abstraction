@@ -20,7 +20,7 @@ https://pjcj.net
 <h1>Branch Coverage</h1>
 <table>
 <tr><td class="h" align="right">File:</td><td align="left">blib/lib/Config/Abstraction.pm</td></tr>
-<tr><td class="h" align="right">Coverage:</td><td align="left" class="c1">85.3%</td></tr>
+<tr><td class="h" align="right">Coverage:</td><td align="left" class="c1">87.6%</td></tr>
 </table>
 <div><br/></div>
 <table>
@@ -71,12 +71,12 @@ https://pjcj.net
 <tr><td class="h"><a id="L889">889</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (length $raw == $_HEX_KEY_LEN and $raw =~ /^[0-9A-Fa-f]{$_HEX_KEY_LEN}$/)</td></tr>
 <tr><td class="h"><a id="L893">893</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (length $raw &gt;= $_B64_KEY_MIN and length $raw &lt;= $_B64_KEY_MAX)</td></tr>
 <tr><td class="h"><a id="L898">898</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if length $bytes == $_AES_KEY_SIZE</td></tr>
-<tr><td class="h"><a id="L911">911</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $$seen{&amp;Scalar::Util::refaddr($href)}++</td></tr>
-<tr><td class="h"><a id="L914">914</a></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">if $k eq &quot;config_path&quot;</td></tr>
+<tr><td class="h"><a id="L911">911</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $$seen{&amp;Scalar::Util::refaddr($href)}++</td></tr>
+<tr><td class="h"><a id="L914">914</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if $k eq &quot;config_path&quot;</td></tr>
 <tr><td class="h"><a id="L916">916</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $v eq &#39;HASH&#39;) { }</td></tr>
-<tr><td class="h"></td><td class="c0">50</td><td class="c0">T</td><td class="c3">F</td><td class="s">elsif (ref $v eq &#39;ARRAY&#39;) { }</td></tr>
+<tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $v eq &#39;ARRAY&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (not ref $v and defined $v and $v =~ /^ENC\[/) { }</td></tr>
-<tr><td class="h"><a id="L920">920</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">if (not ref $v-&gt;[$i] and defined $v-&gt;[$i] and $v-&gt;[$i] =~ /^ENC\[/)</td></tr>
+<tr><td class="h"><a id="L920">920</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (not ref $v-&gt;[$i] and defined $v-&gt;[$i] and $v-&gt;[$i] =~ /^ENC\[/)</td></tr>
 <tr><td class="h"><a id="L936">936</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($token =~ /^
 &#12;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ENC\[
 &#12;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;([A-Za-z0-9]+)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# algorithm name&nbsp;&nbsp;(e.g. AES256GCM)
@@ -85,9 +85,9 @@ https://pjcj.net
 &#12;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\]
 &#12;&nbsp;&nbsp;&nbsp;$/x)</td></tr>
 <tr><td class="h"><a id="L947">947</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless (lc $algo eq &quot;aes256gcm&quot;)</td></tr>
-<tr><td class="h"><a id="L957">957</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">if (length $raw &lt; $_ENC_PAYLOAD_MIN)</td></tr>
-<tr><td class="h"><a id="L961">961</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::AuthEnc::GCM&quot;))</td></tr>
-<tr><td class="h"><a id="L974">974</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($ok and not $@)</td></tr>
+<tr><td class="h"><a id="L957">957</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (length $raw &lt; $_ENC_PAYLOAD_MIN)</td></tr>
+<tr><td class="h"><a id="L961">961</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::AuthEnc::GCM&quot;))</td></tr>
+<tr><td class="h"><a id="L974">974</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($ok and not $@)</td></tr>
 <tr><td class="h"><a id="L991">991</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (ref $spec eq &#39;CODE&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $spec eq &#39;Regexp&#39;) { }</td></tr>
 <tr><td class="h"></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">elsif (ref $spec eq &#39;HASH&#39;) { }</td></tr>
@@ -278,8 +278,8 @@ https://pjcj.net
 <tr><td class="h"><a id="L2063">2063</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$found ? :</td></tr>
 <tr><td class="h"><a id="L2098">2098</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">$found ? :</td></tr>
 <tr><td class="h"><a id="L2161">2161</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless my $key = $self-&gt;_get_encryption_key</td></tr>
-<tr><td class="h"><a id="L2164">2164</a></td><td class="c0">50</td><td class="c3">T</td><td class="c0">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::AuthEnc::GCM&quot;))</td></tr>
-<tr><td class="h"><a id="L2167">2167</a></td><td class="c0">0</td><td class="c0">T</td><td class="c0">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::PRNG&quot;, [&quot;random_bytes&quot;]))</td></tr>
+<tr><td class="h"><a id="L2164">2164</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::AuthEnc::GCM&quot;))</td></tr>
+<tr><td class="h"><a id="L2167">2167</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless ($self-&gt;_load_driver(&quot;Crypt::PRNG&quot;, [&quot;random_bytes&quot;]))</td></tr>
 <tr><td class="h"><a id="L2231">2231</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if scalar @_ == 0</td></tr>
 <tr><td class="h"><a id="L2235">2235</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">unless defined $defaults</td></tr>
 <tr><td class="h"><a id="L2250">2250</a></td><td class="c3">100</td><td class="c3">T</td><td class="c3">F</td><td class="s">if (exists $config-&gt;{&#39;global&#39;})</td></tr>
