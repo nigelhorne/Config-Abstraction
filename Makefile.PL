@@ -17,7 +17,7 @@ WriteMakefile(
 	AUTHOR	=> 'Nigel Horne <njh@nigelhorne.com>',
 	ABSTRACT_FROM	=> 'lib/Config/Abstraction.pm',
 	((defined($ExtUtils::MakeMaker::VERSION) && ($ExtUtils::MakeMaker::VERSION >= 6.3002))
-		? ('LICENSE'=> 'GPL')
+		? ('LICENSE'=> 'gpl_2')
 		: ()),
 	MIN_PERL_VERSION => '5.10.0',
 	PL_FILES => {},
@@ -66,6 +66,7 @@ WriteMakefile(
 			}
 		},
 	}, TEST_REQUIRES => {
+		'autodie' => 0,
 		'File::Glob' => 0,
 		'File::stat' => 0,
 		'IPC::System::Simple' => 0,	# for scripts/generate_index

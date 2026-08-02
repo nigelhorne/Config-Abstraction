@@ -40,6 +40,7 @@ on 'test' => sub {
 	requires 'Test::Returns', '0.03';
 	requires 'Test::TempDir::Tiny';
 	requires 'Test::Without::Module';
+	requires 'autodie';
 };
 
 on 'develop' => sub {

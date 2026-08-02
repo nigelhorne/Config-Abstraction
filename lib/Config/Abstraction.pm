@@ -33,7 +33,7 @@ Version 0.39
 
 =cut
 
-our $VERSION = '0.40';
+our $VERSION = '0.39';
 
 =head1 SYNOPSIS
 
@@ -1356,6 +1356,7 @@ sub _load_config
 			}
 			if((-f $path) && (-r $path)) {
 				my $data = read_file($path);
+				my $raw_content = $data;
 				if($logger) {
 					$logger->debug(ref($self), ' ', __LINE__, ": Loading data from $path");
 				}
@@ -1405,7 +1406,7 @@ sub _load_config
 					} else {
 						undef $data;
 					}
-					if(!$data) {
+					if(!$data && $raw_content !~ /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\b/i) {
 						$self->_load_driver('YAML::XS', ['LoadFile']);
 						if((eval { $data = LoadFile($path) }) && (ref($data) eq 'HASH')) {
 							$data = $self->_sanitize_yaml_values($data);
@@ -1733,7 +1734,7 @@ value is C<undef>), C<0> otherwise.  Returns C<0> when C<key> is C<undef>.
 
 =head4 Output
 
-  0 | 1
+  boolean
 
 =head3 MESSAGES
 

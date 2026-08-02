@@ -8,7 +8,7 @@ use warnings;
 use autodie qw(:all);
 
 use Test::Most;
-use Test::Mockingbird;
+use Test::Mockingbird 0.12;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
 
