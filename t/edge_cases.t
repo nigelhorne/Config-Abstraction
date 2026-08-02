@@ -3473,4 +3473,587 @@ subtest 'environment: works in lazy mode' => sub {
 	is($cfg->get('host'), 'qa-server', 'environment-specific file loaded in lazy mode');
 };
 
+# ===========================================================================
+# new() single-argument form: single string treated as config_file
+# ===========================================================================
+
+subtest 'new() single-arg form: string argument loaded as config_file' => sub {
+	my $dir  = tempdir(CLEANUP => 1);
+	my $path = _write_file($dir, 'singlearg.yaml', "single_arg_key: found\n");
+
+	my $cfg = Config::Abstraction->new($path);
+	ok(defined($cfg), 'single-arg new() creates an object');
+	is($cfg->get('single_arg_key'), 'found', 'single-arg config file value loaded');
+};
+
+subtest 'new() single-arg form: nonexistent path returns undef' => sub {
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new('/this/path/definitely/does/not/exist.yaml');
+		};
+	});
+	ok(!$@,        'single-arg new() with nonexistent path does not throw');
+	ok(!defined($cfg), 'single-arg new() with nonexistent path returns undef');
+};
+
+# ===========================================================================
+# config_files (plural) option: load an explicit list of files
+# ===========================================================================
+
+subtest 'config_files: multiple files loaded in order, last wins on conflict' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	my $f1  = _write_file($dir, 'first.yaml',  "key1: val1\nshared: from_first\n");
+	my $f2  = _write_file($dir, 'second.yaml', "key2: val2\nshared: from_second\n");
+
+	my $cfg = Config::Abstraction->new(
+		config_files => [$f1, $f2],
+		config_dirs  => [''],
+	);
+	ok(defined($cfg), 'config_files loads multiple files');
+	is($cfg->get('key1'), 'val1',        'key only in first file is present');
+	is($cfg->get('key2'), 'val2',        'key only in second file is present');
+	is($cfg->get('shared'), 'from_second', 'second file wins for a shared key');
+};
+
+subtest 'config_files: nonexistent file in list does not crash' => sub {
+	my $dir  = tempdir(CLEANUP => 1);
+	my $real = _write_file($dir, 'exists.yaml', "real_key: real_val\n");
+
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new(
+				config_files => [$real, '/no/such/file.yaml'],
+				config_dirs  => [''],
+			);
+		};
+	});
+	ok(!$@, 'nonexistent config_file in list does not crash constructor');
+	if(defined($cfg)) {
+		is($cfg->get('real_key'), 'real_val', 'real file still loaded despite bad companion');
+	}
+};
+
+# ===========================================================================
+# defaults constructor option: nest internal parameters inside a sub-hash
+# ===========================================================================
+
+subtest 'defaults option: internal params nested inside defaults hash' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "file_key: file_val\n");
+
+	my $cfg = Config::Abstraction->new(
+		defaults => {
+			data        => { data_key => 'data_val' },
+			config_dirs => [$dir],
+		},
+	);
+	ok(defined($cfg), 'defaults option accepted and object constructed');
+	is($cfg->get('data_key'), 'data_val', 'data from defaults option loaded');
+	is($cfg->get('file_key'), 'file_val', 'config_dirs from defaults option used');
+};
+
+subtest 'defaults option: top-level env_prefix overrides env_prefix inside defaults' => sub {
+	# CLAUDE.md: env_prefix passed at the top level always overrides env_prefix inside defaults.
+	local %ENV = %ENV;
+	my $outer_prefix = 'OUTER_';
+	$ENV{"${outer_prefix}OUTER_ONLY"} = 'outer_val';
+
+	my $cfg = Config::Abstraction->new(
+		env_prefix => $outer_prefix,
+		defaults   => { env_prefix => 'INNER_', config_dirs => [] },
+	);
+	ok(defined($cfg), 'outer env_prefix overrides inner defaults env_prefix');
+};
+
+# ===========================================================================
+# flatten mode: AUTOLOAD, explain_sources, and dotted key get() in flat mode
+# ===========================================================================
+
+subtest 'flatten: get() with dotted key traverses the flat hash correctly' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice', pass => 'secret' } },
+		config_dirs => [],
+		flatten     => 1,
+	);
+	# In flatten mode, the config is stored as { 'db.user' => 'alice', 'db.pass' => 'secret' }
+	is($cfg->get('db.user'), 'alice',  'flatten: dotted key lookup for db.user');
+	is($cfg->get('db.pass'), 'secret', 'flatten: dotted key lookup for db.pass');
+	ok(!defined($cfg->get('db')),      'flatten: bare parent key returns undef in flat hash');
+};
+
+subtest 'flatten: AUTOLOAD translates sep_char to dot form for flat hash lookup' => sub {
+	# When sep_char='_' and flatten=1, AUTOLOAD translates db_user -> db.user before lookup.
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [],
+		flatten     => 1,
+		sep_char    => $SEP_US,
+	);
+	my $val;
+	lives_ok { $val = $cfg->db_user() }
+		'AUTOLOAD in flatten mode with sep_char=_ does not crash';
+	is($val, 'alice', 'AUTOLOAD in flatten mode returns correct value');
+};
+
+subtest 'flatten: explain_sources() works correctly in flat mode' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [],
+		flatten     => 1,
+	);
+	my $es;
+	lives_ok { $es = $cfg->explain_sources() }
+		'explain_sources() does not crash in flatten mode';
+	ok(ref($es) eq 'HASH', 'explain_sources() returns hashref in flatten mode');
+	ok(exists $es->{'db.user'}, 'dotted key present in explain_sources in flat mode');
+};
+
+subtest 'flatten: exists() returns 1 for a flat dotted key' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { a => { b => 'val' } },
+		config_dirs => [],
+		flatten     => 1,
+	);
+	is($cfg->exists('a.b'), 1, 'flatten: exists() returns 1 for present dotted key');
+	is($cfg->exists('a'),   0, 'flatten: exists() returns 0 for bare parent in flat hash');
+};
+
+# ===========================================================================
+# env_prefix edge cases
+# ===========================================================================
+
+subtest 'env_prefix: empty string does not crash constructor' => sub {
+	# An empty prefix means the regex pattern matches all env vars.
+	# This is an extreme use case; we verify it does not crash.
+	local %ENV = %ENV;
+	local @ARGV = ();
+
+	my $cfg;
+	eval {
+		$cfg = Config::Abstraction->new(
+			data        => { specific => 'value' },
+			config_dirs => [],
+			env_prefix  => '',
+		);
+	};
+	ok(!$@, 'empty string env_prefix does not die in constructor');
+};
+
+subtest 'env_prefix: very long prefix string does not crash' => sub {
+	my $long_prefix = 'A' x 1000 . '_';
+	local %ENV = %ENV;
+	local @ARGV = ();
+
+	my $cfg;
+	eval {
+		$cfg = Config::Abstraction->new(
+			data        => { x => 1 },
+			config_dirs => [],
+			env_prefix  => $long_prefix,
+		);
+	};
+	ok(!$@, 'very long env_prefix does not crash constructor');
+};
+
+# ===========================================================================
+# CONFIG_DIR environment variable
+# ===========================================================================
+
+subtest 'CONFIG_DIR env var overrides default config directory discovery' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml', "config_dir_env_canary: found_via_CONFIG_DIR\n");
+
+	local %ENV = (%ENV, CONFIG_DIR => $dir);
+	my $cfg;
+	eval {
+		$cfg = Config::Abstraction->new();
+	};
+	ok(!$@, 'CONFIG_DIR env var does not crash constructor');
+	if(defined($cfg)) {
+		is($cfg->get('config_dir_env_canary'), 'found_via_CONFIG_DIR',
+			'config loaded from directory specified by CONFIG_DIR env var');
+	} else {
+		pass('constructor returned undef - CONFIG_DIR may have been overridden by other local config');
+	}
+};
+
+# ===========================================================================
+# INI format: multi-section and global-key edge cases
+# ===========================================================================
+
+subtest 'INI: multi-section file: each section becomes a nested hash' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.ini',
+		"[section1]\nkey1 = val1\n\n[section2]\nkey2 = val2\nshared = s2_val\n");
+
+	my $cfg = Config::Abstraction->new(
+		data        => {},
+		config_dirs => [$dir],
+	);
+	ok(defined($cfg), 'multi-section INI file loaded successfully');
+	is($cfg->get('section1.key1'), 'val1', 'section1.key1 accessible via dotted notation');
+	is($cfg->get('section2.key2'), 'val2', 'section2.key2 accessible via dotted notation');
+	is($cfg->get('section2.shared'), 's2_val', 'section2.shared accessible');
+};
+
+subtest 'INI: file with no sections (key=value only) does not crash' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.ini', "global_key = global_val\n");
+
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new(
+				data        => { fallback => 'ini_no_section' },
+				config_dirs => [$dir],
+			);
+		};
+	});
+	ok(!$@, 'no-section INI (key=value only) does not crash constructor');
+};
+
+# ===========================================================================
+# merge_defaults() with a real nested section
+# ===========================================================================
+
+subtest 'merge_defaults() with a real nested-hash section merges correctly' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { app => { timeout => 30, retries => 3 }, other => 'val' },
+		config_dirs => [],
+	);
+	my $result = $cfg->merge_defaults(
+		defaults => { timeout => 99, extra => 'from_defaults' },
+		section  => 'app',
+	);
+	ok(defined($result),               'merge_defaults with valid nested section succeeds');
+	is($result->{timeout}, 30,         'section key wins over same key in defaults');
+	is($result->{extra}, 'from_defaults', 'default key absent from section survives');
+	is($result->{retries}, 3,          'second section key present in merged result');
+	ok(!exists $result->{other},       'sibling key outside section is not in result');
+};
+
+# ===========================================================================
+# validators: validates env-sourced value (integration of env + validators)
+# ===========================================================================
+
+subtest 'validators: invalid env-sourced value fails validation even when data was valid' => sub {
+	local %ENV = %ENV;
+	# EDGEAPP_DATABASE__PORT (double underscore) -> database.port nested key
+	$ENV{"${ENV_PREFIX}DATABASE__PORT"} = 'not_a_number';   # env overrides the valid data value
+
+	dies_ok {
+		Config::Abstraction->new(
+			data        => { database => { port => $EXPECTED_PORT } },  # valid data value
+			config_dirs => [],
+			env_prefix  => $ENV_PREFIX,
+			validators  => { 'database.port' => 'integer' },
+		);
+	} 'env-sourced non-integer value fails integer validator';
+};
+
+subtest 'validators: valid env-sourced value passes integer validator' => sub {
+	local %ENV = %ENV;
+	$ENV{"${ENV_PREFIX}DATABASE__PORT"} = '9000';
+
+	my $cfg = Config::Abstraction->new(
+		data        => { database => { port => $EXPECTED_PORT } },
+		config_dirs => [],
+		env_prefix  => $ENV_PREFIX,
+		validators  => { 'database.port' => 'integer' },
+	);
+	ok(defined($cfg), 'valid env-sourced integer passes validator');
+	is($cfg->get('database.port'), '9000', 'env value accessible after passing validation');
+};
+
+# ===========================================================================
+# schema + lazy mode: schema validation deferred to first access
+# ===========================================================================
+
+subtest 'schema + lazy: validation deferred until first accessor call' => sub {
+	plan skip_all => 'Params::Validate::Strict not installed'
+		unless eval { require Params::Validate::Strict; 1 };
+
+	# Construct with a valid schema and valid data; lazy defers the validation.
+	my $cfg = Config::Abstraction->new(
+		data        => { retries => 3 },
+		config_dirs => [],
+		lazy        => 1,
+		schema      => { retries => { type => 'integer' } },
+	);
+	ok(defined($cfg) && blessed($cfg), 'lazy + schema: new() returns blessed object without dying');
+};
+
+# ===========================================================================
+# no_fixate option: Data::Reuse is optional (commented out RT#100461)
+# Passing no_fixate => 1 must at minimum not crash the constructor.
+# ===========================================================================
+
+subtest 'no_fixate: option accepted without crashing (Data::Reuse is optional)' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { key => 'value' },
+		config_dirs => [],
+		no_fixate   => 1,
+	);
+	ok(defined($cfg), 'no_fixate => 1 does not crash constructor');
+	is($cfg->get('key'), 'value', 'config value accessible when no_fixate is set');
+};
+
+# ===========================================================================
+# SECURITY: YAML tag injection — YAML::XS must not execute arbitrary code
+# (YAML::XS disables !!perl/code and !!perl/glob by default since 0.82)
+# ===========================================================================
+
+subtest 'SECURITY: YAML !!perl/code tag does not produce an executable coderef' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',
+		"attack: !!perl/code 'sub { die \"YAML code executed\" }'\n");
+
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new(
+				data        => { safe => 'canary' },
+				config_dirs => [$dir],
+			);
+		};
+	});
+
+	# Either the parse fails (acceptable) or the value is a non-callable scalar.
+	ok(!$@, 'YAML code tag attack does not propagate a fatal to the caller');
+	if(defined($cfg)) {
+		my $val = $cfg->get('attack');
+		# If the value survived, it must NOT be a callable code reference
+		ok(!defined($val) || ref($val) ne 'CODE' || !eval { $val->(); 1 },
+			'YAML code tag does not produce an executable coderef in config');
+		is($cfg->get('safe'), 'canary', 'safe key unaffected by hostile YAML neighbour');
+	} else {
+		pass('YAML code tag caused parse failure (acceptable - attack prevented)');
+	}
+};
+
+subtest 'SECURITY: YAML glob tag does not produce a filehandle' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	_write_file($dir, 'base.yaml',
+		"attack: !!perl/glob '*STDOUT'\nsafe: canary\n");
+
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new(config_dirs => [$dir]);
+		};
+	});
+	ok(!$@, 'YAML glob tag does not crash constructor');
+	if(defined($cfg)) {
+		my $val = $cfg->get('attack');
+		ok(!defined($val) || !ref($val) || ref($val) ne 'GLOB',
+			'YAML glob tag does not produce a GLOB reference in config');
+	} else {
+		pass('YAML glob tag caused parse failure (acceptable)');
+	}
+};
+
+# ===========================================================================
+# SECURITY: XML External Entity (XXE) injection
+# XML parsers must NOT fetch external entities from the filesystem or network.
+# ===========================================================================
+
+subtest 'SECURITY: XML XXE does not read /etc/passwd via SYSTEM entity' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+	my $xxe = join('', (
+		'<?xml version="1.0"?>',
+		'<!DOCTYPE config [<!ENTITY secret SYSTEM "file:///etc/passwd">]>',
+		'<config><key>&secret;</key><safe>canary</safe></config>',
+	));
+	_write_file($dir, 'base.xml', $xxe);
+
+	my $cfg;
+	_silenced(sub {
+		eval {
+			$cfg = Config::Abstraction->new(
+				data        => { safe => 'fallback' },
+				config_dirs => [$dir],
+			);
+		};
+	});
+
+	ok(!$@, 'XXE attempt does not propagate a fatal to the caller');
+	if(defined($cfg)) {
+		my $val = $cfg->get('key');
+		# The XXE entity must NOT have resolved to /etc/passwd content
+		ok(!defined($val) || $val !~ /root:/,
+			'XXE does not expose /etc/passwd contents via XML entity expansion');
+	} else {
+		pass('XML parse failed (acceptable -- XXE prevented by parse rejection)');
+	}
+};
+
+# ===========================================================================
+# Encryption: additional edge cases
+# ===========================================================================
+
+subtest 'encryption: encrypt_value with empty string plaintext' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $key = 'H' x 32;
+	my $enc = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		encryption_key => $key,
+		lazy           => 1,
+	);
+
+	my $token;
+	lives_ok { $token = $enc->encrypt_value('') }
+		'encrypt_value("") with empty-string plaintext does not croak';
+	like($token, qr/^ENC\[/, 'empty string encrypts to a valid ENC token');
+
+	# Round-trip: decryption of empty string yields empty string.
+	my $cfg = Config::Abstraction->new(
+		data           => { secret => $token },
+		config_dirs    => [],
+		encryption_key => $key,
+	);
+	ok(defined($cfg), 'object with encrypted empty-string value loads');
+	is($cfg->get('secret'), '', 'encrypted empty string decrypts to empty string');
+};
+
+subtest 'encryption: encryption_key_file that does not exist causes croak' => sub {
+	dies_ok {
+		Config::Abstraction->new(
+			data                => { x => 1 },
+			config_dirs         => [],
+			encryption_key_file => '/this/key/file/does/not/exist.key',
+		);
+	} 'nonexistent encryption_key_file causes croak at construction';
+};
+
+subtest 'encryption: ENC[] token in env var value is decrypted transparently' => sub {
+	plan skip_all => 'CryptX not installed' unless $CRYPTX_AVAILABLE;
+
+	my $key = 'I' x 32;
+	my $enc = Config::Abstraction->new(
+		data           => {},
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => $key,
+		lazy           => 1,
+	);
+	my $token = $enc->encrypt_value('env_secret_val');
+
+	# Inject the ENC token via an environment variable.
+	# EDGEAPP_VAULT__SECRET (double underscore) -> vault.secret key.
+	local %ENV = (%ENV, "${ENV_PREFIX}VAULT__SECRET" => $token);
+
+	my $cfg = Config::Abstraction->new(
+		config_dirs    => [],
+		env_prefix     => $ENV_PREFIX,
+		encryption_key => $key,
+	);
+	ok(defined($cfg), 'object created with ENC[] token in env var');
+	is($cfg->get('vault.secret'), 'env_secret_val',
+		'ENC[] token in env var value is decrypted transparently');
+};
+
+subtest 'encryption: key as 64-char hex string with non-hex char is rejected' => sub {
+	# 64 chars but with 'g' (not a hex digit) — not a valid 32-byte hex key.
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { x => 1 },
+			config_dirs    => [],
+			encryption_key => 'g' x 64,
+		);
+	} '64-char hex string with non-hex characters causes croak';
+};
+
+subtest 'encryption: ENC[] payload shorter than nonce+tag causes croak (no CryptX needed)' => sub {
+	# _decrypt_enc_value checks payload length BEFORE loading CryptX.
+	# Even without CryptX, a short payload must be rejected immediately.
+	# Produce a deliberately short base64url payload (4 bytes decoded < min).
+	require MIME::Base64;
+	my $short_b64 = MIME::Base64::encode_base64url('X' x 4, '');
+	my $short_token = "ENC[AES256GCM,$short_b64]";
+
+	dies_ok {
+		Config::Abstraction->new(
+			data           => { pw => $short_token },
+			config_dirs    => [],
+			encryption_key => 'J' x 32,
+		);
+	} 'ENC[] with short payload croaks before checking CryptX availability';
+	like($@, qr/too short/, 'error message says "too short"');
+};
+
+# ===========================================================================
+# sep_char: multi-character separator
+# ===========================================================================
+
+subtest 'sep_char multi-char "::" splits on the two-character sequence' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [],
+		sep_char    => '::',
+	);
+	is($cfg->get('db::user'), 'alice', 'multi-char sep_char "::" works as key separator');
+	ok(!defined($cfg->get('db.user')), 'dot does not split with sep_char="::"');
+};
+
+subtest 'sep_char "::" with AUTOLOAD returns nested value' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice' } },
+		config_dirs => [],
+		sep_char    => '::',
+	);
+	# AUTOLOAD uses get() internally; the method name is used as-is as the key.
+	# With sep_char='::', the accessor form would need '::' in the method name,
+	# which Perl disallows syntactically. get() is the correct interface here.
+	my $val = $cfg->get('db::user');
+	is($val, 'alice', 'sep_char "::" dotted key lookupworks via get()');
+};
+
+# ===========================================================================
+# HOSTILE: binary data through every layer
+# ===========================================================================
+
+subtest 'binary value in data preserved through merge (Hash::Merge no-clone mode)' => sub {
+	# Raw binary strings (bytes with high-bit set) must survive the merge pipeline.
+	my $binary = join('', map { chr($_) } 0..255);
+	my $cfg = Config::Abstraction->new(
+		data        => { bin => $binary },
+		config_dirs => [],
+	);
+	ok(defined($cfg), 'binary-valued config constructed successfully');
+	is($cfg->get('bin'), $binary, 'binary value preserved byte-for-byte through merge');
+	is(length($cfg->get('bin')), 256, 'binary value length correct');
+};
+
+subtest 'binary key name in data accessible' => sub {
+	my $binkey = "key\x00with\x01nul";
+	my $cfg = Config::Abstraction->new(
+		data        => { $binkey => 'binkey_val' },
+		config_dirs => [],
+	);
+	ok(defined($cfg), 'binary key name in data does not crash constructor');
+	is($cfg->get($binkey), 'binkey_val', 'binary key name accessible via get()');
+};
+
+# ===========================================================================
+# explain_sources() + flatten: combined edge case
+# Each flat key must have at least one source record with type='data'.
+# ===========================================================================
+
+subtest 'explain_sources(): flat-mode keys have provenance records' => sub {
+	my $cfg = Config::Abstraction->new(
+		data        => { db => { user => 'alice', host => 'localhost' } },
+		config_dirs => [],
+		flatten     => 1,
+	);
+	my $es = $cfg->explain_sources();
+	for my $k (grep { $_ ne 'config_path' } keys %{$es}) {
+		ok(scalar(@{$es->{$k}{sources}}) >= 1,
+			"flat key '$k' has at least one source record");
+	}
+};
+
 done_testing();

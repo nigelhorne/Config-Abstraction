@@ -748,6 +748,13 @@ sub new
 			}
 		}
 	}
+	# Fail early when an explicitly-specified key file is missing rather than
+	# silently falling back to unencrypted operation (env-var key files are optional).
+	if(defined $self->{'encryption_key_file'}) {
+		my $kf = $self->{'encryption_key_file'};
+		Carp::croak(ref($self) . ": encryption_key_file '$kf' does not exist") unless -f $kf;
+	}
+
 	if($self->{'lazy'}) {
 		# Defer all source scanning to the first accessor call.
 		# Stash validators/checker/schema for later (after _load_config runs).
@@ -821,6 +828,23 @@ sub _get_environment
 	}
 
 	return $env;
+}
+
+# _sanitize_yaml_values: Recursively replace CODE and GLOB refs with undef.
+# YAML::XS can produce CODE refs from !!perl/code tags regardless of DisableCode.
+# Applying this after LoadFile prevents executable references from reaching callers.
+sub _sanitize_yaml_values
+{
+	my ($self, $val) = @_;
+	my $r = ref($val);
+	return undef if $r eq 'CODE' || $r eq 'GLOB';
+	if($r eq 'HASH') {
+		return { map { $_ => $self->_sanitize_yaml_values($val->{$_}) } keys %$val };
+	}
+	if($r eq 'ARRAY') {
+		return [ map { $self->_sanitize_yaml_values($_) } @$val ];
+	}
+	return $val;
 }
 
 # Resolve the AES-256 encryption key from constructor option, env vars, or key file.
@@ -1212,6 +1236,7 @@ sub _load_config
 					}
 					next;
 				}
+				$data = $self->_sanitize_yaml_values($data) if defined($data) && ref($data);
 			} elsif ($file =~ /\.json$/) {
 				$data = eval { decode_json(read_file($path)) };
 					if($@) {
@@ -1225,16 +1250,21 @@ sub _load_config
 			} elsif($file =~ /\.xml$/) {
 				my $rc;
 				if($self->_load_driver('XML::Simple', ['XMLin'])) {
-					eval { $rc = XMLin($path, ForceArray => 0, KeyAttr => []) };
-					if($@) {
-						if($logger) {
-							$logger->notice("Failed to load XML from $path: $@");
-						} else {
-							Carp::carp("Failed to load XML from $path: $@");
+					my $xml_raw = eval { read_file($path) };
+					if(defined($xml_raw) && $xml_raw =~ /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\b/i) {
+						Carp::carp(ref($self) . ": skipping $path: XML external entity declarations not permitted");
+					} elsif(defined($xml_raw)) {
+						eval { $rc = XMLin(\$xml_raw, ForceArray => 0, KeyAttr => []) };
+						if($@) {
+							if($logger) {
+								$logger->notice("Failed to load XML from $path: $@");
+							} else {
+								Carp::carp("Failed to load XML from $path: $@");
+							}
+							undef $rc;
+						} elsif($rc) {
+							$data = $rc;
 						}
-						undef $rc;
-					} elsif($rc) {
-						$data = $rc;
 					}
 				}
 				if((!defined($rc)) && $self->_load_driver('XML::PP')) {
@@ -1332,7 +1362,11 @@ sub _load_config
 				eval {
 					if(($data =~ /^\s*<\?xml/) || ($data =~ /<\/[^>]+>/)) {
 						if($self->_load_driver('XML::Simple', ['XMLin'])) {
-							if($data = XMLin($path, ForceArray => 0, KeyAttr => [])) {
+							if($data =~ /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\b/i) {
+								Carp::carp(ref($self) . ": skipping $path: XML external entity declarations not permitted");
+								undef $data;
+							} elsif(my $xml_data = XMLin(\$data, ForceArray => 0, KeyAttr => [])) {
+								$data = $xml_data;
 								$self->{'type'} = 'XML';
 							}
 						} elsif($self->_load_driver('XML::PP')) {
@@ -1374,6 +1408,7 @@ sub _load_config
 					if(!$data) {
 						$self->_load_driver('YAML::XS', ['LoadFile']);
 						if((eval { $data = LoadFile($path) }) && (ref($data) eq 'HASH')) {
+							$data = $self->_sanitize_yaml_values($data);
 							# Could be colon file, could be YAML, whichever it is break the configuration fields
 							# foreach my($k, $v) (%{$data}) {
 							foreach my $k (keys %{$data}) {
@@ -1431,7 +1466,10 @@ sub _load_config
 							if((!$data) || (ref($data) ne 'HASH')) {
 								# Maybe XML without the leading XML header
 								if($self->_load_driver('XML::Simple', ['XMLin'])) {
-									eval { $data = XMLin($path, ForceArray => 0, KeyAttr => []) };
+									my $xml_raw = eval { read_file($path) };
+									if(defined($xml_raw) && $xml_raw !~ /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\b/i) {
+										eval { $data = XMLin(\$xml_raw, ForceArray => 0, KeyAttr => []) };
+									}
 								}
 								if((!$data) || (ref($data) ne 'HASH')) {
 									if($self->_load_driver('Config::Abstract')) {
@@ -2544,13 +2582,16 @@ sub _parse_config_string
 		if($filename =~ /\.ya?ml$/i) {
 			$self->_load_driver('YAML::XS', ['Load']);
 			$data = YAML::XS::Load($raw);
+			$data = $self->_sanitize_yaml_values($data) if defined($data) && ref($data);
 
 		} elsif($filename =~ /\.json$/i) {
 			$data = decode_json($raw);
 
 		} elsif($filename =~ /\.xml$/i) {
 			if($self->_load_driver('XML::Simple', ['XMLin'])) {
-				$data = XMLin(\$raw, ForceArray => 0, KeyAttr => []);
+				if($raw !~ /<!ENTITY\s+\w+\s+(?:SYSTEM|PUBLIC)\b/i) {
+					$data = XMLin(\$raw, ForceArray => 0, KeyAttr => []);
+				}
 			} elsif($self->_load_driver('XML::PP')) {
 				my $pp = XML::PP->new();
 				if(my $tree = $pp->parse(\$raw)) {
