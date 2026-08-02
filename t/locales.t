@@ -20,7 +20,7 @@ use warnings;
 use Test::Most;
 use File::Temp qw(tempdir);
 use POSIX qw(ENOENT);
-use Config::Abstraction;
+use_ok('Config::Abstraction');
 
 # -------------------------------------------------------------------------
 # Section 1: Geographic -- environment-specific config tiers via country codes
@@ -77,10 +77,21 @@ for my $country (qw(GB US FR DE CN)) {
 	};
 }
 
-# Case-insensitivity: GB and gb name the same file tier (by convention --
-# the environment name is used verbatim in the filename, so 'gb' looks for base.gb.yaml).
-# Test that both lower-case and upper-case country code names load distinct files correctly.
-subtest 'geographic: upper- vs lower-case tier names are distinct' => sub {
+# Probe whether the running filesystem is case-sensitive.  On macOS the default
+# APFS/HFS+ volume is case-insensitive, so writing 'base.gb.yaml' and 'base.GB.yaml'
+# creates only one file (last write wins).  We detect this once and share the result.
+my $_probe_dir = tempdir(CLEANUP => 1);
+open(my $_pf, '>', "$_probe_dir/CasEpRoBe.tmp") or die "probe write failed: $!";
+close $_pf;
+my $CASE_INSENSITIVE_FS = (-e "$_probe_dir/caseprobe.tmp") ? 1 : 0;
+
+# On a case-sensitive filesystem: environment 'gb' and 'GB' name distinct files.
+# On a case-insensitive filesystem (e.g. macOS APFS/HFS+): they collapse to one file
+# and this test cannot distinguish them -- it is skipped.
+subtest 'geographic: upper- vs lower-case tier names are distinct (case-sensitive FS only)' => sub {
+	plan skip_all => 'Filesystem is case-insensitive (e.g. macOS APFS/HFS+); base.gb.yaml and base.GB.yaml are the same file'
+		if $CASE_INSENSITIVE_FS;
+
 	my $dir = tempdir(CLEANUP => 1);
 
 	open my $fh, '>', "$dir/base.yaml" or die;
@@ -100,6 +111,39 @@ subtest 'geographic: upper- vs lower-case tier names are distinct' => sub {
 
 	is($lower_cfg->get('tier'), 'lowercase_gb', 'environment gb loads base.gb.yaml');
 	is($upper_cfg->get('tier'), 'uppercase_GB', 'environment GB loads base.GB.yaml');
+};
+
+# Regression: on a case-insensitive filesystem (macOS APFS/HFS+), writing
+# base.gb.yaml then base.GB.yaml creates only one file.  The module must still
+# load it successfully regardless of which casing was used as the environment name.
+# On case-sensitive filesystems both objects load their respective distinct file.
+subtest 'geographic: environment tier works on case-insensitive filesystem (regression)' => sub {
+	my $dir = tempdir(CLEANUP => 1);
+
+	open my $fh, '>', "$dir/base.yaml" or die;
+	print $fh "tier: base\n";
+	close $fh;
+
+	# Write only one casing; on a case-insensitive FS both names resolve to it.
+	open $fh, '>', "$dir/base.GB.yaml" or die;
+	print $fh "tier: gb_value\n";
+	close $fh;
+
+	# Both environment names must produce a valid, loaded object.
+	my $upper_cfg = Config::Abstraction->new(config_dirs => [$dir], environment => 'GB');
+	ok(defined($upper_cfg),                    'GB environment: object constructed');
+	is($upper_cfg->get('tier'), 'gb_value',    'GB environment: tier file loaded');
+
+	my $lower_cfg = Config::Abstraction->new(config_dirs => [$dir], environment => 'gb');
+	if($CASE_INSENSITIVE_FS) {
+		# On a case-insensitive FS, 'gb' resolves to the same file as 'GB'.
+		ok(defined($lower_cfg),                'gb environment on case-insensitive FS: object constructed');
+		is($lower_cfg->get('tier'), 'gb_value','gb environment on case-insensitive FS: finds same file as GB');
+	} else {
+		# On a case-sensitive FS, 'gb' finds no base.gb.yaml, so it falls back to base.yaml.
+		ok(defined($lower_cfg),                'gb environment on case-sensitive FS: object constructed from base.yaml');
+		is($lower_cfg->get('tier'), 'base',    'gb environment on case-sensitive FS: no base.gb.yaml, falls back to base');
+	}
 };
 
 # Concurrent instances for different regions must not interfere.
