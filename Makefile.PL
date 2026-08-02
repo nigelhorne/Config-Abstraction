@@ -68,8 +68,7 @@ WriteMakefile(
 				# web => 'https://github.com/nigelhorne/Config-Abstraction/issues'
 				# url => 'https://github.com/nigelhorne/Config-Abstraction/issues',
 			}
-		},
-		optional_features => {
+		}, optional_features => {
 			encryption => {
 				description => 'AES-256-GCM encryption of config values via ENC[] tokens',
 				prereqs => { runtime => { requires => { 'CryptX' => 0 } } },

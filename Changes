@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.40
+0.40	Sun Aug  2 04:37:58 PM EDT 2026
 	[ Security ]
 	- Fix YAML code injection: YAML::XS v0.91 ignores $YAML::XS::DisableCode and
 	  materialises callable CODE refs from !!perl/code tags. New private helper
