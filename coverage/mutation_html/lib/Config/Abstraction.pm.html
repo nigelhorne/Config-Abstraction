@@ -321,11 +321,11 @@ Approximate LCSAJ segments: 581<br>
 </span><span class="">   29: 
 </span><span class="">   30: =head1 VERSION
 </span><span class="">   31: 
-</span><span class="">   32: Version 0.39
+</span><span class="">   32: Version 0.40
 </span><span class="">   33: 
 </span><span class="">   34: =cut
 </span><span class="">   35: 
-</span><span class="">   36: our $VERSION = &#39;0.39&#39;;
+</span><span class="">   36: our $VERSION = &#39;0.40&#39;;
 </span><span class="">   37: 
 </span><span class="">   38: =head1 SYNOPSIS
 </span><span class="">   39: 
@@ -1248,14 +1248,8 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  917: 			$self-&gt;_decrypt_config_values($v, $key, $seen);
 </span><span class="">  918: 		} elsif(ref($v) eq &#39;ARRAY&#39;) {
 </span><span class="">  919: 			for my $i (0..$#{$v}) {
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  920: 				if(!ref($v-&gt;[$i]) &amp;&amp; defined($v-&gt;[$i]) &amp;&amp; $v-&gt;[$i] =~ /^ENC\[/) {
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_920_5: Invert condition if to unless</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class="">  921: 					$v-&gt;[$i] = $self-&gt;_decrypt_enc_value($v-&gt;[$i], $key);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  920: 				if(!ref($v-&gt;[$i]) &amp;&amp; defined($v-&gt;[$i]) &amp;&amp; $v-&gt;[$i] =~ /^ENC\[/) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  921: 					$v-&gt;[$i] = $self-&gt;_decrypt_enc_value($v-&gt;[$i], $key);
 </span><span class="">  922: 				}
 </span><span class="">  923: 			}
 </span><span class="">  924: 		} elsif(!ref($v) &amp;&amp; defined($v) &amp;&amp; $v =~ /^ENC\[/) {
@@ -1295,14 +1289,8 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><p> <b> Mutants (Total: 4, Killed: 4, Survived: 0)</b><p><span class="">  958: 		Carp::croak(ref($self) . &quot;: ENC token payload is too short to be valid&quot;);
 </span><span class="">  959: 	}
 </span><span class="">  960: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">961 → 961 → 965</span></span>  961: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_961_2: Invert condition unless to if</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class="">  962: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">961 → 961 → 965</span></span>  961: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  962: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required to decrypt ENC[] values; install it with: cpanm CryptX&#39;);
 </span><span class="">  963: 	}
 </span><span class="">  964: 
 </span><span class=""><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">965 → 974 → 978</span></span>  965: 	my $nonce = substr($raw,  0, $_AES_NONCE_SIZE);
@@ -1314,39 +1302,12 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class="">  971: 	my $pt = $gcm-&gt;decrypt_add($ct);
 </span><span class="">  972: 
 </span><span class="">  973: 	my $ok = eval { $gcm-&gt;decrypt_done($tag) };
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch.">  974: 	unless($ok &amp;&amp; !$@) {
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_974_2: Invert condition unless to if</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class="">  975: 		Carp::croak(ref($self) . &quot;: decryption failed (wrong key or tampered data)&quot;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  974: 	unless($ok &amp;&amp; !$@) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class="">  975: 		Carp::croak(ref($self) . &quot;: decryption failed (wrong key or tampered data)&quot;);
 </span><span class="">  976: 	}
 </span><span class="">  977: 
-</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values.">  978: 	return $pt;
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
-					<ul>
-				<li><b>BOOL_NEGATE_978_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Boolean branch test suggestion
-ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
-</pre>
-								</div>
-							</li><li><b>RETURN_UNDEF_978_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Return value assertion
-is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
-</pre>
-								</div>
-							</li></ul></details>
-<span class="">  979: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic.">  978: 	return $pt;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class="">  979: }
 </span><span class="">  980: 
 </span><span class="">  981: # Apply the validators hash supplied as a constructor option.
 </span><span class="">  982: # Each key is a dotted config key; each value is a coderef, regex, type string, or spec hashref.
@@ -2705,23 +2666,11 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 2161: 	my $key = $self-&gt;_get_encryption_key()
 </span><span class=""> 2162: 		or Carp::croak(ref($self) . &#39;: no encryption key configured (set encryption_key, encryption_key_file, or ENCRYPTION_KEY env var)&#39;);
 </span><span class=""> 2163: 
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."> 2164: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_2164_2: Invert condition unless to if</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class=""> 2165: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required; install it with: cpanm CryptX&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 2164: 	unless($self-&gt;_load_driver(&#39;Crypt::AuthEnc::GCM&#39;)) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 2165: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::AuthEnc::GCM) is required; install it with: cpanm CryptX&#39;);
 </span><span class=""> 2166: 	}
-</span><span class="survived-1 tooltip" data-tooltip="Mutation survived. Add targeted tests to validate this branch."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">2167 → 2167 → 2171</span></span> 2167: 	unless($self-&gt;_load_driver(&#39;Crypt::PRNG&#39;, [&#39;random_bytes&#39;])) {
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 1, Killed: 0, Survived: 1)</summary>
-					<ul>
-				<li><b>COND_INV_2167_2: Invert condition unless to if</b><br>MEDIUM: Add tests asserting both true and false outcomes
-</li></ul></details>
-<span class=""> 2168: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::PRNG) is required; install it with: cpanm CryptX&#39;);
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."><span class="lcsaj-tip"><span class="lcsaj-dot">●</span><span class="lcsaj-tip-text">2167 → 2167 → 2171</span></span> 2167: 	unless($self-&gt;_load_driver(&#39;Crypt::PRNG&#39;, [&#39;random_bytes&#39;])) {
+</span><p> <b> Mutants (Total: 1, Killed: 1, Survived: 0)</b><p><span class=""> 2168: 		Carp::croak(ref($self) . &#39;: CryptX (Crypt::PRNG) is required; install it with: cpanm CryptX&#39;);
 </span><span class=""> 2169: 	}
 </span><span class=""> 2170: 
 </span><span class=""> 2171: 	require MIME::Base64;
@@ -2732,29 +2681,8 @@ is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
 </span><span class=""> 2176: 	my $ct  = $gcm-&gt;encrypt_add($plaintext);
 </span><span class=""> 2177: 	my $tag = $gcm-&gt;encrypt_done();
 </span><span class=""> 2178: 
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 2179: 	return &#39;ENC[AES256GCM,&#39; . MIME::Base64::encode_base64url($nonce . $ct . $tag, &#39;&#39;) . &#39;]&#39;;
-</span>
-					<details class="mutant-details">
-					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
-					<ul>
-				<li><b>BOOL_NEGATE_2179_2: Negate boolean return expression</b><br>MEDIUM: Add tests asserting both true and false outcomes
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Boolean branch test suggestion
-ok( !func(INPUT), &#39;Verify boolean branch behaviour&#39; );
-</pre>
-								</div>
-							</li><li><b>RETURN_UNDEF_2179_2: Replace return expression with undef</b><br>LOW: Mutation survived, but impact may be minor
-
-								<div class="suggested-test">
-								<div class="suggest-label">🧪 Suggested Test</div>
-								<pre># Return value assertion
-is( func(INPUT), EXPECTED, &#39;Verify correct return value&#39; );
-</pre>
-								</div>
-							</li></ul></details>
-<span class=""> 2180: }
+</span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 2179: 	return &#39;ENC[AES256GCM,&#39; . MIME::Base64::encode_base64url($nonce . $ct . $tag, &#39;&#39;) . &#39;]&#39;;
+</span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 2180: }
 </span><span class=""> 2181: 
 </span><span class=""> 2182: =head2 merge_defaults
 </span><span class=""> 2183: 
