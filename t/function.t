@@ -1563,6 +1563,28 @@ SKIP: {
 			qr/decryption failed/, 'tampered GCM tag causes authentication failure croak';
 	};
 
+	subtest '_decrypt_config_values() - terminates on circular references (regression: no $seen guard caused deep recursion under inverted-condition mutant)' => sub {
+		my $cfg = Config::Abstraction->new(
+			data           => {},
+			config_dirs    => [],
+			encryption_key => $HEX_KEY_B,
+			lazy           => 1,
+		);
+		my $key = $cfg->_get_encryption_key();
+
+		# Build a config hash that contains a cycle: $child points back to $parent.
+		# Hash::Merge no-clone mode can produce shared/cyclic refs in production.
+		# Without the $seen guard this call never returns.
+		my $parent = { plain => 'ok' };
+		my $child  = { up    => $parent };
+		$parent->{down} = $child;
+
+		# Must return without exhausting the stack.
+		lives_ok { $cfg->_decrypt_config_values($parent, $key) }
+			'does not recurse infinitely on a circular reference';
+		is($parent->{plain}, 'ok', 'non-ENC leaf preserved through circular walk');
+	};
+
 	subtest '_decrypt_config_values() - decrypts nested leaves and skips config_path' => sub {
 		my $cfg = Config::Abstraction->new(
 			data           => {},

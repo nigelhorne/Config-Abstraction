@@ -878,15 +878,19 @@ sub _decode_encryption_key
 }
 
 # Recursively walk $href and decrypt any leaf value matching ENC[...].
+# $seen guards against circular references (possible when Hash::Merge
+# no-clone mode is active and sub-hashes are shared across the merge tree).
 sub _decrypt_config_values
 {
-	my ($self, $href, $key) = @_;
+	my ($self, $href, $key, $seen) = @_;
+	$seen //= {};
+	return if $seen->{Scalar::Util::refaddr($href)}++;
 
 	for my $k (keys %{$href}) {
 		next if $k eq 'config_path';
 		my $v = $href->{$k};
 		if(ref($v) eq 'HASH') {
-			$self->_decrypt_config_values($v, $key);
+			$self->_decrypt_config_values($v, $key, $seen);
 		} elsif(ref($v) eq 'ARRAY') {
 			for my $i (0..$#{$v}) {
 				if(!ref($v->[$i]) && defined($v->[$i]) && $v->[$i] =~ /^ENC\[/) {
