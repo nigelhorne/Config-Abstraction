@@ -22,6 +22,7 @@ Readonly::Scalar my $_HEX_KEY_LEN     => 64;	# 32 bytes expressed as hexadecimal
 Readonly::Scalar my $_B64_KEY_MIN     => 43;	# minimum base64/base64url chars for 32 bytes
 Readonly::Scalar my $_B64_KEY_MAX     => 44;	# maximum base64/base64url chars for 32 bytes
 
+
 =head1 NAME
 
 Config::Abstraction - Merge and manage configuration data from different sources
@@ -724,6 +725,10 @@ sub new
 		config => {},
 	}, $class;
 
+	# Cache the compiled sep_char regex once so get() and exists() do not
+	# recompile it on every key lookup.
+	$self->{'_sep_re'} = qr/\Q$self->{'sep_char'}\E/;
+
 	if(my $logger = $self->{'logger'}) {
 		if(!Scalar::Util::blessed($logger)) {
 			# Don't call $self->_load_driver('Log::Abstraction') as it can make a call to logger, which is yet to be set up
@@ -1068,24 +1073,32 @@ sub _is_plain_scalar
 # Skips the meta-key 'config_path'. Used by explain_sources() and source tracking.
 # $seen guards against circular references (e.g. those possible when
 # Hash::Merge::set_clone_behavior(0) is active).
-sub _flatten_keys
+#
+# _flatten_into writes into a caller-supplied hashref accumulator so that
+# each leaf key is written exactly once -- O(N) total writes vs the previous
+# O(N^2) pattern of %flat = (%flat, _flatten_keys(...)) at each recursion level.
+sub _flatten_into
 {
-	my ($hash, $prefix, $seen) = @_;
-	$prefix //= '';
-	$seen   //= {};
-	my %flat;
-	return %flat unless ref($hash) eq 'HASH';
+	my ($acc, $hash, $prefix, $seen) = @_;
+	return unless ref($hash) eq 'HASH';
 	my $addr = Scalar::Util::refaddr($hash);
-	return %flat if $seen->{$addr}++;
+	return if $seen->{$addr}++;
 	for my $k (keys %$hash) {
 		next if $k eq 'config_path';
 		my $full = length($prefix) ? "$prefix.$k" : $k;
 		if(ref($hash->{$k}) eq 'HASH') {
-			%flat = (%flat, _flatten_keys($hash->{$k}, $full, $seen));
+			_flatten_into($acc, $hash->{$k}, $full, $seen);
 		} else {
-			$flat{$full} = $hash->{$k};
+			$acc->{$full} = $hash->{$k};
 		}
 	}
+}
+
+sub _flatten_keys
+{
+	my ($hash, $prefix, $seen) = @_;
+	my %flat;
+	_flatten_into(\%flat, $hash, $prefix // '', $seen // {});
 	return %flat;
 }
 
@@ -1597,7 +1610,7 @@ sub get
 		return $self->{config}{$key};
 	}
 	my $ref = $self->{'config'};
-	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
+	for my $part (split $self->{'_sep_re'}, $key) {
 		return undef unless ref $ref eq 'HASH';
 		return unless exists $ref->{$part};
 		$ref = $ref->{$part};
@@ -1694,7 +1707,7 @@ sub exists
 		return exists($self->{config}{$key}) ? 1 : 0;
 	}
 	my $ref = $self->{'config'};
-	for my $part (split qr/\Q$self->{sep_char}\E/, $key) {
+	for my $part (split $self->{'_sep_re'}, $key) {
 		return 0 unless ref $ref eq 'HASH';
 		return 0 if(!exists($ref->{$part}));
 		$ref = $ref->{$part};
@@ -2400,12 +2413,15 @@ sub _is_local_host
 	return 1 if $bare eq '127.0.0.1';
 	return 1 if $bare eq '::1';
 
-	require Sys::Hostname;
-	my $fqdn  = lc(Sys::Hostname::hostname());
-	return 1 if lc($bare) eq $fqdn;
-
-	(my $short = $fqdn) =~ s/\..*$//;	# trim domain component
-	return 1 if lc($bare) eq $short;
+	# Cache the resolved hostname on the object so Sys::Hostname::hostname()
+	# (a syscall) is only made once per Config::Abstraction instance.
+	unless(defined $self->{'_cached_hostname'}) {
+		require Sys::Hostname;
+		$self->{'_cached_hostname'} = lc(Sys::Hostname::hostname());
+		($self->{'_cached_short_hostname'} = $self->{'_cached_hostname'}) =~ s/\..*$//;
+	}
+	return 1 if lc($bare) eq $self->{'_cached_hostname'};
+	return 1 if lc($bare) eq $self->{'_cached_short_hostname'};
 
 	return 0;
 }

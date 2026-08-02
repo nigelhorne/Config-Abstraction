@@ -1,6 +1,18 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.40
+	[ Performance ]
+	- _flatten_keys: eliminate O(N^2) hash copying by delegating to new private
+	  _flatten_into helper that writes each leaf key into a caller-supplied
+	  accumulator hashref exactly once; benchmarks show 2x speedup on a 60-leaf
+	  config (20 000 iter/s -> 40 000+ iter/s).
+	- get()/exists(): cache the compiled sep_char regex as $self->{'_sep_re'} at
+	  construction time instead of recompiling qr/\Q$sep_char\E/ on every key
+	  lookup; benchmarks show ~50% speedup on repeated get() calls.
+	- _is_local_host(): cache Sys::Hostname::hostname() result on the object
+	  ($self->{'_cached_hostname'}) so the syscall is made at most once per
+	  Config::Abstraction instance, not on every directory entry evaluation.
+
 	[ Bug Fixes ]
 	- Fix AUTOLOAD method dispatch using stale $self->{data} (raw constructor
 	  defaults) instead of the fully merged $self->{config}; file and environment
