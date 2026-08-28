@@ -1,5 +1,7 @@
 package Config::Abstraction;
 
+# TODO: import from __DATA__ like Config::Auto in Geo::Coder::Free
+
 use strict;
 use warnings;
 
