@@ -10,6 +10,7 @@ use autodie qw(:all);
 
 use Test::Most;
 use Test::Needs;
+use Test::Permissions;
 use Test::Without::Module;
 use Readonly;
 use Scalar::Util qw(blessed reftype);
@@ -92,31 +93,15 @@ sub _silenced
 # Run $code while $path is unreadable, restoring its mode afterwards even if
 # $code dies.  Returns undef when $code ran, or a skip reason when chmod cannot
 # take read access away here (root, CAP_DAC_OVERRIDE, fakeroot, Windows, FAT...).
-# Uses Test::Permissions, which probes for real, when it is installed;
-# otherwise falls back to checking -r after chmod(0000)
+# Uses Test::Permissions, which probes for real
 sub _with_unreadable
 {
 	my ($dir, $path, $code) = @_;
 
-	if(eval { require Test::Permissions; 1 }) {
-		if(my $reason = Test::Permissions::why_not('read', $dir)) {
-			return $reason;
-		}
-		Test::Permissions::with_revoked(read => $path, $code);
-		return;
+	if(my $reason = Test::Permissions::why_not('read', $dir)) {
+		return $reason;
 	}
-
-	my $mode = (stat($path))[2] & 07777;
-	chmod(0000, $path);
-	if(-r $path) {
-		chmod($mode, $path);
-		return 'chmod(0000) does not restrict reads for this user (root?)';
-	}
-	my $ok = eval { $code->(); 1 };
-	my $err = $@;
-	chmod($mode, $path);
-	die $err unless $ok;
-	return;
+	Test::Permissions::with_revoked(read => $path, $code);
 }
 
 # ---------------------------------------------------------------------------

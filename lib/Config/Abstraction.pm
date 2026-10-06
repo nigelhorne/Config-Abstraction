@@ -970,6 +970,7 @@ sub _decrypt_enc_value
 
 	my $gcm = Crypt::AuthEnc::GCM->new('AES', $key);
 	$gcm->iv_add($nonce);
+	$gcm->adata_add('');	# end the IV phase; see encrypt_value()
 	my $pt = $gcm->decrypt_add($ct);
 
 	my $ok = eval { $gcm->decrypt_done($tag) };
@@ -2148,6 +2149,7 @@ Requires L<CryptX> (C<Crypt::AuthEnc::GCM>, C<Crypt::PRNG>).
   nonce = 12 random bytes
   gcm = new GCM('AES', key)
   gcm.iv_add(nonce)
+  gcm.adata_add('')  -- ends the IV phase (required by CryptX < 0.049)
   ciphertext = gcm.encrypt_add(plaintext)
   tag = gcm.encrypt_done()
   return "ENC[AES256GCM," + base64url(nonce + ciphertext + tag) + "]"
@@ -2175,6 +2177,10 @@ sub encrypt_value
 	my $nonce = random_bytes($_AES_NONCE_SIZE);
 	my $gcm   = Crypt::AuthEnc::GCM->new('AES', $key);
 	$gcm->iv_add($nonce);
+	# Empty AAD explicitly ends the IV phase.  CryptX < 0.049 does not do this
+	# implicitly, so encrypt_add() straight after iv_add() fails there with
+	# "Invalid argument provided".  The output is identical on newer CryptX.
+	$gcm->adata_add('');
 	my $ct  = $gcm->encrypt_add($plaintext);
 	my $tag = $gcm->encrypt_done();
 

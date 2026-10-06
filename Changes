@@ -2,6 +2,17 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 
 0.41
 	[ Bug Fixes ]
+	- Fix encrypt_value() dying with "encrypt_add/gcm_process failed: Invalid
+	  argument provided" on CryptX older than 0.049, whose GCM code does not
+	  leave the IV phase by itself. encrypt_value() and ENC[] decryption now
+	  call adata_add('') after iv_add() to end the IV phase explicitly; the
+	  output is byte-identical on newer CryptX, so existing ENC[] tokens are
+	  unaffected.
+	  See https://www.cpantesters.org/cpan/report/6c68aef6-9d1d-11f1-9946-adfc6d8775ea
+	- CryptX is now declared in PREREQ_PM (previously only under
+	  optional_features, so CPAN clients never upgraded an old copy), with a
+	  minimum of 0.062: 0.049 fixed GCM encryption of the empty string, and
+	  0.062 fixed GCM tag verification.
 	- Fix t/extended_tests.t failures when the tests are run as root, or in a
 	  container with CAP_DAC_OVERRIDE, or under fakeroot: chmod(0000) does not
 	  stop those users reading a file, so the two unreadable-file subtests
