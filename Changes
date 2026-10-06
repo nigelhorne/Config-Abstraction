@@ -1,5 +1,16 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
+0.41
+	[ Bug Fixes ]
+	- Fix t/extended_tests.t failures when the tests are run as root, or in a
+	  container with CAP_DAC_OVERRIDE, or under fakeroot: chmod(0000) does not
+	  stop those users reading a file, so the two unreadable-file subtests
+	  loaded it anyway. A new _with_unreadable() helper skips them when read
+	  access cannot be revoked, and restores the file's mode even if the
+	  constructor dies. It uses Test::Permissions to probe for real when it is
+	  installed, otherwise it falls back to checking -r after chmod(0000).
+	  Test::Permissions is a recommended (not required) test prerequisite.
+
 0.40	Sun Aug  2 04:37:58 PM EDT 2026
 	[ Security ]
 	- Fix YAML code injection: YAML::XS v0.91 ignores $YAML::XS::DisableCode and

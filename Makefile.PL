@@ -68,6 +68,12 @@ WriteMakefile(
 				# web => 'https://github.com/nigelhorne/Config-Abstraction/issues'
 				# url => 'https://github.com/nigelhorne/Config-Abstraction/issues',
 			}
+		}, prereqs => {
+			test => {
+				recommends => {
+					'Test::Permissions' => 0,	# probes whether chmod can revoke read access; t/extended_tests.t falls back to -r
+				},
+			},
 		}, optional_features => {
 			encryption => {
 				description => 'AES-256-GCM encryption of config values via ENC[] tokens',

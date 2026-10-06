@@ -42,6 +42,7 @@ on 'test' => sub {
 	requires 'Test::TempDir::Tiny';
 	requires 'Test::Without::Module';
 	requires 'autodie';
+	recommends 'Test::Permissions';   # probes whether chmod can revoke read access; t/extended_tests.t falls back to -r
 };
 
 on 'develop' => sub {
