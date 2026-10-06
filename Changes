@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.41
+0.41	Mon Oct  5 09:35:23 PM EDT 2026
 	[ Bug Fixes ]
 	- Fix encrypt_value() dying with "encrypt_add/gcm_process failed: Invalid
 	  argument provided" on CryptX older than 0.049, whose GCM code does not

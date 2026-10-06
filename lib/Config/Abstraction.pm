@@ -31,11 +31,11 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 =head1 VERSION
 
-Version 0.40
+Version 0.41
 
 =cut
 
-our $VERSION = '0.40';
+our $VERSION = '0.41';
 
 =head1 SYNOPSIS
 
