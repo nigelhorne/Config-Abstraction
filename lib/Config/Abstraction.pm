@@ -24,7 +24,6 @@ Readonly::Scalar my $_HEX_KEY_LEN     => 64;	# 32 bytes expressed as hexadecimal
 Readonly::Scalar my $_B64_KEY_MIN     => 43;	# minimum base64/base64url chars for 32 bytes
 Readonly::Scalar my $_B64_KEY_MAX     => 44;	# maximum base64/base64url chars for 32 bytes
 
-
 =head1 NAME
 
 Config::Abstraction - Merge and manage configuration data from different sources
@@ -320,7 +319,8 @@ C<local.xml>, C<base.ini>, and C<local.ini>.
 
 If C<config_file> or C<config_files> is set, those files are loaded last.
 
-If no C<config_dirs> is given, try hard to find the files in various places.
+If no C<config_dirs> is given,
+C<Config::Abstraction> tries hard to find the files in various places.
 
 The value of C<config_dirs> can be overridden at runtime by the environment variable CONFIG_DIR
 (note that is just one directory, hence it's CONFIG_DIR not CONFIG_DIRS).
