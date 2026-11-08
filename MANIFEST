@@ -28,6 +28,7 @@ t/logger.t
 t/manifest.t
 t/merge_config.t
 t/mutant_killers.t
+t/noshadow.t
 t/perl.t
 t/pod-cm.t
 t/pod-coverage.t

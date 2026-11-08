@@ -4,7 +4,7 @@ Config::Abstraction - Merge and manage configuration data from different sources
 
 ## Version
 
-Version 0.41
+Version 0.42
 
 ## Synopsis
 
@@ -342,6 +342,11 @@ Options:
     since later files override earlier ones.
 
     Considers the files `default` and `$script_name` before looking at `config_file` and `config_files`.
+
+    The running script itself is never read as configuration, even when one of the
+    configuration directories is the directory it is in, and neither is any file
+    that starts with `#!`, since such a file is a program rather than
+    configuration, and the Perl parser would run it.
 
 - `data`
 
