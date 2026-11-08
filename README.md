@@ -288,7 +288,8 @@ This will override any value set for `database.user` in the configuration files.
 
     If `config_file` or `config_files` is set, those files are loaded last.
 
-    If no `config_dirs` is given, try hard to find the files in various places.
+    If no `config_dirs` is given,
+    `Config::Abstraction` tries hard to find the files in various places.
 
     The value of `config_dirs` can be overridden at runtime by the environment variable CONFIG\_DIR
     (note that is just one directory, hence it's CONFIG\_DIR not CONFIG\_DIRS).
