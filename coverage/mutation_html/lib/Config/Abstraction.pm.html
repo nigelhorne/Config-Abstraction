@@ -365,303 +365,303 @@ Approximate LCSAJ segments: 581<br>
 </span><span class="">   24: Readonly::Scalar my $_B64_KEY_MIN     =&gt; 43;	# minimum base64/base64url chars for 32 bytes
 </span><span class="">   25: Readonly::Scalar my $_B64_KEY_MAX     =&gt; 44;	# maximum base64/base64url chars for 32 bytes
 </span><span class="">   26: 
-</span><span class="">   27: 
-</span><span class="">   28: =head1 NAME
-</span><span class="">   29: 
-</span><span class="">   30: Config::Abstraction - Merge and manage configuration data from different sources
-</span><span class="">   31: 
-</span><span class="">   32: =head1 VERSION
-</span><span class="">   33: 
-</span><span class="">   34: Version 0.41
-</span><span class="">   35: 
-</span><span class="">   36: =cut
-</span><span class="">   37: 
-</span><span class="">   38: our $VERSION = &#39;0.41&#39;;
-</span><span class="">   39: 
-</span><span class="">   40: =head1 SYNOPSIS
-</span><span class="">   41: 
-</span><span class="">   42: =head2 Pattern 1: Environment overrides file overrides in-code defaults
-</span><span class="">   43: 
-</span><span class="">   44: The most common pattern for twelve-factor-style apps.
-</span><span class="">   45: The C&lt;data&gt; argument supplies defaults, a YAML file supplies site configuration,
-</span><span class="">   46: and environment variables allow per-deployment overrides without touching any file.
-</span><span class="">   47: 
-</span><span class="">   48:   # config/base.yaml
-</span><span class="">   49:   #   database:
-</span><span class="">   50:   #     host: db.example.com
-</span><span class="">   51:   #     port: 5432
-</span><span class="">   52:   #     user: app
-</span><span class="">   53: 
-</span><span class="">   54:   use Config::Abstraction;
-</span><span class="">   55: 
-</span><span class="">   56:   my $config = Config::Abstraction-&gt;new(
-</span><span class="">   57:       data        =&gt; { database =&gt; { host =&gt; &#39;localhost&#39;, port =&gt; 5432 } },
-</span><span class="">   58:       config_dirs =&gt; [&#39;config&#39;],
-</span><span class="">   59:       env_prefix  =&gt; &#39;APP_&#39;,
-</span><span class="">   60:   );
-</span><span class="">   61: 
-</span><span class="">   62:   # In production, set APP_DATABASE__HOST=db.prod.example.com in the environment.
-</span><span class="">   63:   # That silently overrides the file value, which in turn overrides the default.
-</span><span class="">   64:   my $host = $config-&gt;get(&#39;database.host&#39;);
-</span><span class="">   65:   my $port = $config-&gt;get(&#39;database.port&#39;);
-</span><span class="">   66: 
-</span><span class="">   67: =head2 Pattern 2: Command-line arguments override everything
-</span><span class="">   68: 
-</span><span class="">   69: Useful for CLI tools where operator flags must win over every other source.
-</span><span class="">   70: 
-</span><span class="">   71:   # Run as: myscript.pl --APP_LOGLEVEL=debug --APP_DATABASE__HOST=localhost
-</span><span class="">   72: 
-</span><span class="">   73:   use Config::Abstraction;
-</span><span class="">   74: 
-</span><span class="">   75:   my $config = Config::Abstraction-&gt;new(
-</span><span class="">   76:       config_dirs =&gt; [&#39;config&#39;],
-</span><span class="">   77:       env_prefix  =&gt; &#39;APP_&#39;,
-</span><span class="">   78:   );
-</span><span class="">   79: 
-</span><span class="">   80:   # @ARGV is consumed and stripped during new(); the resulting config already
-</span><span class="">   81:   # has cli-layer values at the highest precedence.
-</span><span class="">   82:   my $loglevel = $config-&gt;get(&#39;loglevel&#39;);       # &#39;debug&#39;  (from --APP_LOGLEVEL)
-</span><span class="">   83:   my $db_host  = $config-&gt;get(&#39;database.host&#39;);  # &#39;localhost&#39; (from --APP_DATABASE__HOST)
-</span><span class="">   84: 
-</span><span class="">   85: =head2 Pattern 3: Multi-file layering (base + local override)
-</span><span class="">   86: 
-</span><span class="">   87: Separates shared defaults from machine-specific tweaks.
-</span><span class="">   88: Every developer has a C&lt;base.yaml&gt;; only the production server has C&lt;local.yaml&gt;.
-</span><span class="">   89: 
-</span><span class="">   90:   # config/base.yaml   -- checked into version control
-</span><span class="">   91:   #   database:
-</span><span class="">   92:   #     host: localhost
-</span><span class="">   93:   #     user: dev
-</span><span class="">   94:   #
-</span><span class="">   95:   # config/local.yaml  -- NOT checked in; production only
-</span><span class="">   96:   #   database:
-</span><span class="">   97:   #     host: db.prod.example.com
-</span><span class="">   98:   #     user: produser
-</span><span class="">   99:   #     password: s3cr3t
-</span><span class="">  100: 
-</span><span class="">  101:   use Config::Abstraction;
-</span><span class="">  102: 
-</span><span class="">  103:   my $config = Config::Abstraction-&gt;new(
-</span><span class="">  104:       config_dirs =&gt; [&#39;config&#39;],   # loads base.yaml then local.yaml
-</span><span class="">  105:       env_prefix  =&gt; &#39;APP_&#39;,
-</span><span class="">  106:   );
-</span><span class="">  107: 
-</span><span class="">  108:   # On a dev machine (no local.yaml): host=&#39;localhost&#39;, user=&#39;dev&#39;
-</span><span class="">  109:   # On the prod server:               host=&#39;db.prod.example.com&#39;, user=&#39;produser&#39;
-</span><span class="">  110:   my $db = $config-&gt;get(&#39;database.host&#39;);
-</span><span class="">  111:   my $user = $config-&gt;get(&#39;database.user&#39;);
-</span><span class="">  112: 
-</span><span class="">  113: =head1 DESCRIPTION
-</span><span class="">  114: 
-</span><span class="">  115: C&lt;Config::Abstraction&gt; is a flexible configuration management layer that sits above C&lt;Config::*&gt; modules.
-</span><span class="">  116: It provides a simple way to layer multiple configuration sources with predictable merge order.
-</span><span class="">  117: It lets you define sources such as:
-</span><span class="">  118: 
-</span><span class="">  119: =over 4
-</span><span class="">  120: 
-</span><span class="">  121: =item * Perl hashes (in-memory defaults or dynamic values)
-</span><span class="">  122: 
-</span><span class="">  123: =item * Environment variables (with optional prefixes)
-</span><span class="">  124: 
-</span><span class="">  125: =item * Configuration files (YAML, JSON, INI, or plain key=value)
-</span><span class="">  126: 
-</span><span class="">  127: =item * Command-line arguments
-</span><span class="">  128: 
-</span><span class="">  129: =back
-</span><span class="">  130: 
-</span><span class="">  131: Sources are applied in the order they are provided. Later sources override
-</span><span class="">  132: earlier ones unless a key is explicitly set to C&lt;undef&gt; in the later source.
-</span><span class="">  133: 
-</span><span class="">  134: In addition to using drivers to load configuration data from multiple file
-</span><span class="">  135: formats (YAML, JSON, XML, and INI),
-</span><span class="">  136: it also allows levels of configuration, each of which overrides the lower levels.
-</span><span class="">  137: So, it also integrates environment variable
-</span><span class="">  138: overrides and command line arguments for runtime configuration adjustments.
-</span><span class="">  139: This module is designed to help developers manage layered configurations that can be loaded from files and overridden at run-time for debugging,
-</span><span class="">  140: offering a modern, robust and dynamic approach
-</span><span class="">  141: to configuration management.
-</span><span class="">  142: 
-</span><span class="">  143: =head2 Merge Precedence
-</span><span class="">  144: 
-</span><span class="">  145: Sources are applied in the order shown below.  Each row wins over every row
-</span><span class="">  146: above it.  When the same key appears in multiple sources, the highest-priority
-</span><span class="">  147: source always determines the final value - including when that value is C&lt;undef&gt;.
-</span><span class="">  148: 
-</span><span class="">  149:   Priority   Source                         Set with
-</span><span class="">  150:   --------   ------                         --------
-</span><span class="">  151:      1 (lo)  data constructor argument      data =&gt; { key =&gt; &#39;default&#39; }
-</span><span class="">  152:      2        base.*  config files          config/base.yaml, base.json, ...
-</span><span class="">  153:      3        base.{env}.* config files     config/base.prod.yaml, ...
-</span><span class="">  154:      4        local.* config files          config/local.yaml, local.json, ...
-</span><span class="">  155:      5        local.{env}.* config files    config/local.prod.yaml, ...
-</span><span class="">  156:      6        default / script-name files   config/default.yaml, myapp.yaml, ...
-</span><span class="">  157:      7        config_file / config_files    config_file =&gt; &#39;/etc/myapp.yaml&#39;
-</span><span class="">  158:      8        Environment variables         APP_DATABASE__HOST=db.prod.example.com
-</span><span class="">  159:      9 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
-</span><span class="">  160: 
-</span><span class="">  161: The active environment is set by the C&lt;environment&gt; constructor option, or
-</span><span class="">  162: auto-detected from C&lt;{env_prefix}ENV&gt; (e.g. C&lt;APP_ENV&gt;), C&lt;PLACK_ENV&gt;, or
-</span><span class="">  163: C&lt;NODE_ENV&gt;.  When no environment is configured, rows 3 and 5 are skipped.
-</span><span class="">  164: 
-</span><span class="">  165: Within the file tier (rows 2-7), later files override earlier files using
-</span><span class="">  166: C&lt;Hash::Merge&gt; LEFT_PRECEDENT: every key in the later file wins over the same
-</span><span class="">  167: key in an earlier file, even when the later value is C&lt;undef&gt; (YAML C&lt;~&gt;).
-</span><span class="">  168: Nested hashes are merged recursively, so a C&lt;local.yaml&gt; that only sets
-</span><span class="">  169: C&lt;database.host&gt; will not erase C&lt;database.port&gt; from C&lt;base.yaml&gt;.
-</span><span class="">  170: 
-</span><span class="">  171:   Example - what wins for the key C&lt;database.host&gt; when APP_ENV=prod:
-</span><span class="">  172: 
-</span><span class="">  173:   data              =&gt;  &#39;localhost&#39;              (overridden by base.yaml)
-</span><span class="">  174:   base.yaml         =&gt;  &#39;db.example.com&#39;         (overridden by base.prod.yaml)
-</span><span class="">  175:   base.prod.yaml    =&gt;  &#39;db.prod.example.com&#39;    (overridden by local.yaml)
-</span><span class="">  176:   local.yaml        =&gt;  &#39;db.local.example.com&#39;   (overridden by local.prod.yaml)
-</span><span class="">  177:   local.prod.yaml   =&gt;  &#39;db.prod-local.example.com&#39;  (overridden by $APP_DATABASE__HOST)
-</span><span class="">  178:   $APP_DATABASE__HOST  =&gt;  &#39;db.override.example.com&#39;    &lt;-- this wins
-</span><span class="">  179: 
-</span><span class="">  180: =head2 KEY FEATURES
-</span><span class="">  181: 
-</span><span class="">  182: =over 4
-</span><span class="">  183: 
-</span><span class="">  184: =item * Multi-Format Support
-</span><span class="">  185: 
-</span><span class="">  186: Supports configuration files in YAML, JSON, XML, and INI formats.
-</span><span class="">  187: Automatically merges configuration data from these different formats,
-</span><span class="">  188: allowing hierarchical configuration management.
-</span><span class="">  189: 
-</span><span class="">  190: =item * Environment Variable Overrides
-</span><span class="">  191: 
-</span><span class="">  192: Allows environment variables to override values in the configuration files.
-</span><span class="">  193: By setting environment variables with a specific prefix (default: C&lt;APP_&gt;),
-</span><span class="">  194: values in the configuration files can be dynamically adjusted without modifying
-</span><span class="">  195: the file contents.
-</span><span class="">  196: 
-</span><span class="">  197: =item * Flattened Configuration Option
-</span><span class="">  198: 
-</span><span class="">  199: Optionally supports flattening the configuration structure. This converts deeply
-</span><span class="">  200: nested configuration keys into a flat key-value format (e.g., C&lt;database.user&gt;
-</span><span class="">  201: instead of C&lt;database-E&lt;gt&gt;{user}&gt;). This makes accessing values easier for
-</span><span class="">  202: applications that prefer flat structures or need compatibility with flat
-</span><span class="">  203: key-value stores.
-</span><span class="">  204: 
-</span><span class="">  205: =item * Layered Configuration
-</span><span class="">  206: 
-</span><span class="">  207: Supports merging multiple layers of configuration files. For example, you can
-</span><span class="">  208: have a C&lt;base.yaml&gt; configuration file that provides default values, and a
-</span><span class="">  209: C&lt;local.yaml&gt; (or C&lt;local.json&gt;, C&lt;local.xml&gt;, etc.) file that overrides
-</span><span class="">  210: specific values. This allows for environment-specific configurations while
-</span><span class="">  211: keeping defaults intact.
-</span><span class="">  212: 
-</span><span class="">  213: =item * Merge Strategy
-</span><span class="">  214: 
-</span><span class="">  215: The module merges the configuration data intelligently, allowing values in more
-</span><span class="">  216: specific files (like C&lt;local.yaml&gt;, C&lt;local.json&gt;, C&lt;local.xml&gt;, C&lt;local.ini&gt;)
-</span><span class="">  217: to override values in base files. This enables a flexible and layered configuration
-</span><span class="">  218: system where you can set defaults and override them for specific environments.
-</span><span class="">  219: 
-</span><span class="">  220: =item * Error Handling
-</span><span class="">  221: 
-</span><span class="">  222: Includes error handling for loading configuration files.
-</span><span class="">  223: If any file fails to
-</span><span class="">  224: load (e.g., due to syntax issues), the module will throw descriptive error
-</span><span class="">  225: messages to help with debugging.
-</span><span class="">  226: 
-</span><span class="">  227: =item * Centralized Configuration Management
-</span><span class="">  228: 
-</span><span class="">  229: Supports remote configuration management files,
-</span><span class="">  230: so that configuration on remote machines can be centrally managed.
-</span><span class="">  231: 
-</span><span class="">  232: =back
-</span><span class="">  233: 
-</span><span class="">  234: =head2 SUPPORTED FILE FORMATS
-</span><span class="">  235: 
-</span><span class="">  236: =over 4
-</span><span class="">  237: 
-</span><span class="">  238: =item * YAML (C&lt;*.yaml&gt;, C&lt;*.yml&gt;)
-</span><span class="">  239: 
-</span><span class="">  240: Loaded with C&lt;YAML::XS&gt;.
-</span><span class="">  241: 
-</span><span class="">  242: =item * JSON (C&lt;*.json&gt;)
-</span><span class="">  243: 
-</span><span class="">  244: Loaded with C&lt;JSON::MaybeXS&gt;.
-</span><span class="">  245: 
-</span><span class="">  246: =item * XML (C&lt;*.xml&gt;)
-</span><span class="">  247: 
-</span><span class="">  248: Loaded with C&lt;XML::Simple&gt; (preferred) or C&lt;XML::PP&gt; (fallback).
-</span><span class="">  249: 
-</span><span class="">  250: =item * INI (C&lt;*.ini&gt;)
-</span><span class="">  251: 
-</span><span class="">  252: Loaded with C&lt;Config::IniFiles&gt;.
-</span><span class="">  253: 
-</span><span class="">  254: =item * TOML (C&lt;*.toml&gt;)
-</span><span class="">  255: 
-</span><span class="">  256: Loaded with C&lt;TOML::Tiny&gt;, which implements TOML 1.0.  TOML is a good choice
-</span><span class="">  257: for human-editable configuration because its syntax is unambiguous: all values
-</span><span class="">  258: are typed, strings must be quoted, and nesting uses C&lt;[section]&gt; headers or
-</span><span class="">  259: dotted keys rather than indentation.
-</span><span class="">  260: 
-</span><span class="">  261:   # Example: config/base.toml
-</span><span class="">  262:   [database]
-</span><span class="">  263:   host   = &quot;db.example.com&quot;
-</span><span class="">  264:   port   = 5432
-</span><span class="">  265:   user   = &quot;app&quot;
-</span><span class="">  266: 
-</span><span class="">  267:   [cache]
-</span><span class="">  268:   ttl    = 300
-</span><span class="">  269:   debug  = false
-</span><span class="">  270: 
-</span><span class="">  271: C&lt;base.toml&gt; and C&lt;local.toml&gt; are discovered automatically in C&lt;config_dirs&gt;;
-</span><span class="">  272: C&lt;local.toml&gt; has higher precedence than C&lt;base.toml&gt;, following the same
-</span><span class="">  273: layering rules as all other formats.  TOML is also tried as a fallback parser
-</span><span class="">  274: in the all-parsers chain used for extensionless C&lt;config_file&gt; entries.
-</span><span class="">  275: 
-</span><span class="">  276: If C&lt;TOML::Tiny&gt; is not installed, TOML files are silently skipped with a
-</span><span class="">  277: C&lt;carp&gt; warning.
-</span><span class="">  278: 
-</span><span class="">  279: =back
-</span><span class="">  280: 
-</span><span class="">  281: =head2 ENVIRONMENT VARIABLE HANDLING
-</span><span class="">  282: 
-</span><span class="">  283: Configuration values can be overridden via environment variables. Environment variables use double underscores (__) to denote nested configuration keys and single underscores remain as part of the key name under the prefix namespace.
-</span><span class="">  284: 
-</span><span class="">  285: For example:
-</span><span class="">  286: 
-</span><span class="">  287:   APP_DATABASE__USER becomes database.user (nested structure)
-</span><span class="">  288: 
-</span><span class="">  289:     $ export APP_DATABASE__USER=&quot;env_user&quot;
-</span><span class="">  290: 
-</span><span class="">  291: will override any value set for `database.user` in the configuration files.
-</span><span class="">  292: 
-</span><span class="">  293:   APP_LOGLEVEL becomes APP.loglevel (flat under prefix namespace)
-</span><span class="">  294: 
-</span><span class="">  295:   APP_API__RATE_LIMIT becomes api.rate_limit (mixed usage)
-</span><span class="">  296: 
-</span><span class="">  297: This allows you to override both top-level and nested configuration values using environment variables.
-</span><span class="">  298: 
-</span><span class="">  299: Configuration values can be overridden via the command line (C&lt;@ARGV&gt;).
-</span><span class="">  300: For instance, if you have a key in the configuration such as C&lt;database.user&gt;,
-</span><span class="">  301: you can override it by adding C&lt;&quot;--APP_DATABASE__USER=other_user_name&quot;&gt; to the command line arguments.
-</span><span class="">  302: This will override any value set for C&lt;database.user&gt; in the configuration files.
-</span><span class="">  303: 
-</span><span class="">  304: =head2 EXAMPLE CONFIGURATION FLOW
-</span><span class="">  305: 
-</span><span class="">  306: =over 4
-</span><span class="">  307: 
-</span><span class="">  308: =item 1. Data Argument
-</span><span class="">  309: 
-</span><span class="">  310: The data passed into the constructor via the C&lt;data&gt; argument is the starting point.
-</span><span class="">  311: Essentially,
-</span><span class="">  312: this contains the default values.
-</span><span class="">  313: 
-</span><span class="">  314: =item 2. Loading Files
-</span><span class="">  315: 
-</span><span class="">  316: The module then looks for configuration files in the specified directories.
-</span><span class="">  317: It loads the following files in order of preference:
-</span><span class="">  318: C&lt;base.yaml&gt;, C&lt;local.yaml&gt;, C&lt;base.json&gt;, C&lt;local.json&gt;, C&lt;base.xml&gt;,
-</span><span class="">  319: C&lt;local.xml&gt;, C&lt;base.ini&gt;, and C&lt;local.ini&gt;.
-</span><span class="">  320: 
-</span><span class="">  321: If C&lt;config_file&gt; or C&lt;config_files&gt; is set, those files are loaded last.
-</span><span class="">  322: 
-</span><span class="">  323: If no C&lt;config_dirs&gt; is given, try hard to find the files in various places.
+</span><span class="">   27: =head1 NAME
+</span><span class="">   28: 
+</span><span class="">   29: Config::Abstraction - Merge and manage configuration data from different sources
+</span><span class="">   30: 
+</span><span class="">   31: =head1 VERSION
+</span><span class="">   32: 
+</span><span class="">   33: Version 0.41
+</span><span class="">   34: 
+</span><span class="">   35: =cut
+</span><span class="">   36: 
+</span><span class="">   37: our $VERSION = &#39;0.41&#39;;
+</span><span class="">   38: 
+</span><span class="">   39: =head1 SYNOPSIS
+</span><span class="">   40: 
+</span><span class="">   41: =head2 Pattern 1: Environment overrides file overrides in-code defaults
+</span><span class="">   42: 
+</span><span class="">   43: The most common pattern for twelve-factor-style apps.
+</span><span class="">   44: The C&lt;data&gt; argument supplies defaults, a YAML file supplies site configuration,
+</span><span class="">   45: and environment variables allow per-deployment overrides without touching any file.
+</span><span class="">   46: 
+</span><span class="">   47:   # config/base.yaml
+</span><span class="">   48:   #   database:
+</span><span class="">   49:   #     host: db.example.com
+</span><span class="">   50:   #     port: 5432
+</span><span class="">   51:   #     user: app
+</span><span class="">   52: 
+</span><span class="">   53:   use Config::Abstraction;
+</span><span class="">   54: 
+</span><span class="">   55:   my $config = Config::Abstraction-&gt;new(
+</span><span class="">   56:       data        =&gt; { database =&gt; { host =&gt; &#39;localhost&#39;, port =&gt; 5432 } },
+</span><span class="">   57:       config_dirs =&gt; [&#39;config&#39;],
+</span><span class="">   58:       env_prefix  =&gt; &#39;APP_&#39;,
+</span><span class="">   59:   );
+</span><span class="">   60: 
+</span><span class="">   61:   # In production, set APP_DATABASE__HOST=db.prod.example.com in the environment.
+</span><span class="">   62:   # That silently overrides the file value, which in turn overrides the default.
+</span><span class="">   63:   my $host = $config-&gt;get(&#39;database.host&#39;);
+</span><span class="">   64:   my $port = $config-&gt;get(&#39;database.port&#39;);
+</span><span class="">   65: 
+</span><span class="">   66: =head2 Pattern 2: Command-line arguments override everything
+</span><span class="">   67: 
+</span><span class="">   68: Useful for CLI tools where operator flags must win over every other source.
+</span><span class="">   69: 
+</span><span class="">   70:   # Run as: myscript.pl --APP_LOGLEVEL=debug --APP_DATABASE__HOST=localhost
+</span><span class="">   71: 
+</span><span class="">   72:   use Config::Abstraction;
+</span><span class="">   73: 
+</span><span class="">   74:   my $config = Config::Abstraction-&gt;new(
+</span><span class="">   75:       config_dirs =&gt; [&#39;config&#39;],
+</span><span class="">   76:       env_prefix  =&gt; &#39;APP_&#39;,
+</span><span class="">   77:   );
+</span><span class="">   78: 
+</span><span class="">   79:   # @ARGV is consumed and stripped during new(); the resulting config already
+</span><span class="">   80:   # has cli-layer values at the highest precedence.
+</span><span class="">   81:   my $loglevel = $config-&gt;get(&#39;loglevel&#39;);       # &#39;debug&#39;  (from --APP_LOGLEVEL)
+</span><span class="">   82:   my $db_host  = $config-&gt;get(&#39;database.host&#39;);  # &#39;localhost&#39; (from --APP_DATABASE__HOST)
+</span><span class="">   83: 
+</span><span class="">   84: =head2 Pattern 3: Multi-file layering (base + local override)
+</span><span class="">   85: 
+</span><span class="">   86: Separates shared defaults from machine-specific tweaks.
+</span><span class="">   87: Every developer has a C&lt;base.yaml&gt;; only the production server has C&lt;local.yaml&gt;.
+</span><span class="">   88: 
+</span><span class="">   89:   # config/base.yaml   -- checked into version control
+</span><span class="">   90:   #   database:
+</span><span class="">   91:   #     host: localhost
+</span><span class="">   92:   #     user: dev
+</span><span class="">   93:   #
+</span><span class="">   94:   # config/local.yaml  -- NOT checked in; production only
+</span><span class="">   95:   #   database:
+</span><span class="">   96:   #     host: db.prod.example.com
+</span><span class="">   97:   #     user: produser
+</span><span class="">   98:   #     password: s3cr3t
+</span><span class="">   99: 
+</span><span class="">  100:   use Config::Abstraction;
+</span><span class="">  101: 
+</span><span class="">  102:   my $config = Config::Abstraction-&gt;new(
+</span><span class="">  103:       config_dirs =&gt; [&#39;config&#39;],   # loads base.yaml then local.yaml
+</span><span class="">  104:       env_prefix  =&gt; &#39;APP_&#39;,
+</span><span class="">  105:   );
+</span><span class="">  106: 
+</span><span class="">  107:   # On a dev machine (no local.yaml): host=&#39;localhost&#39;, user=&#39;dev&#39;
+</span><span class="">  108:   # On the prod server:               host=&#39;db.prod.example.com&#39;, user=&#39;produser&#39;
+</span><span class="">  109:   my $db = $config-&gt;get(&#39;database.host&#39;);
+</span><span class="">  110:   my $user = $config-&gt;get(&#39;database.user&#39;);
+</span><span class="">  111: 
+</span><span class="">  112: =head1 DESCRIPTION
+</span><span class="">  113: 
+</span><span class="">  114: C&lt;Config::Abstraction&gt; is a flexible configuration management layer that sits above C&lt;Config::*&gt; modules.
+</span><span class="">  115: It provides a simple way to layer multiple configuration sources with predictable merge order.
+</span><span class="">  116: It lets you define sources such as:
+</span><span class="">  117: 
+</span><span class="">  118: =over 4
+</span><span class="">  119: 
+</span><span class="">  120: =item * Perl hashes (in-memory defaults or dynamic values)
+</span><span class="">  121: 
+</span><span class="">  122: =item * Environment variables (with optional prefixes)
+</span><span class="">  123: 
+</span><span class="">  124: =item * Configuration files (YAML, JSON, INI, or plain key=value)
+</span><span class="">  125: 
+</span><span class="">  126: =item * Command-line arguments
+</span><span class="">  127: 
+</span><span class="">  128: =back
+</span><span class="">  129: 
+</span><span class="">  130: Sources are applied in the order they are provided. Later sources override
+</span><span class="">  131: earlier ones unless a key is explicitly set to C&lt;undef&gt; in the later source.
+</span><span class="">  132: 
+</span><span class="">  133: In addition to using drivers to load configuration data from multiple file
+</span><span class="">  134: formats (YAML, JSON, XML, and INI),
+</span><span class="">  135: it also allows levels of configuration, each of which overrides the lower levels.
+</span><span class="">  136: So, it also integrates environment variable
+</span><span class="">  137: overrides and command line arguments for runtime configuration adjustments.
+</span><span class="">  138: This module is designed to help developers manage layered configurations that can be loaded from files and overridden at run-time for debugging,
+</span><span class="">  139: offering a modern, robust and dynamic approach
+</span><span class="">  140: to configuration management.
+</span><span class="">  141: 
+</span><span class="">  142: =head2 Merge Precedence
+</span><span class="">  143: 
+</span><span class="">  144: Sources are applied in the order shown below.  Each row wins over every row
+</span><span class="">  145: above it.  When the same key appears in multiple sources, the highest-priority
+</span><span class="">  146: source always determines the final value - including when that value is C&lt;undef&gt;.
+</span><span class="">  147: 
+</span><span class="">  148:   Priority   Source                         Set with
+</span><span class="">  149:   --------   ------                         --------
+</span><span class="">  150:      1 (lo)  data constructor argument      data =&gt; { key =&gt; &#39;default&#39; }
+</span><span class="">  151:      2        base.*  config files          config/base.yaml, base.json, ...
+</span><span class="">  152:      3        base.{env}.* config files     config/base.prod.yaml, ...
+</span><span class="">  153:      4        local.* config files          config/local.yaml, local.json, ...
+</span><span class="">  154:      5        local.{env}.* config files    config/local.prod.yaml, ...
+</span><span class="">  155:      6        default / script-name files   config/default.yaml, myapp.yaml, ...
+</span><span class="">  156:      7        config_file / config_files    config_file =&gt; &#39;/etc/myapp.yaml&#39;
+</span><span class="">  157:      8        Environment variables         APP_DATABASE__HOST=db.prod.example.com
+</span><span class="">  158:      9 (hi)  CLI arguments (@ARGV)          --APP_DATABASE__HOST=db.prod.example.com
+</span><span class="">  159: 
+</span><span class="">  160: The active environment is set by the C&lt;environment&gt; constructor option, or
+</span><span class="">  161: auto-detected from C&lt;{env_prefix}ENV&gt; (e.g. C&lt;APP_ENV&gt;), C&lt;PLACK_ENV&gt;, or
+</span><span class="">  162: C&lt;NODE_ENV&gt;.  When no environment is configured, rows 3 and 5 are skipped.
+</span><span class="">  163: 
+</span><span class="">  164: Within the file tier (rows 2-7), later files override earlier files using
+</span><span class="">  165: C&lt;Hash::Merge&gt; LEFT_PRECEDENT: every key in the later file wins over the same
+</span><span class="">  166: key in an earlier file, even when the later value is C&lt;undef&gt; (YAML C&lt;~&gt;).
+</span><span class="">  167: Nested hashes are merged recursively, so a C&lt;local.yaml&gt; that only sets
+</span><span class="">  168: C&lt;database.host&gt; will not erase C&lt;database.port&gt; from C&lt;base.yaml&gt;.
+</span><span class="">  169: 
+</span><span class="">  170:   Example - what wins for the key C&lt;database.host&gt; when APP_ENV=prod:
+</span><span class="">  171: 
+</span><span class="">  172:   data              =&gt;  &#39;localhost&#39;              (overridden by base.yaml)
+</span><span class="">  173:   base.yaml         =&gt;  &#39;db.example.com&#39;         (overridden by base.prod.yaml)
+</span><span class="">  174:   base.prod.yaml    =&gt;  &#39;db.prod.example.com&#39;    (overridden by local.yaml)
+</span><span class="">  175:   local.yaml        =&gt;  &#39;db.local.example.com&#39;   (overridden by local.prod.yaml)
+</span><span class="">  176:   local.prod.yaml   =&gt;  &#39;db.prod-local.example.com&#39;  (overridden by $APP_DATABASE__HOST)
+</span><span class="">  177:   $APP_DATABASE__HOST  =&gt;  &#39;db.override.example.com&#39;    &lt;-- this wins
+</span><span class="">  178: 
+</span><span class="">  179: =head2 KEY FEATURES
+</span><span class="">  180: 
+</span><span class="">  181: =over 4
+</span><span class="">  182: 
+</span><span class="">  183: =item * Multi-Format Support
+</span><span class="">  184: 
+</span><span class="">  185: Supports configuration files in YAML, JSON, XML, and INI formats.
+</span><span class="">  186: Automatically merges configuration data from these different formats,
+</span><span class="">  187: allowing hierarchical configuration management.
+</span><span class="">  188: 
+</span><span class="">  189: =item * Environment Variable Overrides
+</span><span class="">  190: 
+</span><span class="">  191: Allows environment variables to override values in the configuration files.
+</span><span class="">  192: By setting environment variables with a specific prefix (default: C&lt;APP_&gt;),
+</span><span class="">  193: values in the configuration files can be dynamically adjusted without modifying
+</span><span class="">  194: the file contents.
+</span><span class="">  195: 
+</span><span class="">  196: =item * Flattened Configuration Option
+</span><span class="">  197: 
+</span><span class="">  198: Optionally supports flattening the configuration structure. This converts deeply
+</span><span class="">  199: nested configuration keys into a flat key-value format (e.g., C&lt;database.user&gt;
+</span><span class="">  200: instead of C&lt;database-E&lt;gt&gt;{user}&gt;). This makes accessing values easier for
+</span><span class="">  201: applications that prefer flat structures or need compatibility with flat
+</span><span class="">  202: key-value stores.
+</span><span class="">  203: 
+</span><span class="">  204: =item * Layered Configuration
+</span><span class="">  205: 
+</span><span class="">  206: Supports merging multiple layers of configuration files. For example, you can
+</span><span class="">  207: have a C&lt;base.yaml&gt; configuration file that provides default values, and a
+</span><span class="">  208: C&lt;local.yaml&gt; (or C&lt;local.json&gt;, C&lt;local.xml&gt;, etc.) file that overrides
+</span><span class="">  209: specific values. This allows for environment-specific configurations while
+</span><span class="">  210: keeping defaults intact.
+</span><span class="">  211: 
+</span><span class="">  212: =item * Merge Strategy
+</span><span class="">  213: 
+</span><span class="">  214: The module merges the configuration data intelligently, allowing values in more
+</span><span class="">  215: specific files (like C&lt;local.yaml&gt;, C&lt;local.json&gt;, C&lt;local.xml&gt;, C&lt;local.ini&gt;)
+</span><span class="">  216: to override values in base files. This enables a flexible and layered configuration
+</span><span class="">  217: system where you can set defaults and override them for specific environments.
+</span><span class="">  218: 
+</span><span class="">  219: =item * Error Handling
+</span><span class="">  220: 
+</span><span class="">  221: Includes error handling for loading configuration files.
+</span><span class="">  222: If any file fails to
+</span><span class="">  223: load (e.g., due to syntax issues), the module will throw descriptive error
+</span><span class="">  224: messages to help with debugging.
+</span><span class="">  225: 
+</span><span class="">  226: =item * Centralized Configuration Management
+</span><span class="">  227: 
+</span><span class="">  228: Supports remote configuration management files,
+</span><span class="">  229: so that configuration on remote machines can be centrally managed.
+</span><span class="">  230: 
+</span><span class="">  231: =back
+</span><span class="">  232: 
+</span><span class="">  233: =head2 SUPPORTED FILE FORMATS
+</span><span class="">  234: 
+</span><span class="">  235: =over 4
+</span><span class="">  236: 
+</span><span class="">  237: =item * YAML (C&lt;*.yaml&gt;, C&lt;*.yml&gt;)
+</span><span class="">  238: 
+</span><span class="">  239: Loaded with C&lt;YAML::XS&gt;.
+</span><span class="">  240: 
+</span><span class="">  241: =item * JSON (C&lt;*.json&gt;)
+</span><span class="">  242: 
+</span><span class="">  243: Loaded with C&lt;JSON::MaybeXS&gt;.
+</span><span class="">  244: 
+</span><span class="">  245: =item * XML (C&lt;*.xml&gt;)
+</span><span class="">  246: 
+</span><span class="">  247: Loaded with C&lt;XML::Simple&gt; (preferred) or C&lt;XML::PP&gt; (fallback).
+</span><span class="">  248: 
+</span><span class="">  249: =item * INI (C&lt;*.ini&gt;)
+</span><span class="">  250: 
+</span><span class="">  251: Loaded with C&lt;Config::IniFiles&gt;.
+</span><span class="">  252: 
+</span><span class="">  253: =item * TOML (C&lt;*.toml&gt;)
+</span><span class="">  254: 
+</span><span class="">  255: Loaded with C&lt;TOML::Tiny&gt;, which implements TOML 1.0.  TOML is a good choice
+</span><span class="">  256: for human-editable configuration because its syntax is unambiguous: all values
+</span><span class="">  257: are typed, strings must be quoted, and nesting uses C&lt;[section]&gt; headers or
+</span><span class="">  258: dotted keys rather than indentation.
+</span><span class="">  259: 
+</span><span class="">  260:   # Example: config/base.toml
+</span><span class="">  261:   [database]
+</span><span class="">  262:   host   = &quot;db.example.com&quot;
+</span><span class="">  263:   port   = 5432
+</span><span class="">  264:   user   = &quot;app&quot;
+</span><span class="">  265: 
+</span><span class="">  266:   [cache]
+</span><span class="">  267:   ttl    = 300
+</span><span class="">  268:   debug  = false
+</span><span class="">  269: 
+</span><span class="">  270: C&lt;base.toml&gt; and C&lt;local.toml&gt; are discovered automatically in C&lt;config_dirs&gt;;
+</span><span class="">  271: C&lt;local.toml&gt; has higher precedence than C&lt;base.toml&gt;, following the same
+</span><span class="">  272: layering rules as all other formats.  TOML is also tried as a fallback parser
+</span><span class="">  273: in the all-parsers chain used for extensionless C&lt;config_file&gt; entries.
+</span><span class="">  274: 
+</span><span class="">  275: If C&lt;TOML::Tiny&gt; is not installed, TOML files are silently skipped with a
+</span><span class="">  276: C&lt;carp&gt; warning.
+</span><span class="">  277: 
+</span><span class="">  278: =back
+</span><span class="">  279: 
+</span><span class="">  280: =head2 ENVIRONMENT VARIABLE HANDLING
+</span><span class="">  281: 
+</span><span class="">  282: Configuration values can be overridden via environment variables. Environment variables use double underscores (__) to denote nested configuration keys and single underscores remain as part of the key name under the prefix namespace.
+</span><span class="">  283: 
+</span><span class="">  284: For example:
+</span><span class="">  285: 
+</span><span class="">  286:   APP_DATABASE__USER becomes database.user (nested structure)
+</span><span class="">  287: 
+</span><span class="">  288:     $ export APP_DATABASE__USER=&quot;env_user&quot;
+</span><span class="">  289: 
+</span><span class="">  290: will override any value set for `database.user` in the configuration files.
+</span><span class="">  291: 
+</span><span class="">  292:   APP_LOGLEVEL becomes APP.loglevel (flat under prefix namespace)
+</span><span class="">  293: 
+</span><span class="">  294:   APP_API__RATE_LIMIT becomes api.rate_limit (mixed usage)
+</span><span class="">  295: 
+</span><span class="">  296: This allows you to override both top-level and nested configuration values using environment variables.
+</span><span class="">  297: 
+</span><span class="">  298: Configuration values can be overridden via the command line (C&lt;@ARGV&gt;).
+</span><span class="">  299: For instance, if you have a key in the configuration such as C&lt;database.user&gt;,
+</span><span class="">  300: you can override it by adding C&lt;&quot;--APP_DATABASE__USER=other_user_name&quot;&gt; to the command line arguments.
+</span><span class="">  301: This will override any value set for C&lt;database.user&gt; in the configuration files.
+</span><span class="">  302: 
+</span><span class="">  303: =head2 EXAMPLE CONFIGURATION FLOW
+</span><span class="">  304: 
+</span><span class="">  305: =over 4
+</span><span class="">  306: 
+</span><span class="">  307: =item 1. Data Argument
+</span><span class="">  308: 
+</span><span class="">  309: The data passed into the constructor via the C&lt;data&gt; argument is the starting point.
+</span><span class="">  310: Essentially,
+</span><span class="">  311: this contains the default values.
+</span><span class="">  312: 
+</span><span class="">  313: =item 2. Loading Files
+</span><span class="">  314: 
+</span><span class="">  315: The module then looks for configuration files in the specified directories.
+</span><span class="">  316: It loads the following files in order of preference:
+</span><span class="">  317: C&lt;base.yaml&gt;, C&lt;local.yaml&gt;, C&lt;base.json&gt;, C&lt;local.json&gt;, C&lt;base.xml&gt;,
+</span><span class="">  318: C&lt;local.xml&gt;, C&lt;base.ini&gt;, and C&lt;local.ini&gt;.
+</span><span class="">  319: 
+</span><span class="">  320: If C&lt;config_file&gt; or C&lt;config_files&gt; is set, those files are loaded last.
+</span><span class="">  321: 
+</span><span class="">  322: If no C&lt;config_dirs&gt; is given,
+</span><span class="">  323: C&lt;Config::Abstraction&gt; tries hard to find the files in various places.
 </span><span class="">  324: 
 </span><span class="">  325: The value of C&lt;config_dirs&gt; can be overridden at runtime by the environment variable CONFIG_DIR
 </span><span class="">  326: (note that is just one directory, hence it&#39;s CONFIG_DIR not CONFIG_DIRS).
@@ -2241,7 +2241,7 @@ is( func(VALUE_AT_BOUNDARY), EXPECTED, &#39;Test boundary behaviour&#39; );
 </span><span class="killed tooltip" data-tooltip="Mutations here were killed. Tests are effectively covering this logic."> 1708: 		return 0;
 </span><p> <b> Mutants (Total: 2, Killed: 2, Survived: 0)</b><p><span class=""> 1709: 	}
 </span><span class=""> 1710: 	$self-&gt;{reuse_loaded} = 1;
-</span><span class="survived-2 tooltip" data-tooltip="Return value mutation survived. Add tests asserting exact return values. Boolean logic mutation survived. Add tests covering both true and false paths."> 1711: 	return 1;
+</span><span class="survived-2 tooltip" data-tooltip="Boolean logic mutation survived. Add tests covering both true and false paths. Return value mutation survived. Add tests asserting exact return values."> 1711: 	return 1;
 </span>
 					<details class="mutant-details">
 					<summary>Mutants (Total: 2, Killed: 0, Survived: 2)</summary>
