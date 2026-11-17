@@ -47,3 +47,6 @@ t/unused.t
 t/vars.t
 t/xml.t
 t/xml_pp.t
+t/config-general.t
+t/includes.t
+t/interpolate.t

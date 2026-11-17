@@ -71,6 +71,11 @@ WriteMakefile(
 				# url => 'https://github.com/nigelhorne/Config-Abstraction/issues',
 			}
 		}, prereqs => {
+			runtime => {
+				recommends => {
+					'Config::General' => 0,	# Apache-style *.conf files
+				},
+			},
 			test => {
 				recommends => {
 					'Test::Permissions' => 0,	# probes whether chmod can revoke read access; t/extended_tests.t falls back to -r

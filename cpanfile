@@ -24,6 +24,7 @@ requires 'Scalar::Util';
 requires 'TOML::Tiny';
 requires 'XML::PP', '0.06';
 requires 'YAML::XS', '0.80';   # _sanitize_yaml_values guards against !!perl/code in any version
+recommends 'Config::General';   # Apache-style *.conf files
 
 on 'configure' => sub {
 	requires 'ExtUtils::MakeMaker', '6.64';   # Minimum version for TEST_REQUIRES
