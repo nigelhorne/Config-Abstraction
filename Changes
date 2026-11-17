@@ -1,6 +1,11 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
 0.43
+	[ Behaviour Changes ]
+	- A base.conf, local.conf (or base.{env}.conf, local.{env}.conf) in a
+	  configuration directory is now read when Config::General is installed.
+	  Previously these names were ignored.  Move or rename such a file if it
+	  is not Apache-style configuration.
 	[ Security ]
 	- Includes are confined: an included file must lie within the directory of
 	  the file that began the include chain, or within include_dirs, after
@@ -18,6 +23,8 @@ Revision history for Config::Abstraction - Merge and manage configuration data f
 	- Apache-style configuration via the optional Config::General: base.conf,
 	  local.conf (and their environment-specific forms) are now read, and it
 	  is the last parser tried for an extensionless config_file.
+	- MIME::Base64 and Sys::Hostname (core modules) are now declared in
+	  PREREQ_PM, and Config::General is recommended.
 	- New tests t/includes.t, t/interpolate.t and t/config-general.t.
 
 0.42	Sun Nov  8 02:18:25 PM EST 2026

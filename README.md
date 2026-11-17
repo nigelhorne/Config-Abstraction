@@ -203,23 +203,23 @@ $APP_DATABASE__HOST  =>  'db.override.example.com'    <-- this wins
 
 - YAML (`*.yaml`, `*.yml`)
 
-    Loaded with `YAML::XS`.
+    Loaded with [YAML::XS](https://metacpan.org/pod/YAML%3A%3AXS).
 
 - JSON (`*.json`)
 
-    Loaded with `JSON::MaybeXS`.
+    Loaded with [JSON::MaybeXS](https://metacpan.org/pod/JSON%3A%3AMaybeXS).
 
 - XML (`*.xml`)
 
-    Loaded with `XML::Simple` (preferred) or `XML::PP` (fallback).
+    Loaded with [XML::Simple](https://metacpan.org/pod/XML%3A%3ASimple) (preferred) or [XML::PP](https://metacpan.org/pod/XML%3A%3APP) (fallback).
 
 - INI (`*.ini`)
 
-    Loaded with `Config::IniFiles`.
+    Loaded with [Config::IniFiles](https://metacpan.org/pod/Config%3A%3AIniFiles).
 
 - TOML (`*.toml`)
 
-    Loaded with `TOML::Tiny`, which implements TOML 1.0.  TOML is a good choice
+    Loaded with [TOML::Tiny](https://metacpan.org/pod/TOML%3A%3ATiny), which implements TOML 1.0.  TOML is a good choice
     for human-editable configuration because its syntax is unambiguous: all values
     are typed, strings must be quoted, and nesting uses `[section]` headers or
     dotted keys rather than indentation.
@@ -271,6 +271,11 @@ $APP_DATABASE__HOST  =>  'db.override.example.com'    <-- this wins
     ["INCLUDING FILES"](#including-files) instead.  Config::General's variable interpolation is
     switched off in favour of ["VARIABLE INTERPOLATION"](#variable-interpolation).
 
+    Apache-style content has `<block>...</block>` tags that look
+    like XML.  When an extensionless `config_file` that does not begin with an
+    `<?xml>` declaration fails to parse as XML, it is given one attempt
+    as Apache-style configuration before the XML error is reported.
+
 ### Including Files
 
 With `allow_includes => 1`, a configuration file may name other files
@@ -297,6 +302,12 @@ chain (any depth below it), or within a directory listed in `include_dirs`.
 Symbolic links are resolved before the check.  A file outside those
 directories, a circular include, or a chain deeper than `include_max_depth`
 croaks.  An include that does not exist is skipped with a warning.
+
+The key name can be changed with `include_key`.  A glob that matches no
+file is silently ignored, whereas an explicit path that does not exist warns.
+A file that starts with `#!` is a program and is never read as an include, and
+the running script is never included.  An included file with an unrecognised
+extension is detected by its content (JSON, YAML, TOML, then Apache-style).
 
 Includes are not followed in files fetched from remote directories
 (Newcastle Connection).
@@ -753,6 +764,42 @@ Options:
     validation and need errors to point at the construction site.
 
 If just one argument is given, it is assumed to be the name of a file.
+
+#### Api Specification
+
+##### Input
+
+```
+A hash or hashref of the options above, or a single SCALAR (a file name).
+All are optional.
+
+allow_includes      -- BOOLEAN  -- follow the include key (default 0)
+include_key         -- SCALAR   -- name of the include key (default 'include')
+include_dirs        -- SCALAR | ARRAYREF -- extra directories includes may read
+include_max_depth   -- INTEGER  -- deepest include nesting (default 10)
+interpolate         -- BOOLEAN  -- expand ${...} references (default 0)
+interpolate_strict  -- BOOLEAN  -- croak on an unresolved reference (default 1)
+```
+
+##### Output
+
+```
+Config::Abstraction object, or undef when no configuration was found and
+lazy is not set.
+```
+
+#### Messages
+
+```
+croaks   encryption_key_file does not exist
+croaks   invalid environment name
+croaks   an include outside the permitted directories, a circular include,
+         or includes nested more than include_max_depth deep
+croaks   an unresolved, circular or non-scalar ${...} reference (when
+         interpolate_strict is true)
+carps    an include that is missing, unreadable or not a configuration hash
+carps    a configuration file that cannot be parsed
+```
 
 ### Get(key)
 
@@ -1670,6 +1717,22 @@ Notable changes by release.  Full details are in the `Changes` file.
     AUTOLOAD method dispatch converts underscores to key separators.  If `sep_char` is
     the default `'.'`, AUTOLOAD cannot reach nested keys because Perl method names cannot
     contain dots.
+
+- **Includes are checked, then read**
+
+    The directory check on an included file resolves its path and reads it a moment
+    later.  Someone who can write to the configuration directory could swap the file
+    for a symbolic link in between.  Anyone with that access can already change the
+    configuration, so this is not a privilege boundary, but do not rely on
+    `include_dirs` to confine a directory that untrusted users can write to.
+
+- **Interpolation reaches values from every source**
+
+    With `interpolate`, a configuration value is expanded whichever source it came
+    from, so an `APP_` environment variable or command-line argument that
+    contains `${env:NAME}` will pull in that other variable.  The text of a
+    variable read through `${env:NAME}` is inserted as it is, without being
+    expanded again.
 
 - **Remote directory TOML support requires File::Slurp::Remote**
 

@@ -32,12 +32,19 @@ subtest 'key references, nested and chained' => sub {
 
 subtest 'environment variables' => sub {
 	local $ENV{'CA_TEST_VAR'} = 'from env';
-	delete local $ENV{'CA_TEST_MISSING'};
+	local $ENV{'CA_TEST_MISSING'} = 'x';
+	delete $ENV{'CA_TEST_MISSING'};
 	my $c = cfg({ a => '${env:CA_TEST_VAR}!', b => '${env:CA_TEST_MISSING:-fallback}', c => '${ENV:CA_TEST_VAR}' });
 	is($c->get('a'), 'from env!');
 	is($c->get('b'), 'fallback');
 	is($c->get('c'), 'from env', 'prefix is case-insensitive');
 	throws_ok { cfg({ a => '${env:CA_TEST_MISSING}' }) } qr/\$\{CA_TEST_MISSING\}|env:CA_TEST_MISSING/, 'missing var croaks';
+};
+
+subtest 'text read through env: is not expanded again' => sub {
+	local $ENV{'CA_TEST_NESTED'} = 'a${k}$$';
+	my $c = cfg({ k => 'v', e => '${env:CA_TEST_NESTED}' });
+	is($c->get('e'), 'a${k}$$', 'inserted as it is');
 };
 
 subtest 'defaults and escapes' => sub {

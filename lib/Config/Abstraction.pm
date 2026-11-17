@@ -17,7 +17,7 @@ use Params::Validate::Strict 0.37;
 use Scalar::Util;
 use Readonly;
 
-# AES-256-GCM constants — do not change without updating _decrypt_enc_value and encrypt_value
+# AES-256-GCM constants - do not change without updating _decrypt_enc_value and encrypt_value
 Readonly::Scalar my $_AES_NONCE_SIZE  => 12;	# GCM standard nonce length in bytes
 Readonly::Scalar my $_AES_TAG_SIZE    => 16;	# GCM authentication tag length in bytes
 Readonly::Scalar my $_AES_KEY_SIZE    => 32;	# AES-256 key length in bytes
@@ -243,23 +243,23 @@ so that configuration on remote machines can be centrally managed.
 
 =item * YAML (C<*.yaml>, C<*.yml>)
 
-Loaded with C<YAML::XS>.
+Loaded with L<YAML::XS>.
 
 =item * JSON (C<*.json>)
 
-Loaded with C<JSON::MaybeXS>.
+Loaded with L<JSON::MaybeXS>.
 
 =item * XML (C<*.xml>)
 
-Loaded with C<XML::Simple> (preferred) or C<XML::PP> (fallback).
+Loaded with L<XML::Simple> (preferred) or L<XML::PP> (fallback).
 
 =item * INI (C<*.ini>)
 
-Loaded with C<Config::IniFiles>.
+Loaded with L<Config::IniFiles>.
 
 =item * TOML (C<*.toml>)
 
-Loaded with C<TOML::Tiny>, which implements TOML 1.0.  TOML is a good choice
+Loaded with L<TOML::Tiny>, which implements TOML 1.0.  TOML is a good choice
 for human-editable configuration because its syntax is unambiguous: all values
 are typed, strings must be quoted, and nesting uses C<[section]> headers or
 dotted keys rather than indentation.
@@ -307,6 +307,11 @@ any file the process can read.  Use the C<include> key described under
 L</INCLUDING FILES> instead.  Config::General's variable interpolation is
 switched off in favour of L</VARIABLE INTERPOLATION>.
 
+Apache-style content has C<E<lt>blockE<gt>...E<lt>/blockE<gt>> tags that look
+like XML.  When an extensionless C<config_file> that does not begin with an
+C<E<lt>?xmlE<gt>> declaration fails to parse as XML, it is given one attempt
+as Apache-style configuration before the XML error is reported.
+
 =back
 
 =head2 INCLUDING FILES
@@ -333,6 +338,12 @@ chain (any depth below it), or within a directory listed in C<include_dirs>.
 Symbolic links are resolved before the check.  A file outside those
 directories, a circular include, or a chain deeper than C<include_max_depth>
 croaks.  An include that does not exist is skipped with a warning.
+
+The key name can be changed with C<include_key>.  A glob that matches no
+file is silently ignored, whereas an explicit path that does not exist warns.
+A file that starts with C<#!> is a program and is never read as an include, and
+the running script is never included.  An included file with an unrecognised
+extension is detected by its content (JSON, YAML, TOML, then Apache-style).
 
 Includes are not followed in files fetched from remote directories
 (Newcastle Connection).
@@ -803,6 +814,36 @@ validation and need errors to point at the construction site.
 
 If just one argument is given, it is assumed to be the name of a file.
 
+=head3 API SPECIFICATION
+
+=head4 Input
+
+  A hash or hashref of the options above, or a single SCALAR (a file name).
+  All are optional.
+
+  allow_includes      -- BOOLEAN  -- follow the include key (default 0)
+  include_key         -- SCALAR   -- name of the include key (default 'include')
+  include_dirs        -- SCALAR | ARRAYREF -- extra directories includes may read
+  include_max_depth   -- INTEGER  -- deepest include nesting (default 10)
+  interpolate         -- BOOLEAN  -- expand ${...} references (default 0)
+  interpolate_strict  -- BOOLEAN  -- croak on an unresolved reference (default 1)
+
+=head4 Output
+
+  Config::Abstraction object, or undef when no configuration was found and
+  lazy is not set.
+
+=head3 MESSAGES
+
+  croaks   encryption_key_file does not exist
+  croaks   invalid environment name
+  croaks   an include outside the permitted directories, a circular include,
+           or includes nested more than include_max_depth deep
+  croaks   an unresolved, circular or non-scalar ${...} reference (when
+           interpolate_strict is true)
+  carps    an include that is missing, unreadable or not a configuration hash
+  carps    a configuration file that cannot be parsed
+
 =cut
 
 sub new
@@ -1026,7 +1067,7 @@ sub _decode_encryption_key
 
 	if(length($raw) >= $_B64_KEY_MIN && length($raw) <= $_B64_KEY_MAX) {
 		require MIME::Base64;
-		(my $b64 = $raw) =~ tr/-_/+\//;   # base64url → base64
+		(my $b64 = $raw) =~ tr/-_/+\//;   # base64url to base64
 		$b64 .= '=' x ((4 - length($b64) % 4) % 4);
 		my $bytes = MIME::Base64::decode_base64($b64);
 		return $bytes if length($bytes) == $_AES_KEY_SIZE;
@@ -1071,7 +1112,7 @@ sub _decrypt_enc_value
 		ENC\[
 		([A-Za-z0-9]+)		# algorithm name  (e.g. AES256GCM)
 		,
-		([A-Za-z0-9_-]+)	# base64url payload (RFC 4648 §5 alphabet)
+		([A-Za-z0-9_-]+)	# base64url payload (RFC 4648 section 5 alphabet)
 		\]
 	$/x) {
 		Carp::croak(ref($self) . ": malformed ENC token: $token");
@@ -1170,7 +1211,7 @@ sub _validate_value_spec
 }
 
 # Validate a single value against a named type.
-# Not a method — takes (key, value, type_string).
+# Not a method - takes (key, value, type_string).
 sub _validate_type
 {
 	my ($key, $value, $type) = @_;
@@ -1595,7 +1636,7 @@ sub _load_config
 								# Do not inspect or modify coderefs, blessed objects, or any reference
 								next unless _is_plain_scalar($v);
 
-								next if($v =~ /^"[^"]+"$/);	# Single-quoted field — skip comma-splitting
+								next if($v =~ /^"[^"]+"$/);	# Single-quoted field - skip comma-splitting
 								if($v =~ /,/) {
 									my @vals = split(/\s*,\s*/, $v);
 									delete $data->{$k};
@@ -3564,6 +3605,22 @@ variables may silently fail if the case does not match exactly.
 AUTOLOAD method dispatch converts underscores to key separators.  If C<sep_char> is
 the default C<'.'>, AUTOLOAD cannot reach nested keys because Perl method names cannot
 contain dots.
+
+=item * B<Includes are checked, then read>
+
+The directory check on an included file resolves its path and reads it a moment
+later.  Someone who can write to the configuration directory could swap the file
+for a symbolic link in between.  Anyone with that access can already change the
+configuration, so this is not a privilege boundary, but do not rely on
+C<include_dirs> to confine a directory that untrusted users can write to.
+
+=item * B<Interpolation reaches values from every source>
+
+With C<interpolate>, a configuration value is expanded whichever source it came
+from, so an C<APP_> environment variable or command-line argument that
+contains C<${env:NAME}> will pull in that other variable.  The text of a
+variable read through C<${env:NAME}> is inserted as it is, without being
+expanded again.
 
 =item * B<Remote directory TOML support requires File::Slurp::Remote>
 
