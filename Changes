@@ -1,6 +1,6 @@
 Revision history for Config::Abstraction - Merge and manage configuration data from different sources
 
-0.43
+0.43	Tue Nov 17 09:40:47 AM EST 2026
 	[ Behaviour Changes ]
 	- A base.conf, local.conf (or base.{env}.conf, local.{env}.conf) in a
 	  configuration directory is now read when Config::General is installed.
